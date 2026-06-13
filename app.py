@@ -1,8 +1,9 @@
 import os
 import re
+import json
+import io
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_file
 import anthropic
-import io
 
 from prompts.session_generator import SYNTHESIS_SYSTEM, COACH_GUIDE_SYSTEM
 from docx_builder import markdown_to_docx
@@ -36,32 +37,6 @@ def chat():
     return jsonify({"content": response.content[0].text})
 
 
-@app.route("/api/chat/stream", methods=["POST"])
-def chat_stream():
-    data = request.get_json()
-    messages = data.get("messages", [])
-    system = data.get("system", "")
-    model = data.get("model", "claude-sonnet-4-6")
-    max_tokens = data.get("max_tokens", 8096)
-
-    def generate():
-        with client.messages.stream(
-            model=model,
-            max_tokens=max_tokens,
-            system=system,
-            messages=messages,
-        ) as stream:
-            for text in stream.text_stream:
-                yield f"data: {text}\n\n"
-        yield "data: [DONE]\n\n"
-
-    return Response(
-        stream_with_context(generate()),
-        mimetype="text/event-stream",
-        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
-    )
-
-
 # ── Session Generator ─────────────────────────────────────────────────────────
 
 @app.route("/session-generator")
@@ -84,30 +59,60 @@ def session_generate():
         else f"PREWORK:\n\n{prework}\n\n(No resume provided -- work from pre-work only)"
     )
 
-    def _call(system, user_msg, max_tokens):
-        resp = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=max_tokens,
-            system=system,
-            messages=[{"role": "user", "content": user_msg}],
-        )
-        return resp.content[0].text
+    def _sse(event, data_obj):
+        return f"event: {event}\ndata: {json.dumps(data_obj)}\n\n"
 
-    try:
-        synthesis = _call(
-            SYNTHESIS_SYSTEM,
-            f"Here is the client data:\n\n{client_input}\n\nProduce the complete synthesis.",
-            12000,
-        )
-        guide = _call(
-            COACH_GUIDE_SYSTEM,
-            f"Here is the client data:\n\n{client_input}\n\n---\n\nSYNTHESIS:\n\n{synthesis}\n\nProduce the complete coach session guide.",
-            32000,
-        )
-    except anthropic.APIError as e:
-        return jsonify({"error": str(e)}), 502
+    def generate():
+        # ── Call 1: Synthesis ──────────────────────────────────────────────
+        yield _sse("step", {"step": 1})
 
-    return jsonify({"guide": guide})
+        synthesis_chunks = []
+        try:
+            with client.messages.stream(
+                model="claude-sonnet-4-6",
+                max_tokens=12000,
+                system=SYNTHESIS_SYSTEM,
+                messages=[{"role": "user", "content":
+                    f"Here is the client data:\n\n{client_input}\n\nProduce the complete synthesis."}],
+            ) as stream:
+                for text in stream.text_stream:
+                    synthesis_chunks.append(text)
+                    # Yield a heartbeat so the connection stays alive.
+                    # We don't show synthesis text in the UI, just keep alive.
+                    yield _sse("ping", {})
+        except Exception as e:
+            yield _sse("error", {"message": str(e)})
+            return
+
+        synthesis = "".join(synthesis_chunks)
+
+        # ── Call 2: Coach Guide ────────────────────────────────────────────
+        yield _sse("step", {"step": 2})
+
+        guide_chunks = []
+        try:
+            with client.messages.stream(
+                model="claude-sonnet-4-6",
+                max_tokens=32000,
+                system=COACH_GUIDE_SYSTEM,
+                messages=[{"role": "user", "content":
+                    f"Here is the client data:\n\n{client_input}\n\n---\n\nSYNTHESIS:\n\n{synthesis}\n\nProduce the complete coach session guide."}],
+            ) as stream:
+                for text in stream.text_stream:
+                    guide_chunks.append(text)
+                    yield _sse("guide_chunk", {"text": text})
+        except Exception as e:
+            yield _sse("error", {"message": str(e)})
+            return
+
+        guide = "".join(guide_chunks)
+        yield _sse("done", {"guide": guide})
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.route("/api/session/guide.docx", methods=["POST"])
