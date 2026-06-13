@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+{% block title %}Session Builder — CGC{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#f5f3f0;--surface:#fff;--surface2:#f0ede9;--border:#e0dbd4;
+    --border-mid:#ccc8c0;--charcoal:#1e2022;--charcoal-mid:#3d4145;
+    --charcoal-faint:#9ba0a6;--text:#2c3035;--text-mid:#4a5058;
+    --text-dim:#7a8088;--slate:#3a5a7c;--slate-mid:#5579a0;
+    --slate-light:#dce8f5;--slate-pale:#eef4fb;
+    --green:#2e6b4a;--green-bg:#ddf0e8;--red:#8b4040;--red-bg:#fdf5f5;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Roboto',sans-serif;font-size:14px;line-height:1.6;}
+
+  .page-header{background:var(--charcoal);padding:28px 48px 32px;}
+  .header-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;}
+  .header-title{font-family:'Roboto Slab',serif;font-size:22px;color:#fff;}
+  .header-sub{font-size:12px;color:#9ba0a6;margin-top:3px;font-weight:300;}
+
+  .main{max-width:900px;margin:0 auto;padding:48px;}
+
+  .field-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;display:block;}
+  .field-sub{font-size:13px;font-weight:300;color:var(--text-dim);margin-bottom:10px;}
+  .optional-label{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--border-mid);margin-left:8px;}
+
+  /* Upload zones */
+  .upload-area{background:var(--surface);border:2px dashed var(--border-mid);border-radius:3px;padding:22px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:4px;}
+  .upload-area:hover,.upload-area.drag{border-color:var(--slate-mid);background:var(--slate-pale);}
+  .upload-area.has-file{border-style:solid;border-color:var(--slate-mid);background:var(--slate-pale);}
+  .upload-icon{font-size:24px;margin-bottom:6px;}
+  .upload-text{font-size:13px;color:var(--text-dim);}
+  .upload-text strong{color:var(--slate);font-weight:500;}
+  .upload-filename{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--slate);margin-top:4px;}
+  .file-input{display:none;}
+
+  .form-textarea{width:100%;min-height:110px;font-family:'Roboto Mono',monospace;font-size:12px;line-height:1.6;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:12px 14px;color:var(--text);resize:vertical;outline:none;transition:border-color .15s;}
+  .form-textarea:focus{border-color:var(--slate-mid);}
+  .form-textarea::placeholder{color:var(--border-mid);}
+
+  .divider{height:1px;background:var(--border);margin:32px 0;}
+  .section-title{font-family:'Roboto Slab',serif;font-size:17px;color:var(--charcoal);margin-bottom:4px;}
+  .section-desc{font-size:13px;font-weight:300;color:var(--text-dim);margin-bottom:20px;}
+
+  /* Output cards */
+  .prompts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+  .prompt-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s;}
+  .prompt-card.running{border-color:var(--slate-light);background:var(--slate-pale);}
+  .prompt-card.done{border-color:#b0d9c4;background:var(--green-bg);}
+  .prompt-card.error{border-color:#d4a0a0;background:var(--red-bg);}
+  .prompt-name{font-family:'Roboto Slab',serif;font-size:15px;font-weight:600;color:var(--charcoal);}
+  .prompt-desc{font-size:12px;font-weight:300;color:var(--text-dim);line-height:1.5;flex:1;}
+  .prompt-badge{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;border-radius:2px;display:inline-block;width:fit-content;}
+  .badge-pdf{color:var(--slate);background:var(--slate-pale);border:1px solid var(--slate-light);}
+  .badge-docx{color:var(--green);background:var(--green-bg);border:1px solid #b0d9c4;}
+  .prompt-status{font-size:12px;font-weight:300;min-height:18px;}
+  .status-idle{color:var(--text-dim);}
+  .status-running{color:var(--slate);}
+  .status-done{color:var(--green);}
+  .status-error{color:var(--red);}
+  .download-link{font-family:'Roboto',sans-serif;font-size:12px;font-weight:500;color:#fff;background:var(--slate);border:none;border-radius:2px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-block;transition:background .15s;}
+  .download-link:hover{background:var(--slate-mid);}
+  .download-link.green{background:var(--green);}
+  .download-link.green:hover{background:#1f4f35;}
+
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--slate-light);border-top-color:var(--slate);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .run-btn{font-family:'Roboto',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;background:var(--charcoal);color:#fff;border:none;border-radius:2px;padding:14px 36px;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:10px;}
+  .run-btn:hover:not(:disabled){background:var(--charcoal-mid);}
+  .run-btn:disabled{background:var(--border-mid);cursor:not-allowed;}
+
+  .client-name-input{font-family:'Roboto',sans-serif;font-size:14px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:10px 14px;color:var(--text);outline:none;width:320px;transition:border-color .15s;}
+  .client-name-input:focus{border-color:var(--slate-mid);}
+
+  .error-msg{display:none;background:var(--red-bg);border:1px solid #d4a0a0;border-radius:2px;padding:12px 16px;color:var(--red);font-size:13px;margin-top:12px;}
+  .error-msg.visible{display:block;}
+
+  @media(max-width:700px){
+    .main{padding:28px 20px;}
+    .page-header{padding:20px 24px;}
+    .prompts-grid{grid-template-columns:1fr;}
+    .client-name-input{width:100%;}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="header-label">Challenger Gray &amp; Christmas</div>
+  <div class="header-title">Session Builder</div>
+  <div class="header-sub">Interview Program &bull; Success Stories &bull; Where to Look &bull; Resume Draft</div>
+</div>
+
+<div class="main">
+
+  <!-- Transcript -->
+  <div style="margin-bottom:24px;">
+    <label class="field-label">Session Transcript <span style="color:var(--red)">*</span></label>
+    <div class="field-sub">Upload a .txt or .md file, or paste below</div>
+    <div class="upload-area" id="transcriptDrop"
+      onclick="document.getElementById('transcriptFile').click()"
+      ondragover="dragOver(event,'transcriptDrop')"
+      ondragleave="dragLeave('transcriptDrop')"
+      ondrop="dropFile(event,'transcriptFile','transcriptDrop','transcriptName','transcript')">
+      <div class="upload-icon">&#128196;</div>
+      <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+      <div class="upload-filename" id="transcriptName"></div>
+    </div>
+    <input type="file" class="file-input" id="transcriptFile" accept=".txt,.md"
+      onchange="fileChosen('transcriptFile','transcriptDrop','transcriptName','transcript')">
+    <div style="margin-top:8px;">
+      <textarea class="form-textarea" id="transcriptText" placeholder="Or paste transcript here..."></textarea>
+    </div>
+  </div>
+
+  <!-- Resume -->
+  <div style="margin-bottom:24px;">
+    <label class="field-label">Resume <span class="optional-label">Optional</span></label>
+    <div class="field-sub">Upload or paste the client's current resume — used as the base for the revised draft</div>
+    <div class="upload-area" id="resumeDrop"
+      onclick="document.getElementById('resumeFile').click()"
+      ondragover="dragOver(event,'resumeDrop')"
+      ondragleave="dragLeave('resumeDrop')"
+      ondrop="dropFile(event,'resumeFile','resumeDrop','resumeName','resume')">
+      <div class="upload-icon">&#128203;</div>
+      <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+      <div class="upload-filename" id="resumeName"></div>
+    </div>
+    <input type="file" class="file-input" id="resumeFile" accept=".txt,.md"
+      onchange="fileChosen('resumeFile','resumeDrop','resumeName','resume')">
+    <div style="margin-top:8px;">
+      <textarea class="form-textarea" id="resumeText" style="min-height:80px;" placeholder="Or paste resume text here..."></textarea>
+    </div>
+  </div>
+
+  <!-- Intake -->
+  <div style="margin-bottom:8px;">
+    <label class="field-label">Intake Answers <span class="optional-label">Optional</span></label>
+    <div class="field-sub">Client's pre-session intake responses</div>
+    <div class="upload-area" id="intakeDrop"
+      onclick="document.getElementById('intakeFile').click()"
+      ondragover="dragOver(event,'intakeDrop')"
+      ondragleave="dragLeave('intakeDrop')"
+      ondrop="dropFile(event,'intakeFile','intakeDrop','intakeName','intake')">
+      <div class="upload-icon">&#128221;</div>
+      <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+      <div class="upload-filename" id="intakeName"></div>
+    </div>
+    <input type="file" class="file-input" id="intakeFile" accept=".txt,.md"
+      onchange="fileChosen('intakeFile','intakeDrop','intakeName','intake')">
+    <div style="margin-top:8px;">
+      <textarea class="form-textarea" id="intakeText" style="min-height:80px;" placeholder="Or paste intake answers here..."></textarea>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Client name -->
+  <div style="margin-bottom:28px;">
+    <label class="field-label" for="clientNameInput">Client Name <span style="color:var(--red)">*</span></label>
+    <div class="field-sub">First and last name — used in all output headers</div>
+    <input type="text" id="clientNameInput" class="client-name-input" placeholder="e.g. Jason Cochran">
+  </div>
+
+  <!-- Output cards -->
+  <div class="section-title">Morning Outputs</div>
+  <div class="section-desc">All four run in parallel. Click Generate to start.</div>
+
+  <div class="prompts-grid" id="promptsGrid">
+    <div class="prompt-card" id="card-ip">
+      <div class="prompt-name">Interview Program</div>
+      <div class="prompt-desc">TMAY (two versions), Ideal Role, and Safe Fault — the client's spoken brand toolkit.</div>
+      <span class="prompt-badge badge-pdf">PDF</span>
+      <div class="prompt-status status-idle" id="status-ip">Ready</div>
+    </div>
+    <div class="prompt-card" id="card-stories">
+      <div class="prompt-name">Success Stories</div>
+      <div class="prompt-desc">Every distinct accomplishment extracted and built into a STAR evidence block document.</div>
+      <span class="prompt-badge badge-pdf">PDF</span>
+      <div class="prompt-status status-idle" id="status-stories">Ready</div>
+    </div>
+    <div class="prompt-card" id="card-positioning">
+      <div class="prompt-name">Where to Look</div>
+      <div class="prompt-desc">2-3 target lanes, 3 companies per lane, and LinkedIn search strings confirmed from the session.</div>
+      <span class="prompt-badge badge-pdf">PDF</span>
+      <div class="prompt-status status-idle" id="status-positioning">Ready</div>
+    </div>
+    <div class="prompt-card" id="card-resume">
+      <div class="prompt-name">Resume Draft</div>
+      <div class="prompt-desc">Direct rewrite using transcript as Primary Truth. No evaluation step — straight to a revised draft.</div>
+      <span class="prompt-badge badge-docx">Word Doc</span>
+      <div class="prompt-status status-idle" id="status-resume">Ready</div>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <button class="run-btn" id="runBtn" onclick="runAll()">
+    &#9889; Generate All Outputs
+  </button>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// ── File handling ──────────────────────────────────────────────────────────
+const fileContents = { transcript: '', resume: '', intake: '' };
+
+function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag'); }
+function dragLeave(id)   { document.getElementById(id).classList.remove('drag'); }
+
+function dropFile(e, inputId, dropId, nameId, key) {
+  e.preventDefault();
+  dragLeave(dropId);
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  readFile(file, dropId, nameId, key);
+}
+
+function fileChosen(inputId, dropId, nameId, key) {
+  const file = document.getElementById(inputId).files[0];
+  if (!file) return;
+  readFile(file, dropId, nameId, key);
+  document.getElementById(inputId).value = '';
+}
+
+function readFile(file, dropId, nameId, key) {
+  const reader = new FileReader();
+  reader.onload = e => { fileContents[key] = e.target.result; };
+  reader.readAsText(file);
+  document.getElementById(dropId).classList.add('has-file');
+  document.getElementById(nameId).textContent = file.name;
+}
+
+function getTranscript() { return fileContents.transcript || document.getElementById('transcriptText').value.trim(); }
+function getResume()     { return fileContents.resume     || document.getElementById('resumeText').value.trim(); }
+function getIntake()     { return fileContents.intake     || document.getElementById('intakeText').value.trim(); }
+
+// ── Status helpers ─────────────────────────────────────────────────────────
+function setStatus(id, state, msg) {
+  const card   = document.getElementById(`card-${id}`);
+  const status = document.getElementById(`status-${id}`);
+  card.className = `prompt-card${state !== 'idle' ? ' ' + state : ''}`;
+  status.className = `prompt-status status-${state}`;
+  status.innerHTML = state === 'running'
+    ? `<span class="spinner"></span>${msg}`
+    : msg;
+}
+
+function setDone(id, label, onClick, green = false) {
+  document.getElementById(`card-${id}`).className = 'prompt-card done';
+  const status = document.getElementById(`status-${id}`);
+  status.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'download-link' + (green ? ' green' : '');
+  btn.textContent = `↓ ${label}`;
+  btn.onclick = onClick;
+  status.appendChild(btn);
+}
+
+// ── Main runner (SSE) ──────────────────────────────────────────────────────
+const results = {};
+
+async function runAll() {
+  const transcript  = getTranscript();
+  const resume      = getResume();
+  const intake      = getIntake();
+  const clientName  = document.getElementById('clientNameInput').value.trim();
+
+  hideError();
+  if (!transcript)  { showError('Please upload or paste a transcript.');   return; }
+  if (!clientName)  { showError("Please enter the client's name.");         return; }
+
+  document.getElementById('runBtn').disabled = true;
+  ['ip','stories','positioning','resume'].forEach(id => setStatus(id, 'running', 'Generating...'));
+
+  try {
+    const res = await fetch('/api/builder/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript, resume, intake, client_name: clientName }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server error ${res.status}: ${txt}`);
+    }
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        const eventMatch = part.match(/^event: (\w+)/m);
+        const dataMatch  = part.match(/^data: (.+)/m);
+        if (!eventMatch || !dataMatch) continue;
+
+        const event = eventMatch[1];
+        let payload;
+        try { payload = JSON.parse(dataMatch[1]); } catch { continue; }
+
+        if (event === 'status') {
+          // initial running signals — already set above
+        } else if (event === 'result') {
+          const { id, state, content, message } = payload;
+          if (state === 'done') {
+            results[id] = content;
+            wireDownload(id, content, clientName);
+          } else {
+            setStatus(id, 'error', `Error: ${message}`);
+          }
+        } else if (event === 'error') {
+          showError(payload.message || 'Generation failed.');
+        }
+        // 'complete' event: nothing extra needed
+      }
+    }
+  } catch (err) {
+    showError(err.message || 'Something went wrong.');
+    ['ip','stories','positioning','resume'].forEach(id => {
+      if (!results[id]) setStatus(id, 'error', 'Failed');
+    });
+  } finally {
+    document.getElementById('runBtn').disabled = false;
+  }
+}
+
+function wireDownload(id, content, clientName) {
+  const slug = clientName.toLowerCase().replace(/\s+/g,'_').replace(/[^a-z0-9_]/g,'');
+
+  if (id === 'ip') {
+    setDone('ip', 'Interview Program (PDF)',
+      () => downloadClientPDF(content, clientName, 'Interview Program', `${slug}_interview_program`));
+
+  } else if (id === 'stories') {
+    setDone('stories', 'Success Stories (PDF)',
+      () => downloadClientPDF(content, clientName, 'Success Stories', `${slug}_success_stories`));
+
+  } else if (id === 'positioning') {
+    let posData;
+    try {
+      const cleaned = content.replace(/^```json\s*/i,'').replace(/^```\s*/i,'').replace(/```\s*$/,'').trim();
+      posData = JSON.parse(cleaned);
+    } catch(e) {
+      setStatus('positioning', 'error', 'JSON parse error: ' + e.message);
+      return;
+    }
+    setDone('positioning', 'Where to Look (PDF)',
+      () => downloadPositioningPDF(posData, clientName, `${slug}_where_to_look`));
+
+  } else if (id === 'resume') {
+    setDone('resume', 'Resume Draft (Word)',
+      () => downloadResume(content, clientName), true);
+  }
+}
+
+// ── Resume download (server-side .docx) ───────────────────────────────────
+async function downloadResume(content, clientName) {
+  const btn = document.querySelector('#status-resume .download-link');
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Building...'; }
+
+  try {
+    const res = await fetch('/api/builder/resume.docx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, client_name: clientName }),
+    });
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const parts = clientName.split(' ');
+    a.download = parts.length >= 2
+      ? `${parts[parts.length-1]}_${parts[0]}_Resume.docx`
+      : `${clientName.replace(/\s+/g,'_')}_Resume.docx`;
+    a.href = url;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch(e) {
+    showError('Resume download failed: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
+  }
+}
+
+// ── jsPDF rendering (unchanged from original) ──────────────────────────────
+const CPDF = {
+  charcoal:[30,32,34],charcoalMid:[61,65,69],
+  slate:[58,90,124],slateMid:[85,121,160],
+  slatePale:[238,244,251],slateLight:[220,232,245],
+  text:[44,48,53],textMid:[74,80,88],textDim:[122,128,136],
+  green:[46,107,74],greenBg:[221,240,232],greenBorder:[176,217,196],
+  surface2:[240,237,233],border:[224,219,212],white:[255,255,255],grey:[155,160,166]
+};
+
+function parseInline(text) {
+  if (!text) return [];
+  const segments = [];
+  const parts = text.split(/(\*\*(?:[^*]|\*(?!\*))+\*\*|\*(?:[^*])+\*|`[^`]+`)/);
+  for (const part of parts) {
+    if (!part) continue;
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4)
+      segments.push({ text:part.slice(2,-2), bold:true,  italic:false, code:false });
+    else if (part.startsWith('*') && part.endsWith('*') && part.length > 2)
+      segments.push({ text:part.slice(1,-1), bold:false, italic:true,  code:false });
+    else if (part.startsWith('`') && part.endsWith('`') && part.length > 2)
+      segments.push({ text:part.slice(1,-1), bold:false, italic:false, code:true  });
+    else
+      segments.push({ text:part,             bold:false, italic:false, code:false });
+  }
+  return segments;
+}
+
+function wrapMixed(doc, segments, maxW) {
+  const words = [];
+  for (const seg of segments) {
+    const raw = seg.text; let i = 0;
+    while (i < raw.length) {
+      const wsMatch = raw.slice(i).match(/^(\s+)/);
+      const wdMatch = raw.slice(i).match(/^(\S+)/);
+      if (wsMatch) { if (words.length > 0) words.push({text:' ',...seg,isSpace:true}); i+=wsMatch[1].length; }
+      else if (wdMatch) { words.push({text:wdMatch[1],bold:seg.bold,italic:seg.italic,code:seg.code,isSpace:false}); i+=wdMatch[1].length; }
+      else { i++; }
+    }
+  }
+  function segW(seg) {
+    doc.setFont(seg.code?'courier':'helvetica',seg.bold&&seg.italic?'bolditalic':seg.bold?'bold':seg.italic?'italic':'normal');
+    doc.setFontSize(seg.code?8.5:10);
+    return doc.getTextWidth(seg.text);
+  }
+  const lines=[]; let cur=[],curW=0;
+  for (const w of words) {
+    if (w.isSpace) { if (cur.length>0){cur.push(w);curW+=segW(w);} continue; }
+    const ww=segW(w);
+    if (curW+ww>maxW+0.5&&cur.length>0) { while(cur.length&&cur[cur.length-1].isSpace){curW-=segW(cur[cur.length-1]);cur.pop();} lines.push(cur);cur=[w];curW=ww; }
+    else { cur.push(w);curW+=ww; }
+  }
+  if (cur.length) { while(cur.length&&cur[cur.length-1].isSpace)cur.pop(); if(cur.length)lines.push(cur); }
+  return lines;
+}
+
+function renderMixedLine(doc, lineSegs, x, y, textColor) {
+  let lx = x;
+  for (const seg of lineSegs) {
+    const font  = seg.code ? 'courier' : 'helvetica';
+    const style = seg.bold&&seg.italic?'bolditalic':seg.bold?'bold':seg.italic?'italic':'normal';
+    const size  = seg.code ? 8.5 : 10;
+    doc.setFont(font,style); doc.setFontSize(size);
+    doc.setTextColor(...(seg.code ? CPDF.slateMid : (textColor||CPDF.text)));
+    doc.text(seg.text, lx, y);
+    lx += doc.getTextWidth(seg.text);
+  }
+}
+
+function downloadClientPDF(markdown, clientName, subtitle, filename) {
+  const {jsPDF} = window.jspdf;
+  const doc = new jsPDF({unit:'pt',format:'letter'});
+  const PW=612,PH=792,ML=48,MR=48,CW=PW-ML-MR,BM=56;
+  let y=0,pageNum=0;
+  function fr(x,fy,w,h,col){doc.setFillColor(...col);doc.rect(x,fy,w,h,'F');}
+  function hline(x,fy,w,col,lw=0.5){doc.setFillColor(...col);doc.rect(x,fy,w,lw,'F');}
+  function txt(t,x,fy,col,sz,style='normal'){doc.setFont('helvetica',style);doc.setFontSize(sz);doc.setTextColor(...col);doc.text(String(t||''),x,fy);}
+  function pageFooter(){hline(ML,PH-30,CW,CPDF.border);txt('Challenger, Gray & Christmas  /  Confidential',ML,PH-18,CPDF.textDim,7);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...CPDF.textDim);doc.text(`Page ${doc.internal.getCurrentPageInfo().pageNumber}`,PW-MR,PH-18,{align:'right'});}
+  function newPage(){pageNum++;if(pageNum>1)doc.addPage();if(pageNum>1){fr(0,0,PW,26,CPDF.charcoal);txt(clientName,ML,17,CPDF.grey,7.5,'bold');doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...CPDF.slateMid);doc.text(subtitle,PW-MR,17,{align:'right'});}pageFooter();y=pageNum===1?0:36;}
+  function need(h){if(y+h>PH-BM){newPage();}}
+  newPage();
+  fr(0,0,PW,80,CPDF.charcoal);
+  txt('STRATEGY SESSION  /  CHALLENGER GRAY & CHRISTMAS',ML,22,CPDF.slateMid,7.5);
+  txt(clientName,ML,52,CPDF.white,22,'bold');
+  txt(subtitle,ML,68,CPDF.grey,10,'normal');
+  y=96;
+  const LH=13.5;
+  function renderParagraph(rawText,opts={}){const{indent=0,color=CPDF.textMid,size=10,lineH=LH,spaceAfter=10}=opts;const x=ML+indent,w=CW-indent;const segs=parseInline(rawText),lines=wrapMixed(doc,segs,w);if(!lines.length)return;need(lines.length*lineH+spaceAfter);for(const line of lines){renderMixedLine(doc,line,x,y,color);y+=lineH;}y+=spaceAfter;}
+  function renderHeading(text,depth){const clean=text.replace(/\*\*/g,'').replace(/\*/g,'').replace(/`/g,'');if(depth===1){need(40);y+=8;txt(clean,ML,y,CPDF.charcoal,18,'bold');y+=6;hline(ML,y,CW,CPDF.slate,1.5);y+=14;}else if(depth===2){need(32);y+=6;txt(clean,ML,y,CPDF.slate,13,'bold');y+=14;}else if(depth===3){need(26);y+=4;txt(clean,ML,y,CPDF.charcoal,11,'bold');y+=12;}else{need(22);y+=4;txt(clean,ML,y,CPDF.charcoalMid,10,'bold');y+=12;}}
+  function renderBlockquote(tokens){const lines_raw=[];for(const t of(tokens||[])){if(t.type==='paragraph'||t.type==='text')lines_raw.push(t.text||t.raw||'');}const segs=parseInline(lines_raw.join(' '));const wrappedLines=wrapMixed(doc,segs,CW-28);if(!wrappedLines.length)return;const blockH=wrappedLines.length*LH+22;need(blockH+10);fr(ML,y,CW,blockH,CPDF.slatePale);fr(ML,y,3,blockH,CPDF.slate);let by=y+13;for(const line of wrappedLines){renderMixedLine(doc,line.map(s=>({...s,italic:true})),ML+14,by,CPDF.charcoal);by+=LH;}y+=blockH+8;}
+  function renderListItems(items,ordered){items.forEach((item,i)=>{const rawText=item.text||(item.tokens?(item.tokens[0]?.text||item.tokens[0]?.raw||''):'');const segs=parseInline(rawText),wrappedLines=wrapMixed(doc,segs,CW-22);if(!wrappedLines.length)return;const itemH=wrappedLines.length*LH+5;need(itemH+4);doc.setFont('helvetica','normal');doc.setFontSize(10);doc.setTextColor(...CPDF.slate);doc.text(ordered?`${i+1}.`:'•',ML,y);let ly=y;for(const line of wrappedLines){renderMixedLine(doc,line,ML+14,ly,CPDF.textMid);ly+=LH;}y=ly+5;if(item.tokens){for(const subTok of item.tokens){if(subTok.type==='list')renderListItems(subTok.items,subTok.ordered);}}});}
+  function renderHR(){need(20);y+=8;hline(ML,y,CW,CPDF.border);y+=12;}
+  function renderTokens(tokens){for(const tok of(tokens||[])){switch(tok.type){case 'heading':renderHeading(tok.text||tok.raw||'',tok.depth);break;case 'paragraph':renderParagraph(tok.text||tok.raw||'');break;case 'blockquote':renderBlockquote(tok.tokens);break;case 'list':renderListItems(tok.items,tok.ordered);y+=6;break;case 'hr':renderHR();break;case 'space':y+=4;break;default:if(tok.raw&&tok.raw.trim())renderParagraph(tok.raw);}}}
+  renderTokens(marked.lexer(markdown));
+  doc.save(`${filename||clientName.toLowerCase().replace(/\s+/g,'_')}.pdf`);
+}
+
+function downloadPositioningPDF(posData, clientName, filename) {
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:'pt',format:'letter'});
+  const PW=612,PH=792,ML=48,MR=48,CW=PW-ML-MR,LH=13.5,BM=56;
+  let y=0;
+  function fr(x,fy,w,h,col){doc.setFillColor(...col);doc.rect(x,fy,w,h,'F');}
+  function sr(x,fy,w,h,col,lw=0.5){doc.setDrawColor(...col);doc.setLineWidth(lw);doc.rect(x,fy,w,h,'S');}
+  function hline(x,fy,w,col=[224,219,212],lw=0.5){doc.setFillColor(...col);doc.rect(x,fy,w,lw,'F');}
+  function txt(t,x,fy,col,sz,style='normal'){doc.setFont('helvetica',style);doc.setFontSize(sz);doc.setTextColor(...col);doc.text(String(t||''),x,fy);}
+  function mono(t,x,fy,col,sz=8){doc.setFont('courier','normal');doc.setFontSize(sz);doc.setTextColor(...col);doc.text(String(t||'').toUpperCase(),x,fy);doc.setFont('helvetica','normal');}
+  function footer(){hline(ML,PH-30,CW);txt('Challenger, Gray & Christmas  /  Confidential',ML,PH-18,CPDF.textDim,7);doc.setFont('helvetica','normal');doc.setFontSize(7);doc.setTextColor(...CPDF.textDim);doc.text(`Page ${doc.internal.getCurrentPageInfo().pageNumber}`,PW-MR,PH-18,{align:'right'});}
+  function need(h){if(y+h>PH-BM){doc.addPage();fr(0,0,PW,26,CPDF.charcoal);txt(clientName,ML,17,CPDF.grey,7.5,'bold');doc.setFont('helvetica','normal');doc.setFontSize(7.5);doc.setTextColor(...CPDF.slateMid);doc.text('Where to Look',PW-MR,17,{align:'right'});footer();y=36;}}
+  // Cover
+  fr(0,0,PW,96,CPDF.charcoal);mono('Target Company Guide  /  Challenger Gray & Christmas',ML,22,CPDF.slateMid,7.5);
+  txt(clientName,ML,52,CPDF.white,22,'bold');txt(posData.targetTitle||'',ML,68,CPDF.grey,10);
+  const pills=[`${(posData.lanes||[]).length} Target Lanes`,`${(posData.lanes||[]).reduce((n,l)=>n+l.companies.length,0)} Companies`,'LinkedIn Search Strings'];
+  let px=ML;pills.forEach(p=>{doc.setFont('helvetica','normal');doc.setFontSize(8.5);const pw=doc.getTextWidth(p)+18;fr(px,75,pw,16,[42,46,50]);doc.setTextColor(...CPDF.slateLight);doc.text(p,px+9,85);px+=pw+6;});
+  footer();y=110;
+  // Confirmed
+  need(60);mono('Confirmed in Session',ML,y,CPDF.slateMid,8);y+=12;
+  if(posData.confirmedFrom){const segs=parseInline(posData.confirmedFrom),wrapped=wrapMixed(doc,segs,CW-28),bh=wrapped.length*LH+20;fr(ML,y,CW,bh,CPDF.greenBg);fr(ML,y,3,bh,CPDF.green);let by=y+13;for(const line of wrapped){renderMixedLine(doc,line,ML+14,by,CPDF.textMid);by+=LH;}y+=bh+12;}
+  // Brand
+  need(70);mono('Your Brand Statement',ML,y,CPDF.slateMid,8);y+=12;
+  if(posData.brandStatement){const segs=parseInline(posData.brandStatement),wrapped=wrapMixed(doc,segs,CW-28),bh=wrapped.length*LH+22;fr(ML,y,CW,bh,CPDF.white);sr(ML,y,CW,bh,CPDF.border);fr(ML,y,3,bh,CPDF.slate);let by=y+14;for(const line of wrapped){renderMixedLine(doc,line.map(s=>({...s,italic:true})),ML+14,by,CPDF.charcoal);by+=LH;}y+=bh+14;}
+  // Lanes
+  (posData.lanes||[]).forEach((lane,li)=>{
+    need(50);mono(`Lane ${li+1}  --  ${lane.label||''}`,ML,y,CPDF.slateMid,8);y+=10;
+    fr(ML,y,CW,36,CPDF.charcoal);txt(lane.label||'',ML+12,y+16,CPDF.white,12,'bold');
+    if(lane.recommended){doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(...CPDF.slateMid);doc.text('RECOMMENDED',PW-MR-8,y+16,{align:'right'});}
+    txt(lane.compRange||'',PW-MR-8,y+28,CPDF.grey,8);y+=42;
+    if(lane.hook){const segs=parseInline(lane.hook),wrapped=wrapMixed(doc,segs,CW-28),bh=wrapped.length*LH+20;need(bh+10);fr(ML,y,CW,bh,CPDF.slatePale);fr(ML,y,3,bh,CPDF.slate);mono('Opening Hook',ML+8,y+11,CPDF.slateMid,7.5);let by=y+14+LH*0.2;for(const line of wrapped){renderMixedLine(doc,line.map(s=>({...s,italic:true})),ML+14,by,CPDF.charcoal);by+=LH;}y+=bh+8;}
+    if(lane.why){need(40);const segs=parseInline(lane.why),wrapped=wrapMixed(doc,segs,CW);for(const line of wrapped){need(LH+4);renderMixedLine(doc,line,ML,y,CPDF.textMid);y+=LH;}y+=8;}
+    (lane.companies||[]).forEach(co=>{
+      need(120);fr(ML,y,CW,44,CPDF.charcoal);
+      const fitBg=co.fit==='Strong Fit'?CPDF.greenBg:[240,237,221],fitFg=co.fit==='Strong Fit'?CPDF.green:[107,92,46];
+      fr(PW-MR-68,y+12,64,20,fitBg);doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...fitFg);doc.text((co.fit||'').toUpperCase(),PW-MR-36,y+24,{align:'center'});
+      txt(co.name||'',ML+12,y+20,CPDF.white,13,'bold');txt(co.descriptor||'',ML+12,y+36,CPDF.grey,8.5);y+=48;
+      let tx=ML;[co.size,co.workStyle].forEach(tag=>{if(!tag)return;doc.setFont('helvetica','normal');doc.setFontSize(8);const tw=doc.getTextWidth(tag)+16;fr(tx,y,tw,16,CPDF.surface2);sr(tx,y,tw,16,CPDF.border);doc.setTextColor(...CPDF.textDim);doc.text(tag,tx+8,y+11);tx+=tw+5;});y+=22;
+      if(co.whyItFits){const segs=parseInline(co.whyItFits),wrapped=wrapMixed(doc,segs,CW);need(wrapped.length*LH+12);mono('Why it fits',ML,y,CPDF.textDim,7.5);y+=11;for(const line of wrapped){need(LH+4);renderMixedLine(doc,line,ML,y,CPDF.textMid);y+=LH;}y+=8;}
+      const searches=[{type:'Peer',data:co.peer},{type:'Hiring Mgr',data:co.hiringMgr},{type:'Recruiter',data:co.recruiter}];
+      need(80);mono('LinkedIn Search Strings',ML,y,CPDF.textDim,7.5);y+=10;
+      fr(ML,y,CW,22,CPDF.surface2);sr(ML,y,CW,22,CPDF.border);txt('Type',ML+8,y+14,CPDF.textDim,7.5);txt('Instruction',ML+80,y+14,CPDF.textDim,7.5);y+=22;
+      searches.forEach(s=>{
+        if(!s.data)return;
+        const instrLines=doc.splitTextToSize(s.data.instruction||'',CW-100),urlLines=doc.splitTextToSize(s.data.url||'',CW-92);
+        const rowH=(instrLines.length+urlLines.length)*12+20;need(rowH+2);
+        fr(ML,y,80,rowH,CPDF.surface2);fr(ML+80,y,CW-80,rowH,CPDF.white);sr(ML,y,CW,rowH,CPDF.border);fr(ML+80,y,1,rowH,CPDF.border);
+        mono(s.type,ML+8,y+14,CPDF.slate,8);doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(...CPDF.textMid);doc.text(instrLines,ML+88,y+13);
+        if(urlLines.length){const uy=y+13+instrLines.length*12;doc.setFont('courier','normal');doc.setFontSize(8.5);doc.setTextColor(...CPDF.slate);doc.text(urlLines,ML+88,uy);}
+        y+=rowH+2;
+      });y+=12;
+    });y+=10;
+  });
+  if(posData.actionSequence?.length){
+    need(50);hline(ML,y,CW);y+=14;mono('Your First Week -- Action Sequence',ML,y,CPDF.slateMid,8);y+=12;
+    posData.actionSequence.forEach((item,i)=>{
+      const segs=parseInline(item.text||''),wrapped=wrapMixed(doc,segs,CW-36),rh=wrapped.length*LH+16;
+      need(rh+5);hline(ML,y,CW,[240,237,233]);fr(ML,y,24,rh,[44,48,53]);
+      doc.setFont('courier','bold');doc.setFontSize(8);doc.setTextColor(255,255,255);doc.text(String(i+1).padStart(2,'0'),ML+12,y+rh/2+3,{align:'center'});
+      let ly=y+13;for(const line of wrapped){renderMixedLine(doc,line,ML+32,ly,CPDF.text);ly+=LH;}y+=rh+4;
+    });
+  }
+  doc.save(`${filename||clientName.toLowerCase().replace(/\s+/g,'_')}.pdf`);
+}
+
+function showError(msg) { const el=document.getElementById('errorMsg'); el.textContent=msg; el.className='error-msg visible'; }
+function hideError()    { document.getElementById('errorMsg').className='error-msg'; }
+</script>
+{% endblock %}

@@ -2,11 +2,18 @@ import os
 import re
 import json
 import io
+import queue
+import threading
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_file
 import anthropic
 
 from prompts.session_generator import SYNTHESIS_SYSTEM, COACH_GUIDE_SYSTEM
+from prompts.session_builder import (
+    interview_program_prompt, stories_prompt,
+    positioning_prompt, resume_rewrite_prompt,
+)
 from docx_builder import markdown_to_docx
+from resume_docx_builder import resume_to_docx
 
 app = Flask(__name__)
 
@@ -63,9 +70,7 @@ def session_generate():
         return f"event: {event}\ndata: {json.dumps(data_obj)}\n\n"
 
     def generate():
-        # ── Call 1: Synthesis ──────────────────────────────────────────────
         yield _sse("step", {"step": 1})
-
         synthesis_chunks = []
         try:
             with client.messages.stream(
@@ -77,16 +82,12 @@ def session_generate():
             ) as stream:
                 for text in stream.text_stream:
                     synthesis_chunks.append(text)
-                    # Yield a heartbeat so the connection stays alive.
-                    # We don't show synthesis text in the UI, just keep alive.
                     yield _sse("ping", {})
         except Exception as e:
             yield _sse("error", {"message": str(e)})
             return
 
         synthesis = "".join(synthesis_chunks)
-
-        # ── Call 2: Coach Guide ────────────────────────────────────────────
         yield _sse("step", {"step": 2})
 
         guide_chunks = []
@@ -105,8 +106,7 @@ def session_generate():
             yield _sse("error", {"message": str(e)})
             return
 
-        guide = "".join(guide_chunks)
-        yield _sse("done", {"guide": guide})
+        yield _sse("done", {"guide": "".join(guide_chunks)})
 
     return Response(
         stream_with_context(generate()),
@@ -129,6 +129,119 @@ def session_guide_docx():
         mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         as_attachment=True,
         download_name=f"{slug}_coach_guide.docx",
+    )
+
+
+# ── Session Builder ───────────────────────────────────────────────────────────
+
+@app.route("/session-builder")
+def session_builder():
+    return render_template("session_builder.html")
+
+
+@app.route("/api/builder/generate", methods=["POST"])
+def builder_generate():
+    data        = request.get_json()
+    transcript  = (data.get("transcript") or "").strip()
+    resume      = (data.get("resume") or "").strip()
+    intake      = (data.get("intake") or "").strip()
+    client_name = (data.get("client_name") or "").strip()
+
+    if not transcript:
+        return jsonify({"error": "Transcript is required."}), 400
+    if not client_name:
+        return jsonify({"error": "Client name is required."}), 400
+
+    def _user_msg():
+        msg = f"Here is the session transcript:\n\n{transcript}"
+        if resume:
+            msg += f"\n\n---\nRESUME:\n\n{resume}"
+        if intake:
+            msg += f"\n\n---\nINTAKE ANSWERS:\n\n{intake}"
+        return msg
+
+    def _sse(event, obj):
+        return f"event: {event}\ndata: {json.dumps(obj)}\n\n"
+
+    # Each job runs in its own thread and posts results to a queue
+    q = queue.Queue()
+
+    JOBS = [
+        ("ip",          interview_program_prompt(client_name), 16000),
+        ("stories",     stories_prompt(client_name),           16000),
+        ("positioning", positioning_prompt(client_name, bool(resume), bool(intake)), 8000),
+        ("resume",      resume_rewrite_prompt(client_name),    8000),
+    ]
+
+    def run_job(job_id, system_prompt, max_tokens):
+        try:
+            resp = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=max_tokens,
+                system=system_prompt,
+                messages=[{"role": "user", "content": _user_msg()}],
+            )
+            content = (resp.content[0].text or "").strip()
+            q.put(("done", job_id, content))
+        except Exception as e:
+            q.put(("error", job_id, str(e)))
+
+    def generate():
+        # Signal all jobs as running
+        for job_id, _, _ in JOBS:
+            yield _sse("status", {"id": job_id, "state": "running"})
+
+        # Launch all jobs in parallel threads
+        threads = []
+        for job_id, system_prompt, max_tokens in JOBS:
+            t = threading.Thread(target=run_job, args=(job_id, system_prompt, max_tokens), daemon=True)
+            t.start()
+            threads.append(t)
+
+        # Stream results as each job completes
+        remaining = len(JOBS)
+        while remaining > 0:
+            try:
+                event_type, job_id, payload = q.get(timeout=300)
+            except queue.Empty:
+                yield _sse("error", {"id": "all", "message": "Timeout waiting for results."})
+                return
+
+            remaining -= 1
+            if event_type == "done":
+                yield _sse("result", {"id": job_id, "state": "done", "content": payload})
+            else:
+                yield _sse("result", {"id": job_id, "state": "error", "message": payload})
+
+        yield _sse("complete", {})
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+@app.route("/api/builder/resume.docx", methods=["POST"])
+def builder_resume_docx():
+    data        = request.get_json()
+    resume_text = data.get("content", "")
+    client_name = (data.get("client_name") or "client").strip()
+
+    docx_bytes = resume_to_docx(resume_text)
+
+    # Build filename: LastName_FirstName_Resume.docx
+    parts = client_name.split()
+    if len(parts) >= 2:
+        filename = f"{parts[-1]}_{parts[0]}_Resume.docx"
+    else:
+        filename = f"{client_name.replace(' ', '_')}_Resume.docx"
+
+    return send_file(
+        io.BytesIO(docx_bytes),
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        as_attachment=True,
+        download_name=filename,
     )
 
 
