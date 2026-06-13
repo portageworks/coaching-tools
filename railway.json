@@ -1,6 +1,7 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
   "deploy": {
+    "startCommand": "gunicorn app:app --worker-class gevent --workers 2 --timeout 300 --bind 0.0.0.0:$PORT",
     "healthcheckPath": "/",
     "restartPolicyType": "ON_FAILURE"
   }
