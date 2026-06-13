@@ -1,0 +1,330 @@
+{% extends "base.html" %}
+{% block title %}Session Generator — CGC{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f3f0;--surface:#ffffff;--border:#e0dbd4;--border-mid:#ccc8c0;
+    --charcoal:#1e2022;--charcoal-mid:#3d4145;--text:#2c3035;--text-dim:#7a8088;
+    --slate:#3a5a7c;--slate-mid:#5579a0;--slate-light:#dce8f5;--slate-pale:#eef4fb;
+    --green:#2e6b4a;--green-bg:#ddf0e8;--red:#8b4040;--red-bg:#fdf5f5;
+  }
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  body { background:var(--bg); color:var(--text); font-family:'Roboto',sans-serif; font-size:14px; line-height:1.6; }
+
+  .page-header { background:var(--charcoal); padding:28px 48px 32px; }
+  .header-label { font-family:'Roboto Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--slate-mid); margin-bottom:6px; }
+  .header-title { font-family:'Roboto Slab',serif; font-size:22px; color:#fff; }
+  .header-sub { font-size:12px; color:#9ba0a6; margin-top:3px; font-weight:300; }
+
+  .main { max-width:880px; margin:0 auto; padding:48px; }
+
+  .field-label { font-family:'Roboto Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--slate-mid); margin-bottom:8px; display:block; }
+  .field-sublabel { font-size:13px; font-weight:300; color:var(--text-dim); margin-bottom:12px; line-height:1.5; }
+  .input-section { margin-bottom:28px; }
+
+  /* Textarea with file-upload overlay row */
+  .textarea-wrap { position:relative; }
+  .form-textarea {
+    width:100%; min-height:260px;
+    font-family:'Roboto Mono',monospace; font-size:12px; line-height:1.6;
+    background:var(--surface); border:1px solid var(--border); border-radius:2px;
+    padding:16px 18px; color:var(--text); resize:vertical; outline:none;
+    transition:border-color .15s;
+  }
+  .form-textarea:focus { border-color:var(--slate-mid); }
+  .form-textarea::placeholder { color:var(--border-mid); }
+  .form-textarea.short { min-height:140px; }
+
+  /* File upload pill sits below the textarea */
+  .file-row { display:flex; align-items:center; gap:10px; margin-top:8px; }
+  .file-btn {
+    font-family:'Roboto',sans-serif; font-size:11px; font-weight:600; letter-spacing:.04em;
+    background:var(--surface); color:var(--slate); border:1px solid var(--slate-light);
+    border-radius:2px; padding:6px 14px; cursor:pointer; transition:background .15s;
+    white-space:nowrap;
+  }
+  .file-btn:hover { background:var(--slate-pale); }
+  .file-input { display:none; }
+  .file-name { font-size:12px; color:var(--text-dim); font-family:'Roboto Mono',monospace; }
+
+  .resume-row { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:28px; }
+
+  .generate-btn {
+    font-family:'Roboto',sans-serif; font-size:13px; font-weight:600; letter-spacing:.04em;
+    background:var(--charcoal); color:#fff; border:none; border-radius:2px;
+    padding:14px 32px; cursor:pointer; transition:background .15s;
+    display:flex; align-items:center; gap:10px;
+  }
+  .generate-btn:hover:not(:disabled) { background:var(--charcoal-mid); }
+  .generate-btn:disabled { background:var(--border-mid); cursor:not-allowed; }
+
+  .progress-wrap { display:none; margin-top:28px; }
+  .progress-wrap.visible { display:block; }
+  .progress-steps { display:flex; flex-direction:column; gap:8px; }
+  .progress-step {
+    display:flex; align-items:center; gap:14px;
+    padding:14px 18px; background:var(--surface); border:1px solid var(--border);
+    border-radius:2px; font-size:13px; color:var(--text-dim); transition:all .2s;
+  }
+  .progress-step.active { border-color:var(--slate-light); background:var(--slate-pale); color:var(--slate); }
+  .progress-step.done   { border-color:#b0d9c4; background:var(--green-bg); color:var(--green); }
+  .progress-step.error  { border-color:#d4a0a0; background:var(--red-bg); color:var(--red); }
+  .step-icon { font-size:15px; flex-shrink:0; width:20px; text-align:center; }
+  .step-spinner { width:15px; height:15px; border:2px solid var(--slate-light); border-top-color:var(--slate); border-radius:50%; animation:spin .7s linear infinite; flex-shrink:0; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .outputs-wrap { display:none; margin-top:36px; }
+  .outputs-wrap.visible { display:block; }
+  .outputs-header { font-family:'Roboto Mono',monospace; font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--slate-mid); margin-bottom:16px; }
+  .output-card { background:var(--surface); border:1px solid var(--border); border-radius:2px; padding:24px; }
+  .output-card-label { font-family:'Roboto Mono',monospace; font-size:9px; letter-spacing:.18em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
+  .output-card-title { font-family:'Roboto Slab',serif; font-size:17px; color:var(--charcoal); margin-bottom:8px; }
+  .output-card-desc { font-size:13px; font-weight:300; color:var(--text-dim); margin-bottom:18px; line-height:1.5; }
+  .download-btn {
+    font-family:'Roboto',sans-serif; font-size:12px; font-weight:600; letter-spacing:.04em;
+    background:var(--slate); color:#fff; border:none; border-radius:2px;
+    padding:10px 20px; cursor:pointer; transition:background .15s;
+    display:inline-flex; align-items:center; gap:8px;
+  }
+  .download-btn:hover:not(:disabled) { background:var(--slate-mid); }
+  .download-btn:disabled { background:var(--border-mid); cursor:not-allowed; }
+
+  .divider { height:1px; background:var(--border); margin:32px 0; }
+  .error-msg { display:none; background:var(--red-bg); border:1px solid #d4a0a0; border-radius:2px; padding:14px 18px; color:var(--red); font-size:13px; margin-top:16px; }
+  .error-msg.visible { display:block; }
+
+  @media (max-width:700px) {
+    .main { padding:28px 20px; }
+    .page-header { padding:20px 24px; }
+    .resume-row { grid-template-columns:1fr; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="header-label">Challenger Gray &amp; Christmas</div>
+  <div class="header-title">Session Generator</div>
+  <div class="header-sub">Synthesis + Coach Guide from client pre-work</div>
+</div>
+
+<div class="main">
+
+  <!-- Pre-work input -->
+  <div class="input-section">
+    <label class="field-label" for="formOutput">Client Pre-Work</label>
+    <div class="field-sublabel">Paste the raw pre-work questionnaire output, or upload a .txt file.</div>
+    <div class="textarea-wrap">
+      <textarea class="form-textarea" id="formOutput"
+        placeholder="First Name...&#10;Last Name...&#10;Which best describes your search right now?...&#10;(paste full pre-work output here)"></textarea>
+    </div>
+    <div class="file-row">
+      <button class="file-btn" onclick="document.getElementById('intakeFile').click()">&#8593; Upload intake.txt</button>
+      <input class="file-input" type="file" id="intakeFile" accept=".txt,.md" onchange="loadFile(this,'formOutput','intakeName')">
+      <span class="file-name" id="intakeName"></span>
+    </div>
+  </div>
+
+  <!-- Resume + what this generates -->
+  <div class="resume-row">
+    <div>
+      <label class="field-label" for="resumeText">Resume (optional but recommended)</label>
+      <div class="field-sublabel">Paste resume text, or upload a .txt file. Strengthens role hypotheses, story coaching, and bespoke RP question.</div>
+      <div class="textarea-wrap">
+        <textarea class="form-textarea short" id="resumeText" placeholder="Paste resume text here..."></textarea>
+      </div>
+      <div class="file-row">
+        <button class="file-btn" onclick="document.getElementById('resumeFile').click()">&#8593; Upload resume.txt</button>
+        <input class="file-input" type="file" id="resumeFile" accept=".txt,.md" onchange="loadFile(this,'resumeText','resumeName')">
+        <span class="file-name" id="resumeName"></span>
+      </div>
+    </div>
+    <div>
+      <label class="field-label">What this generates</label>
+      <div class="field-sublabel" style="margin-bottom:0;">
+        <strong style="color:var(--text);">Call 1 &mdash; Synthesis</strong><br>
+        Identity gap, north star phrase, session arc, emotional subtext, story assessment, bespoke RP question, role hypotheses.<br><br>
+        <strong style="color:var(--text);">Call 2 &mdash; Coach Guide</strong><br>
+        Stem-to-stern session guide in session order. Layered question sequences. Optimized for reMarkable.
+      </div>
+    </div>
+  </div>
+
+  <button class="generate-btn" id="generateBtn" onclick="runGeneration()">
+    <span>&#9889;</span> Generate Session Materials
+  </button>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-steps">
+      <div class="progress-step" id="step1">
+        <div class="step-icon" id="step1-icon">&#9675;</div>
+        <span>Call 1 &mdash; Synthesis (identity gap, north star, arc recommendation, story assessment, bespoke question, role hypotheses)</span>
+      </div>
+      <div class="progress-step" id="step2">
+        <div class="step-icon" id="step2-icon">&#9675;</div>
+        <span>Call 2 &mdash; Coach guide (stem-to-stern session flow, layered questions, coaching notes)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="outputs-wrap" id="outputsWrap">
+    <div class="divider"></div>
+    <div class="outputs-header">Ready to download</div>
+    <div class="output-card">
+      <div class="output-card-label">For you</div>
+      <div class="output-card-title">Coach Guide</div>
+      <div class="output-card-desc">Stem-to-stern session guide in session order. Pre-session brief, all eight blocks with layered question sequences and coaching notes. Opens in Google Docs or imports directly to reMarkable.</div>
+      <button class="download-btn" id="downloadBtn" onclick="downloadGuide()">&#8595; Download Guide (.docx)</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let generatedGuide = '';
+let clientFirstName = '';
+let clientLastName = '';
+
+// Read a selected file into a textarea
+function loadFile(input, textareaId, nameId) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById(textareaId).value = e.target.result;
+    document.getElementById(nameId).textContent = file.name;
+  };
+  reader.readAsText(file);
+  // Reset so the same file can be re-uploaded if needed
+  input.value = '';
+}
+
+// Generation — both API calls happen server-side
+async function runGeneration() {
+  const prework = document.getElementById('formOutput').value.trim();
+  const resume  = document.getElementById('resumeText').value.trim();
+
+  if (!prework || prework.length < 100) {
+    showError('Please paste or upload the client pre-work questionnaire.');
+    return;
+  }
+
+  const firstMatch = prework.match(/First Name\s*[:\t]?\s*([^\n]+)/i);
+  const lastMatch  = prework.match(/Last Name\s*[:\t]?\s*([^\n]+)/i);
+  clientFirstName = firstMatch ? firstMatch[1].trim() : 'Client';
+  clientLastName  = lastMatch  ? lastMatch[1].trim()  : '';
+
+  hideError();
+  document.getElementById('generateBtn').disabled = true;
+  document.getElementById('progressWrap').classList.add('visible');
+  document.getElementById('outputsWrap').classList.remove('visible');
+  resetSteps();
+  setStep(1, 'active');
+  setStep(2, 'active');
+
+  try {
+    const res = await fetch('/api/session/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prework, resume }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+
+    generatedGuide = data.guide;
+    setStep(1, 'done');
+    setStep(2, 'done');
+    document.getElementById('outputsWrap').classList.add('visible');
+  } catch (err) {
+    setStep(1, 'error');
+    setStep(2, 'error');
+    showError(err.message || 'Something went wrong. Please try again.');
+  } finally {
+    document.getElementById('generateBtn').disabled = false;
+  }
+}
+
+// Download — server builds the .docx and sends it back as a file
+async function downloadGuide() {
+  const btn = document.getElementById('downloadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Building…';
+
+  try {
+    const res = await fetch('/api/session/guide.docx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        guide: generatedGuide,
+        first_name: clientFirstName,
+        last_name: clientLastName,
+      }),
+    });
+
+    if (!res.ok) {
+      const txt = await res.text();
+      throw new Error(`Server error ${res.status}: ${txt}`);
+    }
+
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const slug = [clientFirstName, clientLastName]
+      .filter(Boolean).join('_').toLowerCase().replace(/\s+/g, '_');
+    a.href     = url;
+    a.download = `${slug}_coach_guide.docx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) {
+    showError('Download failed: ' + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '&#8595; Download Guide (.docx)';
+  }
+}
+
+// UI helpers
+function setStep(num, state) {
+  const step = document.getElementById(`step${num}`);
+  const iconId = `step${num}-icon`;
+  if (!step) return;
+  step.className = `progress-step ${state}`;
+  const icon = document.getElementById(iconId);
+  if (!icon) return;
+  if (state === 'active') {
+    icon.outerHTML = `<div class="step-spinner" id="${iconId}"></div>`;
+  } else if (state === 'done') {
+    document.getElementById(iconId).outerHTML = `<div class="step-icon" id="${iconId}">&#10003;</div>`;
+  } else if (state === 'error') {
+    document.getElementById(iconId).outerHTML = `<div class="step-icon" id="${iconId}">&#10005;</div>`;
+  }
+}
+
+function resetSteps() {
+  for (let i = 1; i <= 2; i++) {
+    const step = document.getElementById(`step${i}`);
+    if (step) step.className = 'progress-step';
+    const icon = document.getElementById(`step${i}-icon`);
+    if (icon) { icon.className = 'step-icon'; icon.textContent = '○'; }
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+function hideError() {
+  document.getElementById('errorMsg').classList.remove('visible');
+}
+</script>
+{% endblock %}
