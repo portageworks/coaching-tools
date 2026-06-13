@@ -14,6 +14,7 @@ from prompts.session_builder import (
 )
 from docx_builder import markdown_to_docx
 from resume_docx_builder import resume_to_docx
+from pdf_builder import build_client_html, build_positioning_html, render_pdf
 
 app = Flask(__name__)
 
@@ -243,6 +244,41 @@ def builder_resume_docx():
         as_attachment=True,
         download_name=filename,
     )
+
+
+@app.route("/api/builder/ip.pdf", methods=["POST"])
+def builder_ip_pdf():
+    data        = request.get_json()
+    content     = data.get("content", "")
+    client_name = (data.get("client_name") or "client").strip()
+    slug        = re.sub(r"[^a-z0-9_]", "", client_name.lower().replace(" ", "_"))
+    pdf_bytes   = render_pdf(build_client_html(content, client_name, "Interview Program"))
+    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+                     as_attachment=True, download_name=f"{slug}_interview_program.pdf")
+
+
+@app.route("/api/builder/stories.pdf", methods=["POST"])
+def builder_stories_pdf():
+    data        = request.get_json()
+    content     = data.get("content", "")
+    client_name = (data.get("client_name") or "client").strip()
+    slug        = re.sub(r"[^a-z0-9_]", "", client_name.lower().replace(" ", "_"))
+    pdf_bytes   = render_pdf(build_client_html(content, client_name, "Success Stories"))
+    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+                     as_attachment=True, download_name=f"{slug}_success_stories.pdf")
+
+
+@app.route("/api/builder/positioning.pdf", methods=["POST"])
+def builder_positioning_pdf():
+    data        = request.get_json()
+    client_name = (data.get("client_name") or "client").strip()
+    slug        = re.sub(r"[^a-z0-9_]", "", client_name.lower().replace(" ", "_"))
+    pos_data    = data.get("positioning")
+    if isinstance(pos_data, str):
+        pos_data = json.loads(pos_data)
+    pdf_bytes = render_pdf(build_positioning_html(pos_data, client_name))
+    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+                     as_attachment=True, download_name=f"{slug}_where_to_look.pdf")
 
 
 if __name__ == "__main__":

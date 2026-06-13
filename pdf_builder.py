@@ -1,0 +1,383 @@
+"""
+Server-side PDF rendering via WeasyPrint.
+Ported from the local pdf_server.py — same CSS, same HTML builders.
+"""
+import io
+import json
+import re
+import html as html_lib
+from pathlib import Path
+from datetime import datetime
+
+from weasyprint import HTML
+from weasyprint.text.fonts import FontConfiguration
+
+# ── Font embedding ─────────────────────────────────────────────────────────────
+_FONT_DIR = Path(__file__).parent / "fonts"
+
+def _load_font_faces():
+    b64_path = _FONT_DIR / "fonts_b64.json"
+    if not b64_path.exists():
+        return ""
+    fonts = json.loads(b64_path.read_text())
+    def face(family, style, weight, key):
+        if key not in fonts:
+            return ""
+        return (f"@font-face{{font-family:'{family}';font-style:{style};"
+                f"font-weight:{weight};"
+                f"src:url('data:font/truetype;base64,{fonts[key]}') format('truetype');}}")
+    return "\n".join([
+        face("Roboto", "normal", "300",   "Roboto-Light.ttf"),
+        face("Roboto", "normal", "400",   "Roboto-Regular.ttf"),
+        face("Roboto", "normal", "700",   "Roboto-Bold.ttf"),
+        face("Roboto", "italic", "400",   "Roboto-Italic.ttf"),
+        face("Roboto", "italic", "700",   "Roboto-BoldItalic.ttf"),
+        face("Roboto Slab", "normal", "100 900", "RobotoSlab-VF.ttf"),
+    ])
+
+FONT_FACES = _load_font_faces()
+
+# ── Markdown → HTML ────────────────────────────────────────────────────────────
+import re as _re
+_EMOJI_RE = _re.compile(
+    "[\U0001F300-\U0001FFFF\U00002600-\U000027BF\U0000FE00-\U0000FE0F]+",
+    flags=_re.UNICODE,
+)
+
+def _clean_markdown(text, strip_emoji=True):
+    lines = []
+    for line in text.split("\n"):
+        if _re.match(r"^#{1,4}\s", line) and strip_emoji:
+            m = _re.match(r"^(#{1,4}\s+)", line)
+            prefix = m.group(1)
+            rest = _EMOJI_RE.sub("", line[len(prefix):]).strip()
+            line = prefix + rest
+        lines.append(line)
+    return "\n".join(lines)
+
+def _md_to_html(text, strip_emoji=True):
+    import markdown as md_lib
+    text = _clean_markdown(text, strip_emoji=strip_emoji)
+    converter = md_lib.Markdown(extensions=["extra", "tables", "sane_lists"])
+    return converter.convert(text)
+
+def esc(s):
+    return html_lib.escape(str(s or ""))
+
+# ── CSS ────────────────────────────────────────────────────────────────────────
+def _client_css(client_name, subtitle):
+    cn = esc(client_name)
+    st = esc(subtitle)
+    return f"""
+{FONT_FACES}
+*,*::before,*::after{{margin:0;padding:0;box-sizing:border-box;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+:root{{
+  --charcoal:#1e2022;--charcoal-mid:#3d4145;
+  --slate:#3a5a7c;--slate-mid:#5579a0;--slate-light:#dce8f5;--slate-pale:#eef4fb;
+  --text:#2c3035;--text-mid:#4a5058;--text-dim:#7a8088;
+  --surface2:#f0ede9;--border:#e0dbd4;
+  --green:#2e6b4a;--green-bg:#ddf0e8;--green-border:#b0d9c4;
+}}
+@page{{
+  size:letter;margin:0.75in 0.85in 0.9in 0.85in;
+  @bottom-left{{content:"{cn}  —  {st}";
+    font-family:'Roboto',sans-serif;font-size:7pt;color:#9ba0a6;
+    padding-top:10pt;border-top:0.5pt solid #e0dbd4;}}
+  @bottom-right{{content:"Page " counter(page) " of " counter(pages) "  |  Confidential";
+    font-family:'Roboto',sans-serif;font-size:7pt;color:#9ba0a6;
+    padding-top:10pt;border-top:0.5pt solid #e0dbd4;}}
+}}
+@page :first{{margin-top:0;}}
+body{{font-family:'Roboto','DejaVu Sans',sans-serif;font-size:10.5pt;
+  line-height:1.72;color:var(--text);background:white;}}
+.doc-header{{background:var(--charcoal);padding:32pt 0.85in 26pt;
+  margin:-0.75in -0.85in 0;}}
+.eyebrow{{font-size:7.5pt;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--slate-mid);margin-bottom:10pt;}}
+.client-name{{font-family:'Roboto Slab',serif;font-size:24pt;font-weight:700;
+  color:white;margin-bottom:4pt;line-height:1.1;}}
+.doc-sub{{font-size:10pt;font-weight:300;color:#9ba0a6;}}
+.header-rule{{height:2pt;background:var(--slate);margin:20pt -0.85in 0;}}
+.doc-body{{padding-top:28pt;}}
+h1{{font-family:'Roboto Slab',serif;font-size:16pt;font-weight:700;
+  color:var(--charcoal);margin-top:30pt;margin-bottom:6pt;
+  padding-bottom:7pt;border-bottom:1.5pt solid var(--slate);
+  break-after:avoid;line-height:1.25;}}
+h1:first-child{{margin-top:0;}}
+h2{{font-family:'Roboto Slab',serif;font-size:12.5pt;font-weight:700;
+  color:var(--slate);margin-top:24pt;margin-bottom:5pt;
+  break-after:avoid;line-height:1.3;}}
+h3{{font-family:'Roboto',sans-serif;font-size:10.5pt;font-weight:600;
+  color:var(--charcoal);margin-top:18pt;margin-bottom:4pt;break-after:avoid;}}
+h4{{font-family:'Roboto',sans-serif;font-size:10pt;font-weight:600;
+  color:var(--charcoal-mid);margin-top:13pt;margin-bottom:3pt;break-after:avoid;}}
+p{{margin-bottom:9pt;color:var(--text-mid);orphans:3;widows:3;}}
+strong{{font-weight:600;color:var(--charcoal);}}
+em{{font-style:italic;}}
+ul,ol{{margin:4pt 0 10pt 18pt;padding:0;}}
+li{{margin-bottom:4pt;color:var(--text-mid);padding-left:2pt;}}
+li::marker{{color:var(--slate);font-weight:500;}}
+ul li::marker{{content:"–  ";}}
+blockquote{{background:var(--slate-pale);border-left:3pt solid var(--slate);
+  border-radius:0 2pt 2pt 0;padding:14pt 18pt;margin:10pt 0 14pt;
+  break-inside:avoid;}}
+blockquote p{{font-style:italic;color:var(--charcoal);margin-bottom:0;
+  font-size:10.5pt;line-height:1.8;font-weight:300;}}
+blockquote p+p{{margin-top:7pt;}}
+hr{{border:none;border-top:0.5pt solid var(--border);margin:16pt 0;}}
+code{{font-family:'DejaVu Sans Mono',monospace;font-size:8.5pt;
+  background:var(--surface2);padding:1pt 4pt;border-radius:2pt;color:var(--slate);}}
+table{{width:100%;border-collapse:collapse;margin:8pt 0 14pt;font-size:10pt;break-inside:avoid;}}
+th{{background:var(--charcoal);color:white;font-weight:600;padding:7pt 10pt;
+  text-align:left;font-size:9pt;letter-spacing:.03em;}}
+td{{padding:6pt 10pt;border-bottom:0.5pt solid var(--border);color:var(--text-mid);vertical-align:top;}}
+tr:nth-child(even) td{{background:var(--surface2);}}
+"""
+
+def _positioning_css(client_name):
+    cn = esc(client_name)
+    return f"""
+{FONT_FACES}
+*,*::before,*::after{{margin:0;padding:0;box-sizing:border-box;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+:root{{
+  --charcoal:#1e2022;--charcoal-mid:#3d4145;
+  --slate:#3a5a7c;--slate-mid:#5579a0;--slate-light:#dce8f5;--slate-pale:#eef4fb;
+  --text:#2c3035;--text-mid:#4a5058;--text-dim:#7a8088;
+  --surface2:#f0ede9;--border:#e0dbd4;
+  --green:#2e6b4a;--green-bg:#ddf0e8;--green-border:#b0d9c4;
+  --amber:#7a4f00;--amber-bg:#fff0cc;
+}}
+@page{{
+  size:letter;margin:0.75in 0.85in 0.9in 0.85in;
+  @bottom-left{{content:"{cn}  —  Where to Look";
+    font-family:'Roboto',sans-serif;font-size:7pt;color:#9ba0a6;
+    padding-top:10pt;border-top:0.5pt solid #e0dbd4;}}
+  @bottom-right{{content:"Page " counter(page) " of " counter(pages) "  |  Confidential";
+    font-family:'Roboto',sans-serif;font-size:7pt;color:#9ba0a6;
+    padding-top:10pt;border-top:0.5pt solid #e0dbd4;}}
+}}
+@page :first{{margin-top:0;}}
+body{{font-family:'Roboto','DejaVu Sans',sans-serif;font-size:10pt;
+  line-height:1.7;color:var(--text);background:white;}}
+.doc-header{{background:var(--charcoal);padding:30pt 0.85in 26pt;
+  margin:-0.75in -0.85in 0;}}
+.eyebrow{{font-size:7.5pt;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--slate-mid);margin-bottom:10pt;}}
+.client-name{{font-family:'Roboto Slab',serif;font-size:24pt;font-weight:700;
+  color:white;margin-bottom:4pt;line-height:1.1;}}
+.doc-sub{{font-size:10pt;font-weight:300;color:#9ba0a6;margin-bottom:14pt;}}
+.pill{{display:inline-block;font-size:8pt;padding:2.5pt 9pt;
+  border:0.5pt solid rgba(85,121,160,.4);color:rgba(220,232,245,.8);
+  border-radius:100pt;background:rgba(58,90,124,.3);margin-right:5pt;margin-bottom:4pt;}}
+.header-rule{{height:2pt;background:var(--slate);margin:20pt -0.85in 0;}}
+.doc-body{{padding-top:26pt;}}
+.section-label{{font-size:7.5pt;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--text-dim);margin-bottom:10pt;padding-bottom:7pt;
+  border-bottom:0.5pt solid var(--border);margin-top:22pt;}}
+.section-label:first-child{{margin-top:0;}}
+.confirmed-block{{background:var(--green-bg);border:0.5pt solid var(--green-border);
+  border-left:3pt solid var(--green);border-radius:0 2pt 2pt 0;
+  padding:12pt 16pt;margin-bottom:22pt;}}
+.confirmed-label{{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--green);margin-bottom:5pt;}}
+.confirmed-text{{font-size:10pt;color:var(--charcoal-mid);line-height:1.7;}}
+.brand-card{{border:0.5pt solid var(--border);border-radius:2pt;
+  padding:18pt 20pt;margin-bottom:4pt;break-inside:avoid;}}
+.brand-quote{{font-family:'Roboto Slab',serif;font-size:11pt;color:var(--charcoal);
+  line-height:1.8;font-style:italic;border-left:3pt solid var(--slate);
+  padding-left:14pt;font-weight:400;}}
+.brand-note{{font-size:8.5pt;color:var(--text-dim);margin-top:9pt;
+  padding-left:17pt;font-style:italic;}}
+.lane-header{{background:var(--charcoal);padding:14pt 16pt;
+  border-radius:2pt 2pt 0 0;break-after:avoid;margin-top:4pt;}}
+.lane-label{{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--slate-mid);margin-bottom:4pt;}}
+.lane-title{{font-family:'Roboto Slab',serif;font-size:13pt;font-weight:700;
+  color:white;line-height:1.2;}}
+.lane-body{{border:0.5pt solid var(--border);border-top:none;
+  border-radius:0 0 2pt 2pt;padding:16pt 18pt;margin-bottom:20pt;}}
+.hook{{background:var(--slate-pale);border-left:3pt solid var(--slate);
+  border-radius:0 2pt 2pt 0;padding:11pt 14pt;margin-bottom:12pt;break-inside:avoid;}}
+.hook-label{{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--slate-mid);margin-bottom:5pt;}}
+.hook-text{{font-size:10pt;color:var(--charcoal);font-style:italic;line-height:1.7;}}
+.lane-why{{font-size:10pt;color:var(--text-mid);line-height:1.75;margin-bottom:10pt;}}
+.comp-note{{font-size:9pt;color:var(--text-dim);padding:6pt 10pt;
+  background:var(--surface2);border:0.5pt solid var(--border);
+  border-radius:2pt;margin-bottom:14pt;}}
+.comp-note strong{{color:var(--charcoal);font-weight:600;}}
+.company-card{{border:0.5pt solid var(--border);border-radius:2pt;
+  margin-bottom:12pt;break-inside:avoid;}}
+.company-top{{padding:12pt 15pt 10pt;border-bottom:0.5pt solid var(--border);}}
+.company-fit{{font-size:7pt;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--green);margin-bottom:3pt;}}
+.company-fit.stretch{{color:var(--amber);}}
+.company-name{{font-family:'Roboto Slab',serif;font-size:13pt;font-weight:700;
+  color:var(--charcoal);margin-bottom:2pt;}}
+.company-desc{{font-size:9pt;color:var(--text-dim);}}
+.tag{{display:inline-block;font-size:8pt;padding:2pt 7pt;
+  border:0.5pt solid var(--border);border-radius:2pt;color:var(--text-dim);
+  margin-right:4pt;margin-top:6pt;background:white;}}
+.company-body{{padding:12pt 15pt 14pt;}}
+.why-label{{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--text-dim);margin-bottom:6pt;}}
+.why-text{{font-size:10pt;color:var(--text-mid);line-height:1.75;margin-bottom:12pt;}}
+.search-block{{border:0.5pt solid var(--border);border-radius:2pt;overflow:hidden;}}
+.search-header{{font-size:7pt;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--text-dim);padding:5pt 11pt;background:var(--surface2);
+  border-bottom:0.5pt solid var(--border);}}
+.search-row{{border-bottom:0.5pt solid var(--border);padding:9pt 11pt;}}
+.search-row:last-child{{border-bottom:none;}}
+.search-type-label{{font-size:7.5pt;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--slate-mid);font-weight:600;margin-bottom:3pt;}}
+.search-instruction{{font-size:9.5pt;color:var(--text-mid);margin-bottom:4pt;line-height:1.6;}}
+.search-string{{font-family:'DejaVu Sans Mono',monospace;font-size:7.5pt;
+  color:var(--slate);background:var(--slate-pale);border:0.5pt solid var(--slate-light);
+  border-radius:2pt;padding:4pt 7pt;display:block;word-break:break-all;line-height:1.5;}}
+.search-note{{font-size:8pt;color:var(--text-dim);font-style:italic;
+  margin-top:4pt;line-height:1.5;}}
+.action-card{{border:0.5pt solid var(--border);border-radius:2pt;
+  padding:16pt 18pt;margin-top:4pt;}}
+.action-item{{padding:9pt 0;border-bottom:0.5pt solid var(--border);
+  break-inside:avoid;overflow:hidden;}}
+.action-item:last-child{{border-bottom:none;}}
+.action-num{{display:inline-block;width:22pt;font-size:8.5pt;
+  color:white;background:var(--charcoal);text-align:center;
+  padding:3pt 0;border-radius:2pt;font-weight:600;
+  float:left;margin-right:10pt;margin-top:1pt;}}
+.action-text{{display:block;overflow:hidden;font-size:10pt;
+  color:var(--text);line-height:1.7;}}
+"""
+
+# ── HTML builders ──────────────────────────────────────────────────────────────
+def build_client_html(markdown_text, client_name, subtitle):
+    today = datetime.now().strftime("%B %d, %Y")
+    body = _md_to_html(markdown_text, strip_emoji=False)
+    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<style>{_client_css(client_name, subtitle)}</style></head><body>
+<div class="doc-header">
+  <div class="eyebrow">Challenger, Gray &amp; Christmas  /  Strategy Session</div>
+  <div class="client-name">{esc(client_name)}</div>
+  <div class="doc-sub">{esc(subtitle)}  —  {today}</div>
+  <div class="header-rule"></div>
+</div>
+<div class="doc-body">{body}</div>
+</body></html>"""
+
+
+def build_positioning_html(pos, client_name):
+    pills_html = "".join(
+        f'<span class="pill">{esc(p)}</span>'
+        for p in [
+            f"{len(pos.get('lanes', []))} Target Lanes",
+            f"{sum(len(l.get('companies', [])) for l in pos.get('lanes', []))} Companies",
+            "LinkedIn Search Strings",
+            "Action Sequence",
+        ]
+    )
+    lanes_html = []
+    for lane in pos.get("lanes", []):
+        comp_note_raw = lane.get("compRange", "")
+        cos = []
+        for co in lane.get("companies", []):
+            tags_html = "".join(
+                f'<span class="tag">{esc(t)}</span>'
+                for t in [co.get("size", ""), co.get("workStyle", "")] if t
+            )
+            search_types = [
+                ("Peer",       co.get("peer", {})),
+                ("Hiring Mgr", co.get("hiringMgr", {})),
+                ("Recruiter",  co.get("recruiter", {})),
+            ]
+            rows_html = ""
+            for label, s in search_types:
+                if not s or not s.get("instruction"):
+                    continue
+                fallback_html = (f'<div class="search-note">{esc(s.get("fallback",""))}</div>'
+                                 if s.get("fallback") else "")
+                rows_html += f"""<div class="search-row">
+  <div class="search-type-label">{esc(label)}</div>
+  <div class="search-instruction">{esc(s.get("instruction",""))}</div>
+  <div class="search-string">{esc(s.get("url",""))}</div>
+  {fallback_html}
+</div>"""
+            stretch = "stretch" if "stretch" in co.get("fit", "").lower() else ""
+            cos.append(f"""<div class="company-card">
+  <div class="company-top">
+    <div class="company-fit {stretch}">{esc(co.get("fit",""))}</div>
+    <div class="company-name">{esc(co.get("name",""))}</div>
+    <div class="company-desc">{esc(co.get("descriptor",""))}</div>
+    <div>{tags_html}</div>
+  </div>
+  <div class="company-body">
+    <div class="why-label">Why It Fits</div>
+    <div class="why-text">{esc(co.get("whyItFits",""))}</div>
+    <div class="search-block">
+      <div class="search-header">LinkedIn Search Strings</div>
+      {rows_html}
+    </div>
+  </div>
+</div>""")
+        comp_note_html = (f'<div class="comp-note"><strong>Typical total comp at your level:</strong> {esc(comp_note_raw)}</div>'
+                          if comp_note_raw else "")
+        lanes_html.append(f"""<div class="lane-header">
+  <div class="lane-label">Target Lane</div>
+  <div class="lane-title">{esc(lane.get("label",""))}</div>
+</div>
+<div class="lane-body">
+  <div class="hook"><div class="hook-label">Your Opening Hook</div>
+    <div class="hook-text">{esc(lane.get("hook",""))}</div></div>
+  <div class="lane-why">{esc(lane.get("why",""))}</div>
+  {comp_note_html}
+  {"".join(cos)}
+</div>""")
+
+    actions = pos.get("actionSequence", [])
+    action_html = ""
+    if actions:
+        items = "".join(
+            f"""<div class="action-item">
+  <div class="action-num">{i+1:02d}</div>
+  <div class="action-text">{esc(a.get("text", a) if isinstance(a, dict) else a)}</div>
+</div>""" for i, a in enumerate(actions)
+        )
+        action_html = f"""<div class="section-label">Your First Week — Action Sequence</div>
+<div class="action-card">{items}</div>"""
+
+    today = datetime.now().strftime("%B %d, %Y")
+    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<style>{_positioning_css(client_name)}</style></head><body>
+<div class="doc-header">
+  <div class="eyebrow">Challenger, Gray &amp; Christmas  /  Target Company Guide</div>
+  <div class="client-name">{esc(client_name)}</div>
+  <div class="doc-sub">{esc(pos.get("targetTitle",""))}  —  {today}</div>
+  <div>{pills_html}</div>
+  <div class="header-rule"></div>
+</div>
+<div class="doc-body">
+<div class="section-label">Confirmed in Session</div>
+<div class="confirmed-block">
+  <div class="confirmed-label">How We Got Here</div>
+  <div class="confirmed-text">{esc(pos.get("confirmedFrom",""))}</div>
+</div>
+<div class="section-label">Your Brand Statement</div>
+<div class="brand-card">
+  <div class="brand-quote">{esc(pos.get("brandStatement",""))}</div>
+  <div class="brand-note">Written from your session. Adjust any language that doesn't feel like you.</div>
+</div>
+<div class="section-label">Target Lanes — Where to Focus</div>
+{"".join(lanes_html)}
+{action_html}
+</div></body></html>"""
+
+
+# ── Renderer ───────────────────────────────────────────────────────────────────
+def render_pdf(html_content: str) -> bytes:
+    font_config = FontConfiguration()
+    buf = io.BytesIO()
+    HTML(string=html_content).write_pdf(buf, font_config=font_config,
+                                        presentational_hints=True)
+    buf.seek(0)
+    return buf.read()
