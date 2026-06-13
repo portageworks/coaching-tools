@@ -10,7 +10,7 @@ import anthropic
 from prompts.session_generator import SYNTHESIS_SYSTEM, COACH_GUIDE_SYSTEM
 from prompts.session_builder import (
     interview_program_prompt, stories_prompt,
-    positioning_prompt, resume_rewrite_prompt,
+    positioning_prompt, resume_diagnostic_prompt, resume_rewrite_prompt,
 )
 from docx_builder import markdown_to_docx
 from resume_docx_builder import resume_to_docx
@@ -171,7 +171,6 @@ def builder_generate():
         ("ip",          interview_program_prompt(client_name), 16000),
         ("stories",     stories_prompt(client_name),           16000),
         ("positioning", positioning_prompt(client_name, bool(resume), bool(intake)), 8000),
-        ("resume",      resume_rewrite_prompt(client_name),    8000),
     ]
 
     def run_job(job_id, system_prompt, max_tokens):
@@ -187,10 +186,36 @@ def builder_generate():
         except Exception as e:
             q.put(("error", job_id, str(e)))
 
+    def run_resume_job():
+        try:
+            # Step 1: diagnostic brief
+            diag_resp = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=1500,
+                system=resume_diagnostic_prompt(),
+                messages=[{"role": "user", "content": _user_msg()}],
+            )
+            brief_raw = (diag_resp.content[0].text or "").strip()
+            brief_raw = brief_raw.replace("```json", "").replace("```", "").strip()
+
+            # Step 2: rewrite informed by brief
+            rewrite_msg = f"STRATEGY BRIEF:\n{brief_raw}\n\n---\n\n{_user_msg()}"
+            rewrite_resp = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=8000,
+                system=resume_rewrite_prompt(),
+                messages=[{"role": "user", "content": rewrite_msg}],
+            )
+            content = (rewrite_resp.content[0].text or "").strip()
+            q.put(("done", "resume", content))
+        except Exception as e:
+            q.put(("error", "resume", str(e)))
+
     def generate():
         # Signal all jobs as running
         for job_id, _, _ in JOBS:
             yield _sse("status", {"id": job_id, "state": "running"})
+        yield _sse("status", {"id": "resume", "state": "running"})
 
         # Launch all jobs in parallel threads
         threads = []
@@ -198,9 +223,12 @@ def builder_generate():
             t = threading.Thread(target=run_job, args=(job_id, system_prompt, max_tokens), daemon=True)
             t.start()
             threads.append(t)
+        t = threading.Thread(target=run_resume_job, daemon=True)
+        t.start()
+        threads.append(t)
 
         # Stream results as each job completes
-        remaining = len(JOBS)
+        remaining = len(JOBS) + 1  # +1 for resume
         while remaining > 0:
             try:
                 event_type, job_id, payload = q.get(timeout=300)
