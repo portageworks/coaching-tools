@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block title %}Session Builder Part 2 — CGC{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f3f0;--surface:#fff;--surface2:#f0ede9;--border:#e0dbd4;
+    --border-mid:#ccc8c0;--charcoal:#1e2022;--charcoal-mid:#3d4145;
+    --charcoal-faint:#9ba0a6;--text:#2c3035;--text-mid:#4a5058;
+    --text-dim:#7a8088;--slate:#3a5a7c;--slate-mid:#5579a0;
+    --slate-light:#dce8f5;--slate-pale:#eef4fb;
+    --green:#2e6b4a;--green-bg:#ddf0e8;--red:#8b4040;--red-bg:#fdf5f5;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Roboto',sans-serif;font-size:14px;line-height:1.6;}
+
+  .page-header{background:var(--charcoal);padding:28px 48px 32px;}
+  .header-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;}
+  .header-title{font-family:'Roboto Slab',serif;font-size:22px;color:#fff;}
+  .header-sub{font-size:12px;color:#9ba0a6;margin-top:3px;font-weight:300;}
+
+  .main{max-width:900px;margin:0 auto;padding:48px;}
+
+  .field-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;display:block;}
+  .field-sub{font-size:13px;font-weight:300;color:var(--text-dim);margin-bottom:10px;}
+  .optional-label{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--border-mid);margin-left:8px;}
+
+  .upload-area{background:var(--surface);border:2px dashed var(--border-mid);border-radius:3px;padding:22px;text-align:center;cursor:pointer;transition:all .15s;margin-bottom:4px;}
+  .upload-area:hover,.upload-area.drag{border-color:var(--slate-mid);background:var(--slate-pale);}
+  .upload-area.has-file{border-style:solid;border-color:var(--slate-mid);background:var(--slate-pale);}
+  .upload-icon{font-size:24px;margin-bottom:6px;}
+  .upload-text{font-size:13px;color:var(--text-dim);}
+  .upload-text strong{color:var(--slate);font-weight:500;}
+  .upload-filename{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--slate);margin-top:4px;}
+  .file-input{display:none;}
+
+  .form-textarea{width:100%;min-height:110px;font-family:'Roboto Mono',monospace;font-size:12px;line-height:1.6;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:12px 14px;color:var(--text);resize:vertical;outline:none;transition:border-color .15s;}
+  .form-textarea:focus{border-color:var(--slate-mid);}
+  .form-textarea::placeholder{color:var(--border-mid);}
+
+  .divider{height:1px;background:var(--border);margin:32px 0;}
+  .section-title{font-family:'Roboto Slab',serif;font-size:17px;color:var(--charcoal);margin-bottom:4px;}
+  .section-desc{font-size:13px;font-weight:300;color:var(--text-dim);margin-bottom:20px;}
+
+  .prompts-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+  .prompt-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:20px;display:flex;flex-direction:column;gap:10px;transition:border-color .15s;}
+  .prompt-card.running{border-color:var(--slate-light);background:var(--slate-pale);}
+  .prompt-card.done{border-color:#b0d9c4;background:var(--green-bg);}
+  .prompt-card.error{border-color:#d4a0a0;background:var(--red-bg);}
+  .prompt-name{font-family:'Roboto Slab',serif;font-size:15px;font-weight:600;color:var(--charcoal);}
+  .prompt-desc{font-size:12px;font-weight:300;color:var(--text-dim);line-height:1.5;flex:1;}
+  .prompt-badge{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;border-radius:2px;display:inline-block;width:fit-content;}
+  .badge-pdf{color:var(--slate);background:var(--slate-pale);border:1px solid var(--slate-light);}
+  .badge-html{color:#2e6b3e;background:#e8f5ee;border:1px solid #a8d5b5;}
+  .prompt-status{font-size:12px;font-weight:300;min-height:18px;}
+  .status-idle{color:var(--text-dim);}
+  .status-running{color:var(--slate);}
+  .status-done{color:var(--green);}
+  .status-error{color:var(--red);}
+  .download-link{font-family:'Roboto',sans-serif;font-size:12px;font-weight:500;color:#fff;background:var(--slate);border:none;border-radius:2px;padding:8px 14px;cursor:pointer;text-decoration:none;display:inline-block;transition:background .15s;}
+  .download-link:hover{background:var(--slate-mid);}
+
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--slate-light);border-top-color:var(--slate);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .run-btn{font-family:'Roboto',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;background:var(--charcoal);color:#fff;border:none;border-radius:2px;padding:14px 36px;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:10px;}
+  .run-btn:hover:not(:disabled){background:var(--charcoal-mid);}
+  .run-btn:disabled{background:var(--border-mid);cursor:not-allowed;}
+
+  .client-name-input{font-family:'Roboto',sans-serif;font-size:14px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:10px 14px;color:var(--text);outline:none;width:320px;transition:border-color .15s;}
+  .client-name-input:focus{border-color:var(--slate-mid);}
+
+  .error-msg{display:none;background:var(--red-bg);border:1px solid #d4a0a0;border-radius:2px;padding:12px 16px;color:var(--red);font-size:13px;margin-top:12px;}
+  .error-msg.visible{display:block;}
+
+  @media(max-width:700px){
+    .main{padding:28px 20px;}
+    .page-header{padding:20px 24px;}
+    .prompts-grid{grid-template-columns:1fr;}
+    .client-name-input{width:100%;}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="header-label">Challenger Gray &amp; Christmas</div>
+  <div class="header-title">Session Builder — Part 2</div>
+  <div class="header-sub">Session Summary &bull; Roleplay Analysis &bull; Branding Profile &bull; Training Assessment</div>
+</div>
+
+<div class="main">
+
+  <!-- Transcript -->
+  <div style="margin-bottom:24px;">
+    <label class="field-label">Session Transcript <span style="color:var(--red)">*</span></label>
+    <div class="field-sub">Upload a .txt or .md file, or paste below</div>
+    <div class="upload-area" id="transcriptDrop"
+      onclick="document.getElementById('transcriptFile').click()"
+      ondragover="dragOver(event,'transcriptDrop')"
+      ondragleave="dragLeave('transcriptDrop')"
+      ondrop="dropFile(event,'transcriptFile','transcriptDrop','transcriptName','transcript')">
+      <div class="upload-icon">&#128196;</div>
+      <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+      <div class="upload-filename" id="transcriptName"></div>
+    </div>
+    <input type="file" class="file-input" id="transcriptFile" accept=".txt,.md"
+      onchange="fileChosen('transcriptFile','transcriptDrop','transcriptName','transcript')">
+    <div style="margin-top:8px;">
+      <textarea class="form-textarea" id="transcriptText" placeholder="Or paste transcript here..."></textarea>
+    </div>
+  </div>
+
+  <!-- Resume -->
+  <div style="margin-bottom:24px;">
+    <label class="field-label">Resume <span class="optional-label">Optional</span></label>
+    <div class="field-sub">Client's current resume — informs branding and summary outputs</div>
+    <div class="upload-area" id="resumeDrop"
+      onclick="document.getElementById('resumeFile').click()"
+      ondragover="dragOver(event,'resumeDrop')"
+      ondragleave="dragLeave('resumeDrop')"
+      ondrop="dropFile(event,'resumeFile','resumeDrop','resumeName','resume')">
+      <div class="upload-icon">&#128203;</div>
+      <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+      <div class="upload-filename" id="resumeName"></div>
+    </div>
+    <input type="file" class="file-input" id="resumeFile" accept=".txt,.md"
+      onchange="fileChosen('resumeFile','resumeDrop','resumeName','resume')">
+    <div style="margin-top:8px;">
+      <textarea class="form-textarea" id="resumeText" style="min-height:80px;" placeholder="Or paste resume text here..."></textarea>
+    </div>
+  </div>
+
+  <!-- Intake -->
+  <div style="margin-bottom:8px;">
+    <label class="field-label">Intake Answers <span class="optional-label">Optional</span></label>
+    <div class="field-sub">Client's pre-session intake responses — Zone, Save, Sideways, must-haves, or any structured pre-work</div>
+    <div class="upload-area" id="intakeDrop"
+      onclick="document.getElementById('intakeFile').click()"
+      ondragover="dragOver(event,'intakeDrop')"
+      ondragleave="dragLeave('intakeDrop')"
+      ondrop="dropFile(event,'intakeFile','intakeDrop','intakeName','intake')">
+      <div class="upload-icon">&#128221;</div>
+      <div class="upload-text"><strong>Click to upload</strong> or drag and drop</div>
+      <div class="upload-filename" id="intakeName"></div>
+    </div>
+    <input type="file" class="file-input" id="intakeFile" accept=".txt,.md"
+      onchange="fileChosen('intakeFile','intakeDrop','intakeName','intake')">
+    <div style="margin-top:8px;">
+      <textarea class="form-textarea" id="intakeText" style="min-height:80px;" placeholder="Or paste intake answers here..."></textarea>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Client name -->
+  <div style="margin-bottom:28px;">
+    <label class="field-label" for="clientNameInput">Client Name <span style="color:var(--red)">*</span></label>
+    <div class="field-sub">First and last name — used in all output headers</div>
+    <input type="text" id="clientNameInput" class="client-name-input" placeholder="e.g. Jason Cochran">
+  </div>
+
+  <!-- Output cards -->
+  <div class="section-title">Post-Session Outputs</div>
+  <div class="section-desc">Summary, Roleplay, and Branding run in parallel. Training Assessment is coach-only.</div>
+
+  <div class="prompts-grid">
+    <div class="prompt-card" id="card-summary">
+      <div class="prompt-name">Session Summary</div>
+      <div class="prompt-desc">Narrative summary of the session — transition story, strengths, action plan, and closing encouragement.</div>
+      <span class="prompt-badge badge-pdf">PDF</span>
+      <div class="prompt-status status-idle" id="status-summary">Ready</div>
+    </div>
+    <div class="prompt-card" id="card-roleplay">
+      <div class="prompt-name">Roleplay Analysis</div>
+      <div class="prompt-desc">Question-by-question coaching breakdown of the practice interview with suggested responses. Two sequential calls.</div>
+      <span class="prompt-badge badge-pdf">PDF</span>
+      <div class="prompt-status status-idle" id="status-roleplay">Ready</div>
+    </div>
+    <div class="prompt-card" id="card-branding">
+      <div class="prompt-name">Branding Profile</div>
+      <div class="prompt-desc">Qualities, skills, evidence statements, elevator narrative, and multi-channel messaging.</div>
+      <span class="prompt-badge badge-pdf">PDF</span>
+      <div class="prompt-status status-idle" id="status-branding">Ready</div>
+    </div>
+    <div class="prompt-card" id="card-training">
+      <div class="prompt-name">Training Assessment</div>
+      <div class="prompt-desc">Internal coach notes — session overview, barriers, interview performance, and evaluation. Coach reference only.</div>
+      <span class="prompt-badge badge-html">HTML</span>
+      <div class="prompt-status status-idle" id="status-training">Ready</div>
+    </div>
+  </div>
+
+  <div class="error-msg" id="errorMsg"></div>
+
+  <button class="run-btn" id="runBtn" onclick="runAll()">
+    &#9889; Generate All Outputs
+  </button>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const fileContents = { transcript: '', resume: '', intake: '' };
+
+function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag'); }
+function dragLeave(id)   { document.getElementById(id).classList.remove('drag'); }
+
+function dropFile(e, inputId, dropId, nameId, key) {
+  e.preventDefault(); dragLeave(dropId);
+  const file = e.dataTransfer.files[0]; if (!file) return;
+  readFile(file, dropId, nameId, key);
+}
+
+function fileChosen(inputId, dropId, nameId, key) {
+  const file = document.getElementById(inputId).files[0]; if (!file) return;
+  readFile(file, dropId, nameId, key);
+  document.getElementById(inputId).value = '';
+}
+
+function readFile(file, dropId, nameId, key) {
+  const reader = new FileReader();
+  reader.onload = e => { fileContents[key] = e.target.result; };
+  reader.readAsText(file);
+  document.getElementById(dropId).classList.add('has-file');
+  document.getElementById(nameId).textContent = file.name;
+}
+
+function getTranscript() { return fileContents.transcript || document.getElementById('transcriptText').value.trim(); }
+function getResume()     { return fileContents.resume     || document.getElementById('resumeText').value.trim(); }
+function getIntake()     { return fileContents.intake     || document.getElementById('intakeText').value.trim(); }
+
+function setStatus(id, state, msg) {
+  document.getElementById(`card-${id}`).className = `prompt-card${state !== 'idle' ? ' ' + state : ''}`;
+  const s = document.getElementById(`status-${id}`);
+  s.className = `prompt-status status-${state}`;
+  s.innerHTML = state === 'running' ? `<span class="spinner"></span>${msg}` : msg;
+}
+
+function setDone(id, label, onClick) {
+  document.getElementById(`card-${id}`).className = 'prompt-card done';
+  const s = document.getElementById(`status-${id}`);
+  s.innerHTML = '';
+  const btn = document.createElement('button');
+  btn.className = 'download-link';
+  btn.textContent = `↓ ${label}`;
+  btn.onclick = onClick;
+  s.appendChild(btn);
+}
+
+const results = {};
+
+async function runAll() {
+  const transcript = getTranscript();
+  const resume     = getResume();
+  const intake     = getIntake();
+  const clientName = document.getElementById('clientNameInput').value.trim();
+
+  hideError();
+  if (!transcript) { showError('Please upload or paste a transcript.'); return; }
+  if (!clientName) { showError("Please enter the client's name."); return; }
+
+  document.getElementById('runBtn').disabled = true;
+  ['summary','roleplay','branding','training'].forEach(id => setStatus(id, 'running', 'Generating...'));
+  // roleplay note
+  setStatus('roleplay', 'running', 'Generating Part 1 of 2...');
+
+  try {
+    const res = await fetch('/api/builder2/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ transcript, resume, intake, client_name: clientName }),
+    });
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+
+    const reader  = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const parts = buffer.split('\n\n');
+      buffer = parts.pop();
+
+      for (const part of parts) {
+        const eventMatch = part.match(/^event: (\w+)/m);
+        const dataMatch  = part.match(/^data: (.+)/m);
+        if (!eventMatch || !dataMatch) continue;
+        const event = eventMatch[1];
+        let payload;
+        try { payload = JSON.parse(dataMatch[1]); } catch { continue; }
+
+        if (event === 'result') {
+          const { id, state, content, message } = payload;
+          if (state === 'done') {
+            results[id] = content;
+            wireDownload(id, content, clientName);
+          } else {
+            setStatus(id, 'error', `Error: ${message}`);
+          }
+        } else if (event === 'error') {
+          showError(payload.message || 'Generation failed.');
+        }
+      }
+    }
+  } catch (err) {
+    showError(err.message || 'Something went wrong.');
+    ['summary','roleplay','branding','training'].forEach(id => {
+      if (!results[id]) setStatus(id, 'error', 'Failed');
+    });
+  } finally {
+    document.getElementById('runBtn').disabled = false;
+  }
+}
+
+function wireDownload(id, content, clientName) {
+  if (id === 'summary') {
+    setDone('summary', 'Session Summary (PDF)',
+      () => downloadFile('/api/builder2/summary.pdf', { content, client_name: clientName }, 'summary', 'pdf'));
+  } else if (id === 'roleplay') {
+    setDone('roleplay', 'Roleplay Analysis (PDF)',
+      () => downloadFile('/api/builder2/roleplay.pdf', { content, client_name: clientName }, 'roleplay', 'pdf'));
+  } else if (id === 'branding') {
+    setDone('branding', 'Branding Profile (PDF)',
+      () => downloadFile('/api/builder2/branding.pdf', { content, client_name: clientName }, 'branding', 'pdf'));
+  } else if (id === 'training') {
+    setDone('training', 'Training Assessment (HTML)',
+      () => downloadFile('/api/builder2/training.html', { content, client_name: clientName }, 'training', 'html'));
+  }
+}
+
+async function downloadFile(endpoint, body, cardId, ext) {
+  const btn = document.querySelector(`#status-${cardId} .download-link`);
+  const orig = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Building...'; }
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const disp = res.headers.get('Content-Disposition') || '';
+    const fnMatch = disp.match(/filename="?([^"]+)"?/);
+    a.download = fnMatch ? fnMatch[1] : `document.${ext}`;
+    a.href = url;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch(e) {
+    showError('Download failed: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = orig; }
+  }
+}
+
+function showError(msg) { const el=document.getElementById('errorMsg'); el.textContent=msg; el.className='error-msg visible'; }
+function hideError()    { document.getElementById('errorMsg').className='error-msg'; }
+</script>
+{% endblock %}
