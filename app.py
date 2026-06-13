@@ -15,6 +15,7 @@ from prompts.session_builder import (
     interview_program_prompt, stories_prompt,
     positioning_prompt, resume_diagnostic_prompt, resume_rewrite_prompt,
 )
+from prompts.resume_tool import DIAGNOSTIC_SYSTEM, REWRITE_SYSTEM
 from prompts.session_builder_part2 import (
     summary_prompt, roleplay_a_prompt, roleplay_b_prompt,
     branding_prompt, training_prompt,
@@ -50,6 +51,111 @@ def chat():
         messages=messages,
     )
     return jsonify({"content": response.content[0].text})
+
+
+# ── Resume Tool ───────────────────────────────────────────────────────────────
+
+@app.route("/resume-tool")
+def resume_tool():
+    return render_template("resume_tool.html")
+
+
+@app.route("/api/resume/diagnose", methods=["POST"])
+def resume_diagnose():
+    data       = request.get_json()
+    resume     = (data.get("resume") or "").strip()
+    transcript = (data.get("transcript") or "").strip()
+    target     = (data.get("target") or "").strip()
+
+    if not resume:
+        return jsonify({"error": "Resume text is required."}), 400
+
+    user_msg = f"RESUME:\n\n{resume}"
+    if target:
+        user_msg += f"\n\n---\nTARGET POSITIONING:\n\n{target}"
+    if transcript:
+        user_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth — overrides resume where they conflict):\n\n{transcript}"
+
+    resp = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=4000,
+        system=DIAGNOSTIC_SYSTEM,
+        messages=[{"role": "user", "content": user_msg}],
+    )
+    raw = (resp.content[0].text or "").strip()
+    raw = raw.replace("```json", "").replace("```", "").strip()
+    try:
+        result = json.loads(raw)
+    except Exception as e:
+        return jsonify({"error": f"JSON parse error: {e}", "raw": raw}), 500
+    return jsonify(result)
+
+
+@app.route("/api/resume/rewrite", methods=["POST"])
+def resume_rewrite():
+    data       = request.get_json()
+    resume     = (data.get("resume") or "").strip()
+    transcript = (data.get("transcript") or "").strip()
+    target     = (data.get("target") or "").strip()
+    diag       = data.get("diagnostic") or {}
+
+    if not resume:
+        return jsonify({"error": "Resume text is required."}), 400
+
+    level = diag.get("level", "EXECUTIVE")
+    score = diag.get("readinessScore", 5)
+    mode  = diag.get("revisionMode", "REWRITE")
+
+    user_msg  = f"CANDIDATE LEVEL: {level}\n"
+    user_msg += f"READINESS SCORE: {score}/10\n"
+    user_msg += f"REVISION MODE: {mode}\n\n"
+    user_msg += "STRATEGY BRIEF:\n"
+    user_msg += f"Strengths to Preserve: {diag.get('strengths', '')}\n"
+    user_msg += f"Narrative Arc: {diag.get('narrativeArc', '')}\n"
+    user_msg += f"Impact Opportunities: {diag.get('impactOpportunities', '')}\n"
+    user_msg += f"Keyword Alignment: {diag.get('keywordAlignment', '')}\n"
+    user_msg += f"Positioning Hypothesis: {diag.get('positioningHypothesis', '')}\n\n"
+    user_msg += f"RESUME:\n\n{resume}"
+    if target:
+        user_msg += f"\n\n---\nTARGET POSITIONING:\n\n{target}"
+    if transcript:
+        user_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth):\n\n{transcript}"
+
+    resp = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens=8000,
+        system=REWRITE_SYSTEM,
+        messages=[{"role": "user", "content": user_msg}],
+    )
+    content = (resp.content[0].text or "").strip()
+    return jsonify({"content": content})
+
+
+@app.route("/api/resume/download.docx", methods=["POST"])
+def resume_download_docx():
+    data        = request.get_json()
+    resume_text = data.get("content", "")
+    font        = (data.get("font") or "Calibri").strip()
+
+    docx_bytes = resume_to_docx(resume_text, font=font)
+
+    first_line = resume_text.strip().splitlines()[0] if resume_text.strip() else ""
+    import re as _re
+    name = _re.sub(r"[^a-zA-Z\s'-]", "", first_line).strip()
+    parts = name.split()
+    if len(parts) >= 2:
+        filename = f"{parts[-1]}_{parts[0]}_Resume.docx"
+    elif parts:
+        filename = f"{parts[0]}_Resume.docx"
+    else:
+        filename = "Resume.docx"
+
+    return send_file(
+        io.BytesIO(docx_bytes),
+        mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        as_attachment=True,
+        download_name=filename,
+    )
 
 
 # ── Session Generator ─────────────────────────────────────────────────────────

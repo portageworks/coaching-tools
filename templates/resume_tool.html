@@ -1,0 +1,521 @@
+{% extends "base.html" %}
+{% block title %}Resume Tool — CGC{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#f5f3f0; --surface:#fff; --surface2:#f0ede9; --border:#e0dbd4;
+    --border-mid:#ccc8c0; --charcoal:#1e2022; --charcoal-mid:#3d4145;
+    --charcoal-faint:#9ba0a6; --text:#2c3035; --text-mid:#4a5058;
+    --text-dim:#7a8088; --slate:#3a5a7c; --slate-mid:#5579a0;
+    --slate-light:#dce8f5; --slate-pale:#eef4fb;
+    --green:#2e6b4a; --green-bg:#ddf0e8;
+    --amber:#7a5c1e; --amber-bg:#fdf5dc; --amber-border:#e8d48a;
+    --red:#8b4040; --red-bg:#fdf5f5;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Roboto',sans-serif;font-size:14px;line-height:1.6;}
+
+  .page-header{background:var(--charcoal);padding:28px 48px 32px;}
+  .header-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;}
+  .header-title{font-family:'Roboto Slab',serif;font-size:22px;color:#fff;}
+  .header-sub{font-size:12px;color:#9ba0a6;margin-top:3px;font-weight:300;}
+
+  .main{max-width:900px;margin:0 auto;padding:48px;}
+
+  .field-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;display:block;}
+  .field-sub{font-size:13px;font-weight:300;color:var(--text-dim);margin-bottom:10px;}
+  .optional-label{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--border-mid);margin-left:8px;}
+
+  textarea.form-textarea{width:100%;font-family:'Roboto Mono',monospace;font-size:12px;line-height:1.6;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:14px 16px;color:var(--text);resize:vertical;outline:none;transition:border-color .15s;}
+  textarea.form-textarea:focus{border-color:var(--slate-mid);}
+  textarea.form-textarea::placeholder{color:var(--border-mid);}
+
+  .steps{display:flex;gap:0;margin-bottom:36px;}
+  .step{display:flex;align-items:center;gap:10px;padding:12px 20px;background:var(--surface);border:1px solid var(--border);font-size:13px;color:var(--text-dim);}
+  .step:not(:last-child){border-right:none;}
+  .step:first-child{border-radius:3px 0 0 3px;}
+  .step:last-child{border-radius:0 3px 3px 0;}
+  .step.active{background:var(--slate-pale);border-color:var(--slate-light);color:var(--slate);}
+  .step.done{background:var(--green-bg);border-color:#b0d9c4;color:var(--green);}
+  .step-num{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:500;width:20px;height:20px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .step-label{font-weight:500;}
+
+  .primary-btn{font-family:'Roboto',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;background:var(--charcoal);color:#fff;border:none;border-radius:2px;padding:13px 32px;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:10px;}
+  .primary-btn:hover{background:var(--charcoal-mid);}
+  .primary-btn:disabled{background:var(--border-mid);cursor:not-allowed;}
+  .secondary-btn{font-family:'Roboto',sans-serif;font-size:13px;font-weight:500;letter-spacing:.04em;background:var(--slate);color:#fff;border:none;border-radius:2px;padding:13px 28px;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:10px;}
+  .secondary-btn:hover{background:var(--slate-mid);}
+  .secondary-btn:disabled{background:var(--border-mid);cursor:not-allowed;}
+  .format-btn{font-family:'Roboto',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;background:var(--green);color:#fff;border:none;border-radius:2px;padding:13px 32px;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:10px;}
+  .format-btn:hover{background:#1f4f35;}
+  .format-btn:disabled{background:var(--border-mid);cursor:not-allowed;}
+  .copy-btn{font-family:'Roboto',sans-serif;font-size:12px;font-weight:500;background:var(--surface2);color:var(--text-mid);border:1px solid var(--border);border-radius:2px;padding:8px 16px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;}
+  .copy-btn:hover{border-color:var(--slate-mid);color:var(--slate);}
+  .copy-btn.copied{background:var(--green-bg);border-color:#b0d9c4;color:var(--green);}
+
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .error-msg{display:none;background:var(--red-bg);border:1px solid #d4a0a0;border-radius:2px;padding:12px 16px;color:var(--red);font-size:13px;margin-top:12px;}
+  .error-msg.visible{display:block;}
+
+  .output-panel{display:none;margin-top:28px;}
+  .output-panel.visible{display:block;animation:fadeIn .25s ease;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+  .panel-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .panel-title{font-family:'Roboto Slab',serif;font-size:18px;color:var(--charcoal);}
+  .panel-actions{display:flex;gap:8px;align-items:center;}
+
+  .brief-wrap{background:var(--slate-pale);border:1px solid var(--slate-light);border-left:3px solid var(--slate);border-radius:0 3px 3px 0;padding:20px 24px;margin-bottom:20px;}
+  .brief-section{margin-bottom:16px;}
+  .brief-section:last-child{margin-bottom:0;}
+  .brief-section-label{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;}
+  .brief-section-content{font-size:14px;color:var(--charcoal);line-height:1.7;}
+
+  .readiness-meter{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding:14px 18px;background:var(--surface);border:1px solid var(--border);border-radius:3px;}
+  .readiness-score{font-family:'Roboto Mono',monospace;font-size:24px;font-weight:700;min-width:36px;text-align:center;}
+  .readiness-bar-wrap{flex:1;}
+  .readiness-bar-label{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px;display:flex;justify-content:space-between;}
+  .readiness-bar{height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+  .readiness-bar-fill{height:100%;border-radius:3px;transition:width .4s ease;}
+  .revision-mode-badge{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:5px 14px;border-radius:2px;white-space:nowrap;}
+
+  .inquiry-section{margin-top:24px;}
+  .inquiry-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .inquiry-section-title{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);font-weight:500;}
+  .inquiry-section-sub{font-size:13px;font-weight:300;color:var(--text-dim);margin-bottom:14px;}
+  .inquiry-wrap{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+  .inquiry-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:16px 18px;display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start;}
+  .inquiry-num{font-family:'Roboto Mono',monospace;font-size:11px;font-weight:500;color:var(--slate-mid);padding-top:2px;}
+  .inquiry-q{font-size:14px;font-weight:500;color:var(--charcoal);margin-bottom:4px;line-height:1.5;}
+  .inquiry-why{font-size:12px;font-weight:300;color:var(--text-dim);line-height:1.5;}
+
+  .remarkable-wrap{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:3px;padding:16px 20px;margin-top:4px;}
+  .remarkable-label{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;}
+  .remarkable-text{font-family:'Roboto Mono',monospace;font-size:12px;line-height:1.8;color:var(--charcoal);white-space:pre-wrap;}
+
+  .level-badge{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;padding:4px 12px;border-radius:2px;display:inline-block;}
+  .badge-exec{color:var(--slate);background:var(--slate-pale);border:1px solid var(--slate-light);}
+  .badge-pro{color:#2e6b4a;background:#ddf0e8;border:1px solid #b0d9c4;}
+
+  .rewrite-cta{display:flex;align-items:center;gap:16px;margin-top:24px;padding-top:24px;border-top:1px solid var(--border);}
+  .rewrite-cta-note{font-size:13px;font-weight:300;color:var(--text-dim);}
+  .rewrite-cta-note.has-gaps{color:var(--amber);}
+
+  .rewrite-output{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:28px 32px;font-family:'Roboto Mono',monospace;font-size:12px;line-height:1.8;color:var(--charcoal);white-space:pre-wrap;word-wrap:break-word;max-height:600px;overflow-y:auto;}
+  .rewrite-output mark{background:#fff3b0;padding:0 2px;border-radius:1px;}
+
+  .format-section{margin-top:24px;padding-top:24px;border-top:1px solid var(--border);}
+  .format-section-label{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:12px;font-weight:500;}
+  .format-controls{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  .font-select-wrap{display:flex;align-items:center;gap:10px;}
+  .font-select-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);}
+  select.font-select{font-family:'Roboto',sans-serif;font-size:13px;background:var(--surface);border:1px solid var(--border);color:var(--text);padding:8px 12px;border-radius:2px;outline:none;cursor:pointer;transition:border-color .15s;}
+  select.font-select:focus{border-color:var(--slate-mid);}
+  .format-note{font-size:12px;font-weight:300;color:var(--text-dim);margin-top:10px;}
+
+  @media(max-width:700px){
+    .main{padding:28px 20px;}
+    .page-header{padding:20px 24px;}
+    .steps{flex-direction:column;}
+    .step:first-child{border-radius:3px 3px 0 0;}
+    .step:last-child{border-radius:0 0 3px 3px;}
+    .step:not(:last-child){border-right:1px solid var(--border);border-bottom:none;}
+    .rewrite-cta{flex-direction:column;align-items:flex-start;}
+    .format-controls{flex-direction:column;align-items:flex-start;}
+    .readiness-meter{flex-direction:column;align-items:stretch;}
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="header-label">Challenger Gray &amp; Christmas</div>
+  <div class="header-title">Resume Tool</div>
+  <div class="header-sub">Evaluate &bull; Revise &bull; Download</div>
+</div>
+
+<div class="main">
+
+  <div class="steps">
+    <div class="step active" id="step-1">
+      <div class="step-num">1</div>
+      <span class="step-label">Evaluate &amp; Coach</span>
+    </div>
+    <div class="step" id="step-2">
+      <div class="step-num">2</div>
+      <span class="step-label">Revise &amp; Strengthen</span>
+    </div>
+    <div class="step" id="step-3">
+      <div class="step-num">3</div>
+      <span class="step-label">Download Word Doc</span>
+    </div>
+  </div>
+
+  <div id="inputSection">
+    <div style="margin-bottom:24px;">
+      <label class="field-label">Resume <span style="color:var(--red)">*</span></label>
+      <div class="field-sub">Paste the resume text below</div>
+      <textarea class="form-textarea" id="resumeText" style="min-height:200px;" placeholder="Paste resume text here..."></textarea>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <label class="field-label">Target Positioning <span class="optional-label">Optional — sharpens evaluation and rewrite</span></label>
+      <div class="field-sub">Paste target titles, target industry, or a target job description.</div>
+      <textarea class="form-textarea" id="targetPositioning" style="min-height:80px;" placeholder="e.g. VP Operations, SaaS / FinTech — or paste a full job description"></textarea>
+    </div>
+
+    <div style="margin-bottom:8px;">
+      <label class="field-label">Session Transcript <span class="optional-label">Optional — becomes Primary Truth if provided</span></label>
+      <div class="field-sub">Paste transcript text below</div>
+      <textarea class="form-textarea" id="transcriptText" style="min-height:100px;" placeholder="Paste transcript text here..."></textarea>
+    </div>
+
+    <div class="error-msg" id="errorMsg"></div>
+
+    <div style="margin-top:20px;">
+      <button class="primary-btn" id="diagnoseBtn" onclick="runDiagnostic()">
+        &#9889; Evaluate Resume
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 1 OUTPUT -->
+  <div class="output-panel" id="briefPanel">
+    <div class="panel-header">
+      <div>
+        <div id="briefReadyLabel" style="font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:4px;"></div>
+        <div class="panel-title">Strategy Brief</div>
+      </div>
+      <span class="level-badge" id="levelBadgeBrief"></span>
+    </div>
+
+    <div class="readiness-meter" id="readinessMeter">
+      <div class="readiness-score" id="readinessScoreNum"></div>
+      <div class="readiness-bar-wrap">
+        <div class="readiness-bar-label">
+          <span>Readiness</span>
+          <span id="readinessScoreLabel"></span>
+        </div>
+        <div class="readiness-bar">
+          <div class="readiness-bar-fill" id="readinessBarFill"></div>
+        </div>
+      </div>
+      <div class="revision-mode-badge" id="revisionModeBadge"></div>
+    </div>
+
+    <div class="brief-wrap" id="briefContent"></div>
+
+    <div class="inquiry-section" id="inquirySection" style="display:none;">
+      <div class="inquiry-section-header">
+        <div class="inquiry-section-title">Coaching Questions — For Your Next Session</div>
+      </div>
+      <div class="inquiry-section-sub" id="inquirySub"></div>
+      <div class="inquiry-wrap" id="inquiryCards"></div>
+      <div class="remarkable-wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="remarkable-label" style="margin-bottom:0;">For your Remarkable — copy this</div>
+          <button class="copy-btn" id="copyQuestionsBtn" onclick="copyQuestions()" style="font-size:11px;padding:5px 12px;">Copy questions</button>
+        </div>
+        <div class="remarkable-text" id="remarkableText"></div>
+      </div>
+    </div>
+
+    <div class="rewrite-cta">
+      <button class="secondary-btn" id="rewriteBtn" onclick="runRewrite()">
+        &#9997;&#65039; Generate Revised Draft
+      </button>
+      <div class="rewrite-cta-note" id="rewriteCtaNote"></div>
+    </div>
+  </div>
+
+  <!-- STEP 2 OUTPUT -->
+  <div class="output-panel" id="rewritePanel">
+    <div class="panel-header">
+      <div class="panel-title">Revised Resume</div>
+      <div class="panel-actions">
+        <button class="copy-btn" id="copyRewriteBtn" onclick="copyRewrite()">Copy text</button>
+      </div>
+    </div>
+    <div class="rewrite-output" id="rewriteOutput"></div>
+
+    <div class="format-section">
+      <div class="format-section-label">Step 3 — Download Word Document</div>
+      <div class="format-controls">
+        <div class="font-select-wrap">
+          <label class="font-select-label">Font</label>
+          <select class="font-select" id="fontSelector">
+            <option value="Calibri">Calibri</option>
+            <option value="Arial">Arial</option>
+            <option value="Cambria">Cambria</option>
+            <option value="Times New Roman">Times New Roman</option>
+          </select>
+        </div>
+        <button class="format-btn" id="formatBtn" onclick="downloadDocx()">
+          &#8595; Download Word Document
+        </button>
+      </div>
+      <div class="format-note">Generates a formatted .docx with proper margins, section headers, tab-aligned dates, and highlighted placeholders.</div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let diagnosticResult = null;
+let rewriteContent   = '';
+
+function getResume()     { return document.getElementById('resumeText').value.trim(); }
+function getTranscript() { return document.getElementById('transcriptText').value.trim(); }
+function getTarget()     { return document.getElementById('targetPositioning').value.trim(); }
+
+// ── DIAGNOSTIC ────────────────────────────────────────────────────
+async function runDiagnostic() {
+  const resume = getResume();
+  hideError();
+  if (!resume) { showError('Please paste a resume.'); return; }
+
+  const btn = document.getElementById('diagnoseBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Evaluating...';
+
+  document.getElementById('briefPanel').classList.remove('visible');
+  document.getElementById('rewritePanel').classList.remove('visible');
+
+  try {
+    const res = await fetch('/api/resume/diagnose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resume: getResume(), transcript: getTranscript(), target: getTarget() }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+    diagnosticResult = data;
+    showDiagnosticResult(data);
+    setStep(1, 'done'); setStep(2, 'active');
+  } catch (err) {
+    showError(err.message || 'Evaluation failed.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '&#9889; Evaluate Resume';
+  }
+}
+
+function getScoreColor(s) {
+  if (s >= 8) return 'var(--green)';
+  if (s >= 6) return 'var(--slate)';
+  if (s >= 4) return 'var(--amber)';
+  return 'var(--red)';
+}
+function getScoreLabel(s) {
+  if (s >= 9) return 'Market-Ready';
+  if (s >= 7) return 'Strong Base';
+  if (s >= 5) return 'Solid Foundation';
+  if (s >= 3) return 'Needs Development';
+  return 'Early Stage';
+}
+function getModeStyle(mode) {
+  if (mode === 'POLISH')     return { bg:'var(--green-bg)',  border:'#b0d9c4',           color:'var(--green)' };
+  if (mode === 'REPOSITION') return { bg:'var(--slate-pale)',border:'var(--slate-light)', color:'var(--slate)' };
+  if (mode === 'REWRITE')    return { bg:'var(--amber-bg)',  border:'var(--amber-border)',color:'var(--amber)' };
+  return                            { bg:'var(--red-bg)',    border:'#d4a0a0',            color:'var(--red)'   };
+}
+
+function showDiagnosticResult(r) {
+  const score      = r.readinessScore || 5;
+  const mode       = r.revisionMode   || 'REWRITE';
+  const canRewrite = r.canRewrite !== false;
+  const hasInquiry = r.inquiryList && r.inquiryList.length > 0;
+
+  const badge = document.getElementById('levelBadgeBrief');
+  badge.textContent = r.level;
+  badge.className = 'level-badge ' + (r.level === 'EXECUTIVE' ? 'badge-exec' : 'badge-pro');
+
+  const lbl = document.getElementById('briefReadyLabel');
+  if (!canRewrite)    { lbl.textContent = 'More context needed — session questions below will help'; lbl.style.color = 'var(--amber)'; }
+  else if (score >= 8){ lbl.textContent = 'Strong resume — light revision recommended';              lbl.style.color = 'var(--green)'; }
+  else if (score >= 6){ lbl.textContent = 'Good foundation — targeted improvements identified';      lbl.style.color = 'var(--slate)'; }
+  else if (hasInquiry){ lbl.textContent = 'Workable material — session answers will sharpen the draft'; lbl.style.color = 'var(--amber)'; }
+  else                { lbl.textContent = 'Ready to revise';                                         lbl.style.color = 'var(--slate)'; }
+
+  const scoreColor = getScoreColor(score);
+  document.getElementById('readinessScoreNum').textContent = score;
+  document.getElementById('readinessScoreNum').style.color = scoreColor;
+  document.getElementById('readinessScoreLabel').textContent = getScoreLabel(score);
+  const fill = document.getElementById('readinessBarFill');
+  fill.style.width = (score * 10) + '%';
+  fill.style.background = scoreColor;
+
+  const ms = getModeStyle(mode);
+  const mb = document.getElementById('revisionModeBadge');
+  mb.textContent = mode;
+  mb.style.background = ms.bg;
+  mb.style.border = '1px solid ' + ms.border;
+  mb.style.color = ms.color;
+
+  document.getElementById('briefContent').innerHTML = `
+    <div class="brief-section"><div class="brief-section-label">Strengths to Preserve</div><div class="brief-section-content">${esc(r.strengths||'')}</div></div>
+    <div class="brief-section"><div class="brief-section-label">Narrative Arc</div><div class="brief-section-content">${esc(r.narrativeArc||'')}</div></div>
+    <div class="brief-section"><div class="brief-section-label">Impact Opportunities</div><div class="brief-section-content">${esc(r.impactOpportunities||'')}</div></div>
+    <div class="brief-section"><div class="brief-section-label">Keyword Alignment</div><div class="brief-section-content">${esc(r.keywordAlignment||'')}</div></div>
+    <div class="brief-section"><div class="brief-section-label">Positioning Hypothesis</div><div class="brief-section-content">${esc(r.positioningHypothesis||'')}</div></div>
+  `;
+
+  const inquirySection = document.getElementById('inquirySection');
+  if (hasInquiry) {
+    inquirySection.style.display = 'block';
+    const sub = document.getElementById('inquirySub');
+    if (score >= 7)      sub.innerHTML = 'A few optional questions that could sharpen specific areas. The resume is strong enough to revise now.';
+    else if (score >= 5) sub.innerHTML = 'These questions target the most impactful gaps. Use them in your client session, then re-run with the transcript.';
+    else                 sub.innerHTML = 'These questions will fill genuine gaps. Session answers will meaningfully improve what the tool can produce.';
+
+    document.getElementById('inquiryCards').innerHTML = r.inquiryList.map((item, i) => `
+      <div class="inquiry-card">
+        <div class="inquiry-num">${String(i+1).padStart(2,'0')}</div>
+        <div>
+          <div class="inquiry-q">${esc(item.question)}</div>
+          <div class="inquiry-why">${esc(item.why)}</div>
+        </div>
+      </div>
+    `).join('');
+
+    document.getElementById('remarkableText').textContent =
+      'Questions for client session:\n\n' + r.inquiryList.map((item,i) => `${i+1}. ${item.question}`).join('\n\n');
+  } else {
+    inquirySection.style.display = 'none';
+  }
+
+  const ctaNote = document.getElementById('rewriteCtaNote');
+  const rwBtn   = document.getElementById('rewriteBtn');
+  if (!canRewrite) {
+    rwBtn.textContent = '✍️ Draft Best-Available Version';
+    ctaNote.textContent = 'Limited source material — the draft will be honest about gaps. Session answers will improve it.';
+    ctaNote.className = 'rewrite-cta-note has-gaps';
+  } else if (mode === 'POLISH') {
+    rwBtn.innerHTML = '&#9997;&#65039; Generate Polished Draft';
+    ctaNote.textContent = 'Strong material — revision will preserve what works and make targeted improvements.';
+    ctaNote.className = 'rewrite-cta-note';
+  } else if (mode === 'REPOSITION') {
+    rwBtn.innerHTML = '&#9997;&#65039; Generate Repositioned Draft';
+    ctaNote.textContent = 'Good base — revision will shift emphasis and targeting while keeping strong content intact.';
+    ctaNote.className = 'rewrite-cta-note';
+  } else {
+    rwBtn.innerHTML = '&#9997;&#65039; Generate Revised Draft';
+    ctaNote.textContent = hasInquiry
+      ? 'Factual gaps will be noted where they affect clarity. Add a transcript after your session to sharpen the draft.'
+      : 'Ready to revise.';
+    ctaNote.className = hasInquiry ? 'rewrite-cta-note has-gaps' : 'rewrite-cta-note';
+  }
+
+  document.getElementById('briefPanel').classList.add('visible');
+  document.getElementById('briefPanel').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+// ── REWRITE ───────────────────────────────────────────────────────
+async function runRewrite() {
+  const btn = document.getElementById('rewriteBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Revising...';
+  hideError();
+
+  try {
+    const res = await fetch('/api/resume/rewrite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        resume: getResume(),
+        transcript: getTranscript(),
+        target: getTarget(),
+        diagnostic: diagnosticResult || {},
+      }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `Server error ${res.status}`);
+
+    rewriteContent = (data.content || '').trim();
+
+    const highlighted = rewriteContent
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+      .replace(/\(\((.+?)\)\)/g,'<mark>(($1))</mark>');
+    document.getElementById('rewriteOutput').innerHTML = highlighted;
+
+    document.getElementById('rewritePanel').classList.add('visible');
+    setStep(2, 'done'); setStep(3, 'active');
+    document.getElementById('rewritePanel').scrollIntoView({ behavior:'smooth', block:'start' });
+  } catch (err) {
+    showError(err.message || 'Revision failed.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '&#9997;&#65039; Generate Revised Draft';
+  }
+}
+
+// ── DOWNLOAD ──────────────────────────────────────────────────────
+async function downloadDocx() {
+  if (!rewriteContent) { showError('No revised resume yet. Generate a draft first.'); return; }
+  const btn  = document.getElementById('formatBtn');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Generating...';
+  hideError();
+
+  try {
+    const font = document.getElementById('fontSelector').value;
+    const res  = await fetch('/api/resume/download.docx', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: rewriteContent, font }),
+    });
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const blob = await res.blob();
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    const disp = res.headers.get('Content-Disposition') || '';
+    const fn   = disp.match(/filename="?([^"]+)"?/);
+    a.download = fn ? fn[1] : 'Resume.docx';
+    a.href = url;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setStep(3, 'done');
+  } catch (err) {
+    showError('Download failed: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+// ── COPY ──────────────────────────────────────────────────────────
+function copyQuestions() {
+  const text = document.getElementById('remarkableText').textContent;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyQuestionsBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function copyRewrite() {
+  if (!rewriteContent) return;
+  navigator.clipboard.writeText(rewriteContent).then(() => {
+    const btn = document.getElementById('copyRewriteBtn');
+    const orig = btn.textContent;
+    btn.textContent = '✓ Copied'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function setStep(num, state) { document.getElementById('step-' + num).className = 'step ' + state; }
+function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function showError(msg) { const el=document.getElementById('errorMsg'); el.textContent=msg; el.className='error-msg visible'; }
+function hideError()    { document.getElementById('errorMsg').className='error-msg'; }
+</script>
+{% endblock %}
