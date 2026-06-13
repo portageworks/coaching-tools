@@ -74,6 +74,8 @@
 
   .client-name-input{font-family:'Roboto',sans-serif;font-size:14px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:10px 14px;color:var(--text);outline:none;width:320px;transition:border-color .15s;}
   .client-name-input:focus{border-color:var(--slate-mid);}
+  .font-select{font-family:'Roboto',sans-serif;font-size:14px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:10px 14px;color:var(--text);outline:none;width:220px;cursor:pointer;transition:border-color .15s;}
+  .font-select:focus{border-color:var(--slate-mid);}
 
   .error-msg{display:none;background:var(--red-bg);border:1px solid #d4a0a0;border-radius:2px;padding:12px 16px;color:var(--red);font-size:13px;margin-top:12px;}
   .error-msg.visible{display:block;}
@@ -158,11 +160,23 @@
 
   <div class="divider"></div>
 
-  <!-- Client name -->
-  <div style="margin-bottom:28px;">
-    <label class="field-label" for="clientNameInput">Client Name <span style="color:var(--red)">*</span></label>
-    <div class="field-sub">First and last name — used in all output headers</div>
-    <input type="text" id="clientNameInput" class="client-name-input" placeholder="e.g. Jason Cochran">
+  <!-- Client name + font -->
+  <div style="margin-bottom:28px;display:flex;gap:32px;flex-wrap:wrap;align-items:flex-end;">
+    <div>
+      <label class="field-label" for="clientNameInput">Client Name <span style="color:var(--red)">*</span></label>
+      <div class="field-sub">First and last name — used in all output headers</div>
+      <input type="text" id="clientNameInput" class="client-name-input" placeholder="e.g. Jason Cochran">
+    </div>
+    <div>
+      <label class="field-label" for="fontSelect">Resume Font</label>
+      <div class="field-sub">Applied to the downloaded Word doc</div>
+      <select id="fontSelect" class="font-select">
+        <option value="Calibri">Calibri</option>
+        <option value="Arial">Arial</option>
+        <option value="Cambria">Cambria</option>
+        <option value="Times New Roman">Times New Roman</option>
+      </select>
+    </div>
   </div>
 
   <!-- Output cards -->
@@ -359,8 +373,9 @@ function wireDownload(id, content, clientName) {
       () => downloadPDF('/api/builder/positioning.pdf', { positioning: posData, client_name: clientName }, 'positioning'));
 
   } else if (id === 'resume') {
+    const font = document.getElementById('fontSelect').value;
     setDone('resume', 'Resume Draft (Word)',
-      () => downloadResume(content, clientName), true);
+      () => downloadResume(content, clientName, font), true);
   }
 }
 
@@ -393,7 +408,7 @@ async function downloadPDF(endpoint, body, cardId) {
 }
 
 // ── Resume download (server-side .docx) ───────────────────────────────────
-async function downloadResume(content, clientName) {
+async function downloadResume(content, clientName, font) {
   const btn = document.querySelector('#status-resume .download-link');
   const orig = btn ? btn.textContent : '';
   if (btn) { btn.disabled = true; btn.textContent = 'Building...'; }
@@ -402,7 +417,7 @@ async function downloadResume(content, clientName) {
     const res = await fetch('/api/builder/resume.docx', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, client_name: clientName }),
+      body: JSON.stringify({ content, client_name: clientName, font: font || 'Calibri' }),
     });
     if (!res.ok) throw new Error(`Server error ${res.status}`);
     const blob = await res.blob();

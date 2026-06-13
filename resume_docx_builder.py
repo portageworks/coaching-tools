@@ -27,9 +27,12 @@ _TEXT_MID  = RGBColor(0x4a, 0x50, 0x58)
 _GREY_FILL = "F2F2F2"
 _SLATE_HEX = "3A5A7C"
 
+DEFAULT_FONT = "Calibri"
+ALLOWED_FONTS = {"Arial", "Calibri", "Cambria", "Times New Roman"}
+
 
 def _run(paragraph, text, bold=False, italic=False, size_pt=11,
-         color=None, highlight=False, font="Calibri"):
+         color=None, highlight=False, font=DEFAULT_FONT):
     run = paragraph.add_run(text)
     run.font.name  = font
     run.font.size  = Pt(size_pt)
@@ -46,7 +49,7 @@ def _run(paragraph, text, bold=False, italic=False, size_pt=11,
 
 
 def _add_runs_with_placeholders(paragraph, text, bold=False, italic=False,
-                                 size_pt=11, color=None, font="Calibri"):
+                                 size_pt=11, color=None, font=DEFAULT_FONT):
     """Split on ((placeholder)) markers and highlight them yellow."""
     parts = re.split(r"(\(\([^)]*?\)\))", text)
     for part in parts:
@@ -83,7 +86,6 @@ def _set_shading(paragraph, fill=_GREY_FILL):
 
 
 def _is_title_line(line):
-    """True if the line looks like a job title line (contains a 4-digit year)."""
     return bool(re.search(r"\b(19|20)\d{2}\b", line))
 
 
@@ -100,30 +102,27 @@ def _split_title_date(line):
 
 # ── paragraph builders ────────────────────────────────────────────────────────
 
-FONT = "Calibri"
-
-def _name_para(doc, text):
+def _name_para(doc, text, font=DEFAULT_FONT):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_after  = Pt(2)
     p.paragraph_format.space_before = Pt(0)
     _run(p, _strip_bold(text).upper(), bold=True, size_pt=20,
-         color=_CHARCOAL, font=FONT)
+         color=_CHARCOAL, font=font)
     return p
 
 
-def _contact_para(doc, text):
+def _contact_para(doc, text, font=DEFAULT_FONT):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     p.paragraph_format.space_after  = Pt(8)
     p.paragraph_format.space_before = Pt(0)
     _add_runs_with_placeholders(p, _strip_bold(text), size_pt=10,
-                                 color=_TEXT_MID, font=FONT)
+                                 color=_TEXT_MID, font=font)
     return p
 
 
-def _section_header(doc, text):
-    # Remove ## prefix
+def _section_header(doc, text, font=DEFAULT_FONT):
     label = re.sub(r"^#+\s*", "", text).strip().upper()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -131,75 +130,75 @@ def _section_header(doc, text):
     p.paragraph_format.space_after  = Pt(6)
     _set_shading(p, _GREY_FILL)
     _set_para_border_bottom(p, color=_SLATE_HEX, size=6)
-    _run(p, label, bold=True, size_pt=11, color=_CHARCOAL, font=FONT)
+    _run(p, label, bold=True, size_pt=11, color=_CHARCOAL, font=font)
     return p
 
 
-def _company_para(doc, text):
+def _company_para(doc, text, font=DEFAULT_FONT):
     p = doc.add_paragraph()
     p.paragraph_format.space_before = Pt(10)
     p.paragraph_format.space_after  = Pt(0)
     _add_runs_with_placeholders(p, _strip_bold(text), bold=True,
-                                 size_pt=11, color=_CHARCOAL, font=FONT)
+                                 size_pt=11, color=_CHARCOAL, font=font)
     return p
 
 
-def _title_para(doc, line):
+def _title_para(doc, line, font=DEFAULT_FONT):
     title, date = _split_title_date(line)
     p = doc.add_paragraph()
     p.paragraph_format.space_before = Pt(2)
     p.paragraph_format.space_after  = Pt(2)
-    # Right-align the date with a tab stop
-    from docx.oxml import OxmlElement
     pPr  = p._p.get_or_add_pPr()
     tabs = OxmlElement("w:tabs")
     tab  = OxmlElement("w:tab")
     tab.set(qn("w:val"),  "right")
-    tab.set(qn("w:pos"),  "9360")  # ~6.5 inches
+    tab.set(qn("w:pos"),  "9360")
     tabs.append(tab)
     pPr.append(tabs)
     _add_runs_with_placeholders(p, title, bold=True, size_pt=11,
-                                 color=_CHARCOAL, font=FONT)
+                                 color=_CHARCOAL, font=font)
     if date:
-        _run(p, "\t", font=FONT, size_pt=11)
-        _add_runs_with_placeholders(p, date, size_pt=10, color=_TEXT_MID, font=FONT)
+        _run(p, "\t", font=font, size_pt=11)
+        _add_runs_with_placeholders(p, date, size_pt=10, color=_TEXT_MID, font=font)
     return p
 
 
-def _scope_para(doc, text):
+def _scope_para(doc, text, font=DEFAULT_FONT):
     p = doc.add_paragraph()
     p.paragraph_format.space_before = Pt(3)
     p.paragraph_format.space_after  = Pt(3)
     _add_runs_with_placeholders(p, text, italic=True, size_pt=10,
-                                 color=_TEXT_MID, font=FONT)
+                                 color=_TEXT_MID, font=font)
     return p
 
 
-def _bullet_para(doc, text):
+def _bullet_para(doc, text, font=DEFAULT_FONT):
     p = doc.add_paragraph(style="List Bullet")
     p.paragraph_format.left_indent   = Inches(0.2)
     p.paragraph_format.space_before  = Pt(0)
     p.paragraph_format.space_after   = Pt(2)
-    _add_runs_with_placeholders(p, text, size_pt=10, color=_TEXT_MID, font=FONT)
+    _add_runs_with_placeholders(p, text, size_pt=10, color=_TEXT_MID, font=font)
     return p
 
 
-def _body_para(doc, text, centered=False):
+def _body_para(doc, text, centered=False, font=DEFAULT_FONT):
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER if centered else WD_ALIGN_PARAGRAPH.LEFT
     p.paragraph_format.space_before = Pt(0)
     p.paragraph_format.space_after  = Pt(4)
     _add_runs_with_placeholders(p, _strip_bold(text), size_pt=10,
-                                 color=_TEXT_MID, font=FONT)
+                                 color=_TEXT_MID, font=font)
     return p
 
 
 # ── main builder ──────────────────────────────────────────────────────────────
 
-def resume_to_docx(resume_text: str) -> bytes:
-    doc  = Document()
+def resume_to_docx(resume_text: str, font: str = DEFAULT_FONT) -> bytes:
+    if font not in ALLOWED_FONTS:
+        font = DEFAULT_FONT
 
-    # Page setup: 8.5 x 11, 0.75" margins
+    doc = Document()
+
     for section in doc.sections:
         section.page_width    = Inches(8.5)
         section.page_height   = Inches(11)
@@ -208,9 +207,8 @@ def resume_to_docx(resume_text: str) -> bytes:
         section.top_margin    = Inches(0.75)
         section.bottom_margin = Inches(0.75)
 
-    # Default style
     style = doc.styles["Normal"]
-    style.font.name = FONT
+    style.font.name = font
     style.font.size = Pt(10)
 
     lines  = resume_text.splitlines()
@@ -224,21 +222,20 @@ def resume_to_docx(resume_text: str) -> bytes:
     def flush_scope():
         nonlocal scope_buffer
         if scope_buffer:
-            _scope_para(doc, " ".join(scope_buffer).strip())
+            _scope_para(doc, " ".join(scope_buffer).strip(), font=font)
             scope_buffer = []
 
     for line in lines:
         raw  = line
         line = line.strip()
 
-        # ── Section header (## ...) ──────────────────────────────────────────
         if line.startswith("## "):
             flush_scope()
             in_role_block = False
             after_title   = False
             seen_bullet   = False
             sec = re.sub(r"^##\s*", "", line).strip().upper()
-            _section_header(doc, line)
+            _section_header(doc, line, font=font)
             if "ADDITIONAL" in sec:
                 state = "ADDITIONAL"
             elif "EXPERIENCE" in sec:
@@ -255,52 +252,45 @@ def resume_to_docx(resume_text: str) -> bytes:
                 state = "SUMMARY"
             continue
 
-        # ── Company header (### ...) in EXPERIENCE ───────────────────────────
         if line.startswith("### ") and state == "EXPERIENCE":
             flush_scope()
             in_role_block = True
             after_title   = False
             seen_bullet   = False
-            _company_para(doc, line[4:].strip())
+            _company_para(doc, line[4:].strip(), font=font)
             continue
 
-        # ── Blank line ───────────────────────────────────────────────────────
         if not line:
             if seen_bullet:
                 flush_scope()
             continue
 
-        # ── Bullet ───────────────────────────────────────────────────────────
         if re.match(r"^[-*]\s+", line) and state == "EXPERIENCE":
             if not seen_bullet:
                 flush_scope()
                 seen_bullet = True
-            _bullet_para(doc, re.sub(r"^[-*]\s+", "", line))
+            _bullet_para(doc, re.sub(r"^[-*]\s+", "", line), font=font)
             continue
 
-        # ── Header state (name + contact) ────────────────────────────────────
         if state == "HEADER":
             clean = re.sub(r"^#+\s*", "", line)
             if header_count == 0:
-                _name_para(doc, clean)
+                _name_para(doc, clean, font=font)
             else:
-                _contact_para(doc, clean)
+                _contact_para(doc, clean, font=font)
             header_count += 1
             if header_count >= 2:
                 state = "PRE_SECTION"
             continue
 
-        # ── Summary ──────────────────────────────────────────────────────────
         if state in ("SUMMARY", "PRE_SECTION"):
-            _body_para(doc, line)
+            _body_para(doc, line, font=font)
             continue
 
-        # ── Competencies (centered, pipe-separated) ───────────────────────────
         if state == "COMPETENCIES":
-            _body_para(doc, line, centered=True)
+            _body_para(doc, line, centered=True, font=font)
             continue
 
-        # ── Professional Experience body ─────────────────────────────────────
         if state == "EXPERIENCE":
             if _is_title_line(line):
                 flush_scope()
@@ -308,25 +298,22 @@ def resume_to_docx(resume_text: str) -> bytes:
                 seen_bullet = False
                 if not in_role_block:
                     in_role_block = True
-                _title_para(doc, line)
+                _title_para(doc, line, font=font)
             elif not in_role_block:
-                _company_para(doc, line)
+                _company_para(doc, line, font=font)
                 in_role_block = True
             elif after_title and not seen_bullet:
-                # Could be SCOPE: line
                 scope_line = re.sub(r"^SCOPE:\s*", "", line, flags=re.IGNORECASE).strip()
                 scope_buffer.append(scope_line)
             else:
-                _body_para(doc, line)
+                _body_para(doc, line, font=font)
             continue
 
-        # ── Additional Experience ─────────────────────────────────────────────
         if state == "ADDITIONAL":
-            _body_para(doc, line)
+            _body_para(doc, line, font=font)
             continue
 
-        # ── Everything else (Education, Certifications, Languages) ───────────
-        _body_para(doc, line)
+        _body_para(doc, line, font=font)
 
     flush_scope()
 

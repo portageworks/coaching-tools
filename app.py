@@ -263,8 +263,9 @@ def builder_resume_docx():
     data        = request.get_json()
     resume_text = data.get("content", "")
     client_name = (data.get("client_name") or "client").strip()
+    font        = (data.get("font") or "Calibri").strip()
 
-    docx_bytes = resume_to_docx(resume_text)
+    docx_bytes = resume_to_docx(resume_text, font=font)
 
     # Build filename: LastName_FirstName_Resume.docx
     parts = client_name.split()
