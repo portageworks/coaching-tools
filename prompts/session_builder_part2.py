@@ -255,62 +255,102 @@ High-authority summary focusing on scope and impact. Formatted for top of resume
 **The Voice:** [Recommended communication style for this brand]"""
 
 
+ATTITUDE_BARRIERS = (
+    "Angry at company | Attending school | Believes age discrimination will impact search | "
+    "Emotionally not ready for job search | Family issues | Fear of networking/resists networking | "
+    "Few personal contacts | Financially too secure | Has a non-compete | "
+    "Knows everything about everything | Knows everything about job search | "
+    "Looking in multiple directions | Main Local Industry Downturn | "
+    "Negative/poor social media presence | Passive-Aggressive behavior | Salary too high | "
+    "Salary too low | Severance too long | Severance too short | "
+    "Single income or primary head of household / spouse not working | "
+    "Single-Industry Region e.g. oil/gas | Started search prior to CGC training | Still working | "
+    "Taking extended vacation/time off | Too many outside interests | Unwilling to relocate | Other"
+)
+
+CAREER_BARRIERS = (
+    "Achievements are hard to qualify | Career has peaked | Company merged and job lost | "
+    "Extended time in one job/title | Generalist | Immigration/ability to work issues | "
+    "Inappropriate experience for job objective | International experience only | "
+    "Job sought is a step down | Lengthy job gap or multiple gaps | Long tenure with same company | "
+    "Looking for major career change | Misleading job titles in career | "
+    "No college if needed for position | No CPA if needed for position | "
+    "No large companies in work history | No small companies in work history | "
+    "Non-profit experience only if seeking for-profit | One industry only if seeking new industry | "
+    "PhD if not applicable to job | Professional student | Received promotion and then lost job | "
+    "Recent demotion | Seeking international only | Seeking previously held job | "
+    "Short tenure with previous company | Short work history | Specialist | "
+    "Title misrepresents level | Other"
+)
+
+INTERVIEW_BARRIERS = (
+    "Accent makes it difficult to understand | Angry/Bitter/Negative | Answers questions not asked | "
+    "Answers questions with questions | Appearance not congruent with expected image | Argumentative | "
+    "Arrogant/egomaniac | Asks too many questions | Bites Lips/Fingers/Nails | Blames Others | "
+    "Blank Stare | Boisterous | Brash/Brassy | Colloquialisms | Complainer | Cynical | Defensive | "
+    "Depressed | Doesn't trust/withholds information | Drops/uses incorrect articles/pronouns | "
+    "Easily Stumped | Ends every sentence upward | Fidgets | Frowns | Guarded | Hesitant | Impatient | "
+    "Intimidating | Introverted | Jokester | Lacks Focus | Lacks Self-Assurance | Lectures | "
+    "Misuses words | Monotone | Moody | Name Dropper | Nervous Laugh | Never/Rarely Smiles | "
+    "No/Poor Eye contact | Off Guard | Overconfident | Overly Aggressive | Overly Opinionated | "
+    "Overly Serious | Passive-aggressive behavior | Perfectionist | Philosophical | "
+    "Poor command of English | Quivery/Shaky | Rolls Eyes | Sassy/Feisty | Self-Centered | "
+    "Self-Deprecating | Shy/Meek | Split/short attention span | Starts Over | Storyteller | "
+    "Talks Negatively | Talks too fast | Talks too much | Terse | Too Folksy | Too Formal | "
+    "Too Honest | Too Low Key | Too Polished/Slick | Too Relaxed | Too Technical | "
+    "Uses company acronyms extensively | Uses fillers e.g. \"I think\" \"Um\" \"You know\" | "
+    "Volunteers Negative Info | Other"
+)
+
+
 def training_prompt(client_name):
     first = client_name.split()[0]
     return f"""{client_anchor(client_name)}
 
-You are producing an internal Training Assessment for the coaching team. This is NOT a client-facing document. Base all observations strictly on the session transcript. Output clean, copy-paste-ready text. No citations, no word bank labels, no bracketed placeholder instructions.
+You are producing an internal Training Assessment for the coaching team. This is NOT a client-facing document. Its fields map directly to the CGC coaching form, so produce them in the exact order and with the exact field names below. Output clean, copy-paste-ready text. No citations, no bracketed placeholder instructions, no preamble.
 
 Use "I" when referring to the coach's observations. Use {first}'s first name throughout.
+
+TWO KINDS OF FIELDS:
+1. SELECTION fields (the three Barrier fields) are dropdown picks. Output ONLY the exact option labels that genuinely apply, copied verbatim from the provided list, one per line as a bullet, ranked most to least salient. Select the most defensible 3-5 (fewer if fewer truly apply). Do NOT write evidence, explanation, or commentary in a selection field. If a real barrier exists that no label covers, add a final bullet "Other: <2-4 word descriptor>".
+2. NARRATIVE fields are prose summaries. These are where the analysis lives. Write them at the depth specified.
+
+Never duplicate content: barriers are named only in the selection fields; their interpretation lives only in the Analysis fields.
 
 ---
 
 # Training Assessment — {first}
 
-## 1. SESSION OVERVIEW
+**Mood:** {first}'s emotional tone and engagement level (2-3 sentences).
 
-**Mood:** Summarize {first}'s emotional tone and engagement level (2-3 sentences).
+**Goals:** Short-term and long-term career objectives discussed (3-4 sentences).
 
-**Goals:** Detail short-term and long-term career objectives discussed (3-4 sentences).
-
-**Resume Status:** Note current strengths and specific gaps to address (2-3 sentences).
+**Resume Status:** Current strengths and specific gaps to address (2-3 sentences).
 
 **Success Stories:** 1-2 sentence summary of 3-4 specific wins discussed.
 
----
+**LinkedIn/Essentials:** Profile review, optimization needs, and comfort with / planned use of Challenger Essentials (2-4 sentences).
 
-## 2. LOGISTICS & PLATFORM
+**Contact Lists:** Whether a networking list exists; if not, the specific recommendation given (2-3 sentences).
 
-**LinkedIn:** Summarize profile review and specific optimization needs (2-3 sentences).
+**Additional Information:** Personal, family, or education factors impacting the search (3-5 sentences).
 
-**Challenger Essentials:** Detail comfort level and planned use of the platform (2-3 sentences).
+**Job Barriers — Client's Attention, Focus and Attitude:**
+Selection field. Choose only from this exact list, verbatim:
+{ATTITUDE_BARRIERS}
 
-**Contact Lists:** State if a networking list exists; if not, provide the specific recommendation given (2-3 sentences).
+**Job Barriers — Client's Career Experience:**
+Selection field. Draw on BOTH the resume and the transcript. Choose only from this exact list, verbatim:
+{CAREER_BARRIERS}
 
-**Additional Info:** Note personal, family, or education factors impacting the search (3-5 sentences).
+**Job Barrier Analysis:** One combined narrative covering both barrier lists above — how these barriers, taken together, will impact {first}'s search strategy and what the next coach should do about them (4-6 sentences).
 
----
+**Interview Barriers:**
+Selection field based on the practice interview. This assessment is from a transcript, so select only barriers evidenced in what was SAID and how it reads — content, tone, verbal habits, fillers, evasiveness, structure. Do NOT select purely physical or visual barriers (eye contact, fidgeting, facial expressions, appearance, nail-biting) unless the transcript explicitly notes them. Choose only from this exact list, verbatim:
+{INTERVIEW_BARRIERS}
 
-## 3. BARRIER ANALYSIS
+**Interview Analysis:** Synthesize interview strengths and growth areas. Frame growth as "what I want to see more of" (4-6 sentences).
 
-**Attention, Focus & Attitude Barriers**
-Based on the transcript, identify 3-5 specific barriers observed. For each, provide 1-2 sentences of evidence.
+**Overall Assessment:** Potential for success and specific advice for the next coach (4-5 sentences).
 
-**Analysis:** How these barriers will impact the search strategy (3-5 sentences).
-
----
-
-## 4. INTERVIEW PERFORMANCE
-
-**Interview Barriers**
-Based on the practice interview in the transcript, identify 3-5 specific areas for development. For each, provide 1-2 sentences of evidence.
-
-**Analysis:** Synthesize interview strengths and growth areas. Frame growth as "what I want to see more of" (3-5 sentences).
-
----
-
-## 5. FINAL EVALUATION
-
-**Overall Assessment:** Summarize potential for success and specific advice for the next coach (4-5 sentences).
-
-**Reason for Leaving:** Provide the employer-safe narrative for {first}'s departure (2-3 sentences)."""
+**Reason for Leaving:** The employer-safe narrative for {first}'s departure (2-3 sentences)."""
