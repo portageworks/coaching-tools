@@ -152,7 +152,7 @@ def _title_para(doc, line, font=DEFAULT_FONT):
     tabs = OxmlElement("w:tabs")
     tab  = OxmlElement("w:tab")
     tab.set(qn("w:val"),  "right")
-    tab.set(qn("w:pos"),  "9360")
+    tab.set(qn("w:pos"),  "10800")
     tabs.append(tab)
     pPr.append(tabs)
     _add_runs_with_placeholders(p, title, bold=True, size_pt=11,
@@ -202,10 +202,10 @@ def resume_to_docx(resume_text: str, font: str = DEFAULT_FONT) -> bytes:
     for section in doc.sections:
         section.page_width    = Inches(8.5)
         section.page_height   = Inches(11)
-        section.left_margin   = Inches(0.75)
-        section.right_margin  = Inches(0.75)
-        section.top_margin    = Inches(0.75)
-        section.bottom_margin = Inches(0.75)
+        section.left_margin   = Inches(0.5)
+        section.right_margin  = Inches(0.5)
+        section.top_margin    = Inches(0.5)
+        section.bottom_margin = Inches(0.5)
 
     style = doc.styles["Normal"]
     style.font.name = font
