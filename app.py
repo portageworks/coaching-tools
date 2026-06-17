@@ -690,6 +690,130 @@ body{{font-family:'Roboto',sans-serif;font-size:15px;line-height:1.7;color:#2c30
     )
 
 
+# ── All-in-one (full day: both runs + package build) ────────────────────────────
+
+@app.route("/full-session")
+def full_session_page():
+    return render_template("full_session.html")
+
+
+@app.route("/api/full/generate", methods=["POST"])
+def full_generate():
+    data        = request.get_json()
+    transcript  = (data.get("transcript") or "").strip()
+    resume      = (data.get("resume") or "").strip()
+    intake      = (data.get("intake") or "").strip()
+    client_name = (data.get("client_name") or "").strip()
+
+    if not transcript:
+        return jsonify({"error": "Transcript is required."}), 400
+    if not client_name:
+        return jsonify({"error": "Client name is required."}), 400
+
+    def _user_msg():
+        msg = f"Here is the session transcript:\n\n{transcript}"
+        if resume:
+            msg += f"\n\n---\nRESUME:\n\n{resume}"
+        if intake:
+            msg += f"\n\n---\nINTAKE ANSWERS:\n\n{intake}"
+        return msg
+
+    def _sse(event, obj):
+        return f"event: {event}\ndata: {json.dumps(obj)}\n\n"
+
+    q = queue.Queue()
+
+    # Single-call jobs: (id, system_prompt, max_tokens, model)
+    JOBS = [
+        ("ip",          interview_program_prompt(client_name),                       16000, MODEL_SMART),
+        ("stories",     stories_prompt(client_name),                                 16000, MODEL_SMART),
+        ("summary",     summary_prompt(client_name),                                 12000, MODEL_SMART),
+        ("branding",    branding_prompt(client_name, bool(resume), bool(intake)),    12000, MODEL_SMART),
+        ("positioning", positioning_prompt(client_name, bool(resume), bool(intake)),  8000, MODEL_SMART),
+        ("training",    training_prompt(client_name),                                 8000, MODEL_FAST),
+    ]
+
+    def run_job(job_id, system_prompt, max_tokens, model):
+        try:
+            resp = client.messages.create(
+                model=model, max_tokens=max_tokens, system=system_prompt,
+                messages=[{"role": "user", "content": _user_msg()}],
+            )
+            q.put(("done", job_id, (resp.content[0].text or "").strip()))
+        except Exception as e:
+            q.put(("error", job_id, str(e)))
+
+    def run_roleplay_job():
+        try:
+            resp_a = client.messages.create(
+                model=MODEL_SMART, max_tokens=16000, system=roleplay_a_prompt(client_name),
+                messages=[{"role": "user", "content": _user_msg()}],
+            )
+            part_a = (resp_a.content[0].text or "").strip()
+            resp_b = client.messages.create(
+                model=MODEL_SMART, max_tokens=16000, system=roleplay_b_prompt(client_name),
+                messages=[{"role": "user", "content": _user_msg()}],
+            )
+            part_b = (resp_b.content[0].text or "").strip()
+            q.put(("done", "roleplay", part_a + "\n\n---\n\n" + part_b))
+        except Exception as e:
+            q.put(("error", "roleplay", str(e)))
+
+    def run_resume_job():
+        try:
+            diag_resp = client.messages.create(
+                model=MODEL_FAST, max_tokens=1500, system=resume_diagnostic_prompt(),
+                messages=[{"role": "user", "content": _user_msg()}],
+            )
+            brief = (diag_resp.content[0].text or "").strip().replace("```json", "").replace("```", "").strip()
+            rewrite_msg = f"STRATEGY BRIEF:\n{brief}\n\n---\n\n{_user_msg()}"
+            rewrite_resp = client.messages.create(
+                model=MODEL_SMART, max_tokens=8000, system=resume_rewrite_prompt(),
+                messages=[{"role": "user", "content": rewrite_msg}],
+            )
+            q.put(("done", "resume", (rewrite_resp.content[0].text or "").strip()))
+        except Exception as e:
+            q.put(("error", "resume", str(e)))
+
+    def generate():
+        all_ids = [j[0] for j in JOBS] + ["roleplay", "resume"]
+        for jid in all_ids:
+            yield _sse("status", {"id": jid, "state": "running"})
+
+        threads = []
+        for job_id, system_prompt, max_tokens, model in JOBS:
+            t = threading.Thread(target=run_job, args=(job_id, system_prompt, max_tokens, model), daemon=True)
+            t.start(); threads.append(t)
+        for runner in (run_roleplay_job, run_resume_job):
+            t = threading.Thread(target=runner, daemon=True)
+            t.start(); threads.append(t)
+
+        remaining = len(JOBS) + 2
+        while remaining > 0:
+            try:
+                event_type, job_id, payload = q.get(timeout=600)
+            except queue.Empty:
+                yield _sse("error", {"id": "all", "message": "Timeout waiting for results."})
+                return
+            remaining -= 1
+            if event_type == "done":
+                try:
+                    strategy_store.save_piece(client_name, job_id, payload)
+                except Exception:
+                    pass
+                yield _sse("result", {"id": job_id, "state": "done", "content": payload})
+            else:
+                yield _sse("result", {"id": job_id, "state": "error", "message": payload})
+
+        yield _sse("complete", {})
+
+    return Response(
+        stream_with_context(generate()),
+        mimetype="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
 # ── Strategy Package (combined client book) ─────────────────────────────────────
 
 @app.route("/strategy-package")
