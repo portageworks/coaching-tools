@@ -264,6 +264,83 @@ def build_client_html(markdown_text, client_name, subtitle):
 </body></html>"""
 
 
+# ── Session Worksheet (reMarkable, ruled note space) ─────────────────────────────
+def _worksheet_css(client_name):
+    cn = esc(client_name)
+    return f"""
+{FONT_FACES}
+*,*::before,*::after{{margin:0;padding:0;box-sizing:border-box;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;}}
+:root{{
+  --charcoal:#1e2022;--charcoal-mid:#3d4145;--slate:#3a5a7c;--slate-mid:#5579a0;
+  --slate-pale:#eef4fb;--text:#2c3035;--text-mid:#4a5058;--text-dim:#7a8088;
+  --border:#e0dbd4;--rule:#c2ccd6;
+}}
+@page{{
+  size:letter;margin:0.6in 0.7in 0.7in 0.7in;
+  @bottom-right{{content:"{cn}  —  Session Worksheet  —  Page " counter(page);
+    font-family:'Roboto',sans-serif;font-size:7.5pt;color:#9ba0a6;
+    padding-top:7pt;border-top:0.5pt solid #e0dbd4;}}
+}}
+@page :first{{margin-top:0;}}
+body{{font-family:'Roboto','DejaVu Sans',sans-serif;font-size:12pt;
+  line-height:1.5;color:var(--text);background:white;}}
+.doc-header{{border-top:3pt solid var(--charcoal);border-bottom:0.5pt solid var(--border);
+  padding:18pt 0.7in 14pt;margin:-0.6in -0.7in 0;}}
+.eyebrow{{font-size:8pt;letter-spacing:.2em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:7pt;}}
+.client-name{{font-family:'Roboto Slab',serif;font-size:22pt;font-weight:700;color:var(--charcoal);line-height:1.1;}}
+.doc-sub{{font-size:10pt;font-weight:300;color:var(--text-mid);margin-top:3pt;}}
+.doc-body{{padding-top:18pt;}}
+h1{{display:none;}}
+h2{{font-family:'Roboto Slab',serif;font-size:15pt;font-weight:700;color:var(--charcoal);
+  margin-top:22pt;margin-bottom:7pt;padding-bottom:6pt;border-bottom:1.5pt solid var(--charcoal);
+  break-after:avoid;break-before:auto;}}
+h2:first-of-type{{margin-top:0;}}
+h3{{font-family:'Roboto',sans-serif;font-size:12.5pt;font-weight:600;color:var(--slate);
+  margin-top:16pt;margin-bottom:6pt;break-after:avoid;}}
+p{{margin-bottom:7pt;color:var(--text-mid);}}
+p em{{color:var(--charcoal-mid);font-style:italic;}}
+strong{{font-weight:600;color:var(--charcoal);}}
+ul,ol{{margin:4pt 0 8pt 20pt;padding:0;}}
+li{{margin-bottom:6pt;color:var(--charcoal);break-inside:avoid;}}
+li::marker{{color:var(--slate-mid);}}
+blockquote{{border-left:2.5pt solid var(--slate);background:var(--slate-pale);
+  padding:8pt 12pt;margin:7pt 0 9pt;break-inside:avoid;border-radius:0 2pt 2pt 0;}}
+blockquote p{{margin-bottom:0;color:var(--charcoal);font-size:11pt;line-height:1.55;}}
+hr{{border:none;border-top:0.5pt solid var(--border);margin:14pt 0;}}
+.note{{margin:6pt 0 12pt;}}
+.note .rule{{height:30pt;border-bottom:0.75pt solid var(--rule);}}
+"""
+
+
+def _ruled_note(size):
+    counts = {"small": 3, "standard": 6, "large": 12}
+    n = counts.get(size or "standard", 6)
+    return '<div class="note">' + ('<div class="rule"></div>' * n) + "</div>"
+
+
+def build_worksheet_html(worksheet_md, client_name):
+    today = datetime.now().strftime("%B %d, %Y")
+    # Split on note markers; the optional size is captured.
+    parts = re.split(r"(?m)^[ \t]*\[\[NOTES(?::([a-zA-Z]+))?\]\][ \t]*$", worksheet_md)
+    body = ""
+    for i, chunk in enumerate(parts):
+        if i % 2 == 0:
+            if chunk and chunk.strip():
+                body += _md_to_html(chunk, strip_emoji=True)
+        else:
+            body += _ruled_note(chunk)  # chunk is the captured size (or None)
+    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<style>{_worksheet_css(client_name)}</style></head><body>
+<div class="doc-header">
+  <div class="eyebrow">Challenger, Gray &amp; Christmas  /  Coach Worksheet</div>
+  <div class="client-name">{esc(client_name)}</div>
+  <div class="doc-sub">Session Worksheet  —  {today}</div>
+</div>
+<div class="doc-body">{body}</div>
+</body></html>"""
+
+
 def _positioning_body_html(pos):
     """The inner content of the positioning guide (everything inside .doc-body),
     reusable both as a standalone PDF and as a section of the strategy package."""

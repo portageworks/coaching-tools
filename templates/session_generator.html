@@ -107,7 +107,7 @@
 <div class="page-header">
   <div class="header-label">Challenger Gray &amp; Christmas</div>
   <div class="header-title">Session Generator</div>
-  <div class="header-sub">Synthesis + Coach Guide from client pre-work</div>
+  <div class="header-sub">Coach Reference + Session Worksheet from client pre-work</div>
 </div>
 
 <div class="main">
@@ -146,8 +146,10 @@
       <div class="field-sublabel" style="margin-bottom:0;">
         <strong style="color:var(--text);">Call 1 &mdash; Synthesis</strong><br>
         Identity gap, north star phrase, session arc, emotional subtext, story assessment, bespoke RP question, role hypotheses.<br><br>
-        <strong style="color:var(--text);">Call 2 &mdash; Coach Guide</strong><br>
-        Stem-to-stern session guide in session order. Layered question sequences. Optimized for reMarkable.
+        <strong style="color:var(--text);">Call 2 &mdash; Coach Reference</strong><br>
+        Deep-read guide in session order, with all coaching notes. For your iPad.<br><br>
+        <strong style="color:var(--text);">Call 3 &mdash; Session Worksheet</strong><br>
+        Lean, plug-and-play driver. Client snapshot + questions + ruled note space. For your reMarkable.
       </div>
     </div>
   </div>
@@ -166,7 +168,11 @@
       </div>
       <div class="progress-step" id="step2">
         <div class="step-icon" id="step2-icon">&#9675;</div>
-        <span>Call 2 &mdash; Coach guide (stem-to-stern session flow, layered questions, coaching notes)</span>
+        <span>Call 2 &mdash; Coach Reference (stem-to-stern session flow, layered questions, coaching notes)</span>
+      </div>
+      <div class="progress-step" id="step3">
+        <div class="step-icon" id="step3-icon">&#9675;</div>
+        <span>Call 3 &mdash; Session Worksheet (client snapshot, questions, ruled note space)</span>
       </div>
     </div>
   </div>
@@ -174,11 +180,17 @@
   <div class="outputs-wrap" id="outputsWrap">
     <div class="divider"></div>
     <div class="outputs-header">Ready to download</div>
+    <div class="output-card" style="margin-bottom:16px;">
+      <div class="output-card-label">For your iPad &mdash; deep read</div>
+      <div class="output-card-title">Coach Reference</div>
+      <div class="output-card-desc">The full stem-to-stern guide: pre-session brief, all blocks, layered question sequences, coaching notes, story assessments, and listen-fors. This is what you study beside the worksheet.</div>
+      <button class="download-btn" id="downloadRefBtn" onclick="downloadReference()">&#8595; Download Reference (.pdf)</button>
+    </div>
     <div class="output-card">
-      <div class="output-card-label">For you</div>
-      <div class="output-card-title">Coach Guide</div>
-      <div class="output-card-desc">Stem-to-stern session guide in session order. Pre-session brief, all eight blocks with layered question sequences and coaching notes. Opens in Google Docs or imports directly to reMarkable.</div>
-      <button class="download-btn" id="downloadBtn" onclick="downloadGuide()">&#8595; Download Guide (.docx)</button>
+      <div class="output-card-label">For your reMarkable &mdash; in the room</div>
+      <div class="output-card-title">Session Worksheet</div>
+      <div class="output-card-desc">Lean, plug-and-play driver. Opens with an "In Their Words" client snapshot, then runs block-by-block: questions plus generous ruled note space to write on. Same session order as the Reference.</div>
+      <button class="download-btn" id="downloadWsBtn" onclick="downloadWorksheet()">&#8595; Download Worksheet (.pdf)</button>
     </div>
   </div>
 
@@ -188,6 +200,7 @@
 {% block scripts %}
 <script>
 let generatedGuide = '';
+let generatedWorksheet = '';
 let clientFirstName = '';
 let clientLastName = '';
 
@@ -264,11 +277,13 @@ async function runGeneration() {
         if (event === 'step') {
           if (payload.step === 1) setStep(1, 'active');
           if (payload.step === 2) { setStep(1, 'done'); setStep(2, 'active'); }
+          if (payload.step === 3) { setStep(2, 'done'); setStep(3, 'active'); }
         } else if (event === 'error') {
           throw new Error(payload.message || 'Generation failed.');
         } else if (event === 'done') {
           generatedGuide = payload.guide;
-          setStep(2, 'done');
+          generatedWorksheet = payload.worksheet || '';
+          setStep(3, 'done');
           document.getElementById('outputsWrap').classList.add('visible');
         }
         // 'ping' and 'guide_chunk' events are intentionally ignored in the UI
@@ -277,41 +292,39 @@ async function runGeneration() {
   } catch (err) {
     setStep(1, 'error');
     setStep(2, 'error');
+    setStep(3, 'error');
     showError(err.message || 'Something went wrong. Please try again.');
   } finally {
     document.getElementById('generateBtn').disabled = false;
   }
 }
 
-// Download — server builds the .docx and sends it back as a file
-async function downloadGuide() {
-  const btn = document.getElementById('downloadBtn');
+// Downloads — server builds each PDF and sends it back as a file
+async function downloadDoc(endpoint, payloadExtra, btnId, label) {
+  const btn = document.getElementById(btnId);
+  const orig = btn.innerHTML;
   btn.disabled = true;
   btn.textContent = 'Building…';
-
   try {
-    const res = await fetch('/api/session/guide.docx', {
+    const res = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        guide: generatedGuide,
+      body: JSON.stringify(Object.assign({
         first_name: clientFirstName,
         last_name: clientLastName,
-      }),
+      }, payloadExtra)),
     });
-
     if (!res.ok) {
       const txt = await res.text();
       throw new Error(`Server error ${res.status}: ${txt}`);
     }
-
     const blob = await res.blob();
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    const slug = [clientFirstName, clientLastName]
-      .filter(Boolean).join('_').toLowerCase().replace(/\s+/g, '_');
+    const disp = res.headers.get('Content-Disposition') || '';
+    const fn   = disp.match(/filename="?([^"]+)"?/);
     a.href     = url;
-    a.download = `${slug}_coach_guide.docx`;
+    a.download = fn ? fn[1] : label;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -320,8 +333,15 @@ async function downloadGuide() {
     showError('Download failed: ' + e.message);
   } finally {
     btn.disabled = false;
-    btn.innerHTML = '&#8595; Download Guide (.docx)';
+    btn.innerHTML = orig;
   }
+}
+
+function downloadReference() {
+  downloadDoc('/api/session/reference.pdf', { guide: generatedGuide }, 'downloadRefBtn', 'coach_reference.pdf');
+}
+function downloadWorksheet() {
+  downloadDoc('/api/session/worksheet.pdf', { worksheet: generatedWorksheet }, 'downloadWsBtn', 'session_worksheet.pdf');
 }
 
 // UI helpers
@@ -342,7 +362,7 @@ function setStep(num, state) {
 }
 
 function resetSteps() {
-  for (let i = 1; i <= 2; i++) {
+  for (let i = 1; i <= 3; i++) {
     const step = document.getElementById(`step${i}`);
     if (step) step.className = 'progress-step';
     const icon = document.getElementById(`step${i}-icon`);

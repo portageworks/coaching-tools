@@ -10,7 +10,7 @@ import threading
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_file
 import anthropic
 
-from prompts.session_generator import SYNTHESIS_SYSTEM, COACH_GUIDE_SYSTEM
+from prompts.session_generator import SYNTHESIS_SYSTEM, COACH_GUIDE_SYSTEM, WORKSHEET_SYSTEM
 from prompts.session_builder import (
     interview_program_prompt, stories_prompt,
     positioning_prompt, resume_diagnostic_prompt, resume_rewrite_prompt,
@@ -22,7 +22,10 @@ from prompts.session_builder_part2 import (
 )
 from docx_builder import markdown_to_docx
 from resume_docx_builder import resume_to_docx
-from pdf_builder import build_client_html, build_positioning_html, build_strategy_package_html, render_pdf
+from pdf_builder import (
+    build_client_html, build_positioning_html, build_strategy_package_html,
+    build_worksheet_html, render_pdf,
+)
 import strategy_store
 
 app = Flask(__name__)
@@ -228,7 +231,26 @@ def session_generate():
             yield _sse("error", {"message": str(e)})
             return
 
-        yield _sse("done", {"guide": "".join(guide_chunks)})
+        guide = "".join(guide_chunks)
+        yield _sse("step", {"step": 3})
+
+        worksheet_chunks = []
+        try:
+            with client.messages.stream(
+                model=MODEL_FAST,
+                max_tokens=16000,
+                system=WORKSHEET_SYSTEM,
+                messages=[{"role": "user", "content":
+                    f"Here is the client data:\n\n{client_input}\n\n---\n\nSYNTHESIS:\n\n{synthesis}\n\n---\n\nCOACH GUIDE:\n\n{guide}\n\nProduce the lean session worksheet."}],
+            ) as stream:
+                for text in stream.text_stream:
+                    worksheet_chunks.append(text)
+                    yield _sse("ping", {})
+        except Exception as e:
+            yield _sse("error", {"message": str(e)})
+            return
+
+        yield _sse("done", {"guide": guide, "worksheet": "".join(worksheet_chunks)})
 
     return Response(
         stream_with_context(generate()),
@@ -237,14 +259,44 @@ def session_generate():
     )
 
 
+def _session_slug(data):
+    first = (data.get("first_name") or "client").strip().lower()
+    last  = (data.get("last_name") or "").strip().lower()
+    return re.sub(r"\s+", "_", f"{first}_{last}".strip("_")) or "client"
+
+
+def _client_full_name(data):
+    return " ".join(p for p in [(data.get("first_name") or "").strip(),
+                                (data.get("last_name") or "").strip()] if p) or "Client"
+
+
+@app.route("/api/session/reference.pdf", methods=["POST"])
+def session_reference_pdf():
+    data       = request.get_json()
+    guide_md   = data.get("guide", "")
+    name       = _client_full_name(data)
+    slug       = _session_slug(data)
+    pdf_bytes  = render_pdf(build_client_html(guide_md, name, "Coach Reference"))
+    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+                     as_attachment=True, download_name=f"{slug}_coach_reference.pdf")
+
+
+@app.route("/api/session/worksheet.pdf", methods=["POST"])
+def session_worksheet_pdf():
+    data          = request.get_json()
+    worksheet_md  = data.get("worksheet", "")
+    name          = _client_full_name(data)
+    slug          = _session_slug(data)
+    pdf_bytes     = render_pdf(build_worksheet_html(worksheet_md, name))
+    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+                     as_attachment=True, download_name=f"{slug}_session_worksheet.pdf")
+
+
 @app.route("/api/session/guide.docx", methods=["POST"])
 def session_guide_docx():
     data = request.get_json()
     guide_md = data.get("guide", "")
-    first = (data.get("first_name") or "client").strip().lower()
-    last = (data.get("last_name") or "").strip().lower()
-    slug = re.sub(r"\s+", "_", f"{first}_{last}".strip("_"))
-
+    slug = _session_slug(data)
     docx_bytes = markdown_to_docx(guide_md)
     return send_file(
         io.BytesIO(docx_bytes),
