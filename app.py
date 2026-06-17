@@ -22,7 +22,8 @@ from prompts.session_builder_part2 import (
 )
 from docx_builder import markdown_to_docx
 from resume_docx_builder import resume_to_docx
-from pdf_builder import build_client_html, build_positioning_html, render_pdf
+from pdf_builder import build_client_html, build_positioning_html, build_strategy_package_html, render_pdf
+import strategy_store
 
 app = Flask(__name__)
 
@@ -358,6 +359,10 @@ def builder_generate():
 
             remaining -= 1
             if event_type == "done":
+                try:
+                    strategy_store.save_piece(client_name, job_id, payload)
+                except Exception:
+                    pass
                 yield _sse("result", {"id": job_id, "state": "done", "content": payload})
             else:
                 yield _sse("result", {"id": job_id, "state": "error", "message": payload})
@@ -568,6 +573,10 @@ def builder2_generate():
                 return
             remaining -= 1
             if event_type == "done":
+                try:
+                    strategy_store.save_piece(client_name, job_id, payload)
+                except Exception:
+                    pass
                 yield _sse("result", {"id": job_id, "state": "done", "content": payload})
             else:
                 yield _sse("result", {"id": job_id, "state": "error", "message": payload})
@@ -679,6 +688,36 @@ body{{font-family:'Roboto',sans-serif;font-size:15px;line-height:1.7;color:#2c30
         as_attachment=True,
         download_name=f"{slug}_training_assessment.html",
     )
+
+
+# ── Strategy Package (combined client book) ─────────────────────────────────────
+
+@app.route("/strategy-package")
+def strategy_package_page():
+    return render_template("strategy_package.html")
+
+
+@app.route("/api/package/clients")
+def package_clients():
+    return jsonify(strategy_store.list_clients())
+
+
+@app.route("/api/package/build.pdf", methods=["POST"])
+def package_build_pdf():
+    data        = request.get_json()
+    client_name = (data.get("client_name") or "").strip()
+    if not client_name:
+        return jsonify({"error": "Client name is required."}), 400
+
+    pieces = strategy_store.load_all(client_name)
+    if not pieces:
+        return jsonify({"error": f"No saved content found for {client_name}. Run the Session Builder for this client first."}), 404
+
+    html      = build_strategy_package_html(client_name, pieces)
+    pdf_bytes = render_pdf(html)
+    slug      = strategy_store.slugify(client_name)
+    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+                     as_attachment=True, download_name=f"{slug}_strategy_package.pdf")
 
 
 if __name__ == "__main__":

@@ -10,3 +10,6 @@ dist/
 build/
 .DS_Store
 Thumbs.db
+
+# Per-client strategy package storage (client PII — never commit)
+outputs/

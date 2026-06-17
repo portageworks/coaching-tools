@@ -1,0 +1,182 @@
+{% extends "base.html" %}
+{% block title %}Strategy Package — CGC{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f5f3f0;--surface:#fff;--surface2:#f0ede9;--border:#e0dbd4;
+    --border-mid:#ccc8c0;--charcoal:#1e2022;--charcoal-mid:#3d4145;
+    --text:#2c3035;--text-mid:#4a5058;--text-dim:#7a8088;--slate:#3a5a7c;
+    --slate-mid:#5579a0;--slate-light:#dce8f5;--slate-pale:#eef4fb;
+    --green:#2e6b4a;--green-bg:#ddf0e8;--red:#8b4040;--red-bg:#fdf5f5;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{background:var(--bg);color:var(--text);font-family:'Roboto',sans-serif;font-size:14px;line-height:1.6;}
+
+  .page-header{background:var(--charcoal);padding:28px 48px 32px;}
+  .header-label{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;}
+  .header-title{font-family:'Roboto Slab',serif;font-size:22px;color:#fff;}
+  .header-sub{font-size:12px;color:#9ba0a6;margin-top:3px;font-weight:300;}
+
+  .main{max-width:900px;margin:0 auto;padding:48px;}
+
+  .section-title{font-family:'Roboto Slab',serif;font-size:17px;color:var(--charcoal);margin-bottom:4px;}
+  .section-desc{font-size:13px;font-weight:300;color:var(--text-dim);margin-bottom:20px;}
+
+  .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .refresh-btn{font-family:'Roboto',sans-serif;font-size:12px;font-weight:500;background:var(--surface2);color:var(--text-mid);border:1px solid var(--border);border-radius:2px;padding:8px 14px;cursor:pointer;}
+  .refresh-btn:hover{border-color:var(--slate-mid);color:var(--slate);}
+
+  .client-list{display:flex;flex-direction:column;gap:12px;margin-bottom:28px;}
+  .client-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:18px 20px;cursor:pointer;transition:all .15s;}
+  .client-card:hover{border-color:var(--slate-mid);}
+  .client-card.selected{border-color:var(--slate);background:var(--slate-pale);box-shadow:0 0 0 1px var(--slate);}
+  .client-card-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;}
+  .client-name{font-family:'Roboto Slab',serif;font-size:16px;font-weight:600;color:var(--charcoal);}
+  .client-updated{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--text-dim);}
+  .checklist{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{font-size:11px;font-family:'Roboto Mono',monospace;letter-spacing:.04em;padding:4px 10px;border-radius:2px;border:1px solid var(--border);display:inline-flex;align-items:center;gap:5px;}
+  .chip.present{color:var(--green);background:var(--green-bg);border-color:#b0d9c4;}
+  .chip.missing{color:var(--text-dim);background:var(--surface2);}
+
+  .empty{background:var(--surface);border:1px dashed var(--border-mid);border-radius:3px;padding:32px;text-align:center;color:var(--text-dim);font-size:13px;}
+
+  .build-btn{font-family:'Roboto',sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;background:var(--charcoal);color:#fff;border:none;border-radius:2px;padding:14px 36px;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:10px;}
+  .build-btn:hover:not(:disabled){background:var(--charcoal-mid);}
+  .build-btn:disabled{background:var(--border-mid);cursor:not-allowed;}
+
+  .spinner{display:inline-block;width:13px;height:13px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .error-msg{display:none;background:var(--red-bg);border:1px solid #d4a0a0;border-radius:2px;padding:12px 16px;color:var(--red);font-size:13px;margin-top:16px;}
+  .error-msg.visible{display:block;}
+  .build-note{font-size:12px;font-weight:300;color:var(--text-dim);margin-top:12px;}
+
+  @media(max-width:700px){.main{padding:28px 20px;}.page-header{padding:20px 24px;}}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="header-label">Challenger Gray &amp; Christmas</div>
+  <div class="header-title">Strategy Package</div>
+  <div class="header-sub">Assemble all client deliverables into one polished PDF — no re-runs</div>
+</div>
+
+<div class="main">
+  <div class="toolbar">
+    <div>
+      <div class="section-title">Select a Client</div>
+      <div class="section-desc">Content saved from Session Builder runs. Pick a client, then build the combined package.</div>
+    </div>
+    <button class="refresh-btn" onclick="loadClients()">↻ Refresh</button>
+  </div>
+
+  <div class="client-list" id="clientList"></div>
+
+  <button class="build-btn" id="buildBtn" onclick="buildPackage()" disabled>
+    ⬇ Build Strategy Package
+  </button>
+  <div class="build-note" id="buildNote">Sections present for the selected client will be included, in the standard order.</div>
+
+  <div class="error-msg" id="errorMsg"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const ALL_PIECES = [
+  ['summary','Session Summary'],
+  ['branding','Branding Profile'],
+  ['ip','Interview Program'],
+  ['stories','Success Stories'],
+  ['roleplay','Roleplay Analysis'],
+  ['positioning','Where to Look'],
+];
+
+let selectedClient = null;
+
+async function loadClients(){
+  hideError();
+  const list = document.getElementById('clientList');
+  list.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const res = await fetch('/api/package/clients');
+    const clients = await res.json();
+    if(!Array.isArray(clients) || clients.length === 0){
+      list.innerHTML = '<div class="empty">No saved clients yet. Run the Session Builder (Part 1 and/or Part 2) for a client and their content will appear here.</div>';
+      return;
+    }
+    list.innerHTML = clients.map(renderClientCard).join('');
+  }catch(err){
+    list.innerHTML = '';
+    showError('Could not load clients: ' + (err.message || err));
+  }
+}
+
+function renderClientCard(c){
+  const have = new Set(c.pieces || []);
+  const chips = ALL_PIECES.map(([key,label]) => {
+    const present = have.has(key);
+    return `<span class="chip ${present?'present':'missing'}">${present?'✓':'○'} ${label}</span>`;
+  }).join('');
+  const updated = c.updated ? new Date(c.updated).toLocaleString() : '';
+  const safeName = c.name.replace(/"/g,'&quot;');
+  return `<div class="client-card" data-name="${safeName}" onclick="selectClient(this)">
+    <div class="client-card-top">
+      <div class="client-name">${escapeHtml(c.name)}</div>
+      <div class="client-updated">${escapeHtml(updated)}</div>
+    </div>
+    <div class="checklist">${chips}</div>
+  </div>`;
+}
+
+function selectClient(el){
+  document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedClient = el.getAttribute('data-name');
+  document.getElementById('buildBtn').disabled = false;
+}
+
+async function buildPackage(){
+  if(!selectedClient) return;
+  hideError();
+  const btn = document.getElementById('buildBtn');
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Building…';
+  try{
+    const res = await fetch('/api/package/build.pdf', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ client_name: selectedClient }),
+    });
+    if(!res.ok){
+      const data = await res.json().catch(()=>({}));
+      throw new Error(data.error || `Server error ${res.status}`);
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const disp = res.headers.get('Content-Disposition') || '';
+    const fn = disp.match(/filename="?([^"]+)"?/);
+    a.download = fn ? fn[1] : 'strategy_package.pdf';
+    a.href = url;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  }catch(err){
+    showError(err.message || 'Build failed.');
+  }finally{
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+function escapeHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function showError(msg){const el=document.getElementById('errorMsg');el.textContent=msg;el.className='error-msg visible';}
+function hideError(){document.getElementById('errorMsg').className='error-msg';}
+
+loadClients();
+</script>
+{% endblock %}
