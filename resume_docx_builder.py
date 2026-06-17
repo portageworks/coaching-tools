@@ -50,18 +50,32 @@ def _run(paragraph, text, bold=False, italic=False, size_pt=11,
 
 def _add_runs_with_placeholders(paragraph, text, bold=False, italic=False,
                                  size_pt=11, color=None, font=DEFAULT_FONT):
-    """Split on ((placeholder)) markers and highlight them yellow."""
+    """Split on ((placeholder)) markers and highlight them yellow.
+    Markdown emphasis markers are stripped from non-placeholder text since
+    bold/italic are applied via run formatting, not literal asterisks."""
     parts = re.split(r"(\(\([^)]*?\)\))", text)
     for part in parts:
         if not part:
             continue
         is_ph = part.startswith("((") and part.endswith("))")
+        if not is_ph:
+            part = _strip_md(part)
+            if not part:
+                continue
         _run(paragraph, part, bold=bold, italic=italic, size_pt=size_pt,
              color=color, highlight=is_ph, font=font)
 
 
+def _strip_md(text):
+    """Remove markdown emphasis markers (**bold**, *italic*) and any stray
+    leading/trailing asterisks, leaving the inner text intact."""
+    text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+    text = re.sub(r"\*([^*]+)\*", r"\1", text)
+    return text.replace("**", "").replace("*", "")
+
+
 def _strip_bold(text):
-    return re.sub(r"\*\*([^*]*)\*\*", r"\1", text)
+    return _strip_md(text)
 
 
 def _set_para_border_bottom(paragraph, color="AAAAAA", size=4, space=1):
@@ -228,6 +242,10 @@ def resume_to_docx(resume_text: str, font: str = DEFAULT_FONT) -> bytes:
     for line in lines:
         raw  = line
         line = line.strip()
+
+        # Skip markdown horizontal rules / separators the model sometimes inserts
+        if re.fullmatch(r"[-*_]{3,}", line):
+            continue
 
         if line.startswith("## "):
             flush_scope()
