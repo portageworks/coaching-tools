@@ -53,6 +53,7 @@
   .prompt-badge{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.14em;text-transform:uppercase;padding:3px 8px;border-radius:2px;display:inline-block;width:fit-content;}
   .badge-pdf{color:var(--slate);background:var(--slate-pale);border:1px solid var(--slate-light);}
   .badge-html{color:#2e6b3e;background:#e8f5ee;border:1px solid #a8d5b5;}
+  .badge-docx{color:#7a5c1e;background:#fdf5dc;border:1px solid #e8d48a;}
   .prompt-status{font-size:12px;font-weight:300;min-height:18px;}
   .status-idle{color:var(--text-dim);}
   .status-running{color:var(--slate);}
@@ -87,7 +88,7 @@
 <div class="page-header">
   <div class="header-label">Challenger Gray &amp; Christmas</div>
   <div class="header-title">Session Builder — Part 2</div>
-  <div class="header-sub">Session Summary &bull; Roleplay Analysis &bull; Branding Profile &bull; Training Assessment</div>
+  <div class="header-sub">Revised Resume &bull; Session Summary &bull; Roleplay Analysis &bull; Branding Profile &bull; Training Assessment</div>
 </div>
 
 <div class="main">
@@ -163,9 +164,15 @@
 
   <!-- Output cards -->
   <div class="section-title">Post-Session Outputs</div>
-  <div class="section-desc">Summary, Roleplay, and Branding run in parallel. Training Assessment is coach-only.</div>
+  <div class="section-desc">All outputs run in parallel. Training Assessment is coach-only.</div>
 
   <div class="prompts-grid">
+    <div class="prompt-card" id="card-resume">
+      <div class="prompt-name">Revised Resume</div>
+      <div class="prompt-desc">Evaluates the resume against the session transcript, then produces a revised draft using the transcript as Primary Truth.</div>
+      <span class="prompt-badge badge-docx">DOCX</span>
+      <div class="prompt-status status-idle" id="status-resume">Ready</div>
+    </div>
     <div class="prompt-card" id="card-summary">
       <div class="prompt-name">Session Summary</div>
       <div class="prompt-desc">Narrative summary of the session — transition story, strengths, action plan, and closing encouragement.</div>
@@ -318,7 +325,10 @@ async function runAll() {
 }
 
 function wireDownload(id, content, clientName) {
-  if (id === 'summary') {
+  if (id === 'resume') {
+    setDone('resume', 'Download Word Document',
+      () => downloadFile('/api/builder2/resume.docx', { content, client_name: clientName, font: 'Calibri' }, 'resume', 'docx'));
+  } else if (id === 'summary') {
     setDone('summary', 'Session Summary (PDF)',
       () => downloadFile('/api/builder2/summary.pdf', { content, client_name: clientName }, 'summary', 'pdf'));
   } else if (id === 'roleplay') {

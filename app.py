@@ -488,6 +488,44 @@ def builder2_generate():
         except Exception as e:
             q.put(("error", "roleplay", str(e)))
 
+    def run_resume_job():
+        try:
+            diag_msg = f"RESUME:\n\n{resume}" if resume else "No resume provided."
+            if transcript:
+                diag_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth — overrides resume where they conflict):\n\n{transcript}"
+            diag_resp = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=2000,
+                system=DIAGNOSTIC_SYSTEM,
+                messages=[{"role": "user", "content": diag_msg}],
+            )
+            cleaned = diag_resp.content[0].text.strip()
+            cleaned = cleaned.replace("```json", "").replace("```", "").strip()
+            diag = json.loads(cleaned)
+
+            rw_msg = f"CANDIDATE LEVEL: {diag.get('level','EXECUTIVE')}\n"
+            rw_msg += f"READINESS SCORE: {diag.get('readinessScore', 5)}/10\n"
+            rw_msg += f"REVISION MODE: {diag.get('revisionMode','REWRITE')}\n\n"
+            rw_msg += f"STRATEGY BRIEF:\n"
+            rw_msg += f"Strengths to Preserve: {diag.get('strengths','')}\n"
+            rw_msg += f"Narrative Arc: {diag.get('narrativeArc','')}\n"
+            rw_msg += f"Impact Opportunities: {diag.get('impactOpportunities','')}\n"
+            rw_msg += f"Keyword Alignment: {diag.get('keywordAlignment','')}\n"
+            rw_msg += f"Positioning Hypothesis: {diag.get('positioningHypothesis','')}\n\n"
+            if resume:
+                rw_msg += f"RESUME:\n\n{resume}"
+            if transcript:
+                rw_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth):\n\n{transcript}"
+            rw_resp = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=8000,
+                system=REWRITE_SYSTEM,
+                messages=[{"role": "user", "content": rw_msg}],
+            )
+            q.put(("done", "resume", (rw_resp.content[0].text or "").strip()))
+        except Exception as e:
+            q.put(("error", "resume", str(e)))
+
     JOBS = [
         ("summary",  summary_prompt(client_name),                          12000),
         ("branding", branding_prompt(client_name, bool(resume), bool(intake)), 12000),
@@ -498,6 +536,7 @@ def builder2_generate():
         for job_id, _, _ in JOBS:
             yield _sse("status", {"id": job_id, "state": "running"})
         yield _sse("status", {"id": "roleplay", "state": "running"})
+        yield _sse("status", {"id": "resume", "state": "running"})
 
         threads = []
         for job_id, system_prompt, max_tokens in JOBS:
@@ -507,8 +546,11 @@ def builder2_generate():
         t = threading.Thread(target=run_roleplay_job, daemon=True)
         t.start()
         threads.append(t)
+        t = threading.Thread(target=run_resume_job, daemon=True)
+        t.start()
+        threads.append(t)
 
-        remaining = len(JOBS) + 1
+        remaining = len(JOBS) + 2
         while remaining > 0:
             try:
                 event_type, job_id, payload = q.get(timeout=600)
@@ -561,6 +603,18 @@ def builder2_branding_pdf():
     pdf_bytes   = render_pdf(build_client_html(content, client_name, "Branding Profile"))
     return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
                      as_attachment=True, download_name=f"{slug}_branding_profile.pdf")
+
+
+@app.route("/api/builder2/resume.docx", methods=["POST"])
+def builder2_resume_docx():
+    data        = request.get_json()
+    content     = data.get("content", "")
+    font        = (data.get("font") or "Calibri").strip()
+    client_name = (data.get("client_name") or "client").strip()
+    slug        = re.sub(r"[^a-z0-9_]", "", client_name.lower().replace(" ", "_"))
+    docx_bytes  = resume_to_docx(content, font=font)
+    return send_file(io.BytesIO(docx_bytes), mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                     as_attachment=True, download_name=f"{slug}_resume.docx")
 
 
 @app.route("/api/builder2/training.html", methods=["POST"])
