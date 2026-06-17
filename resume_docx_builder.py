@@ -159,7 +159,7 @@ def _title_para(doc, line, font=DEFAULT_FONT):
                                  color=_CHARCOAL, font=font)
     if date:
         _run(p, "\t", font=font, size_pt=11)
-        _add_runs_with_placeholders(p, date, size_pt=10, color=_TEXT_MID, font=font)
+        _add_runs_with_placeholders(p, date, size_pt=11, color=_TEXT_MID, font=font)
     return p
 
 
@@ -167,7 +167,7 @@ def _scope_para(doc, text, font=DEFAULT_FONT):
     p = doc.add_paragraph()
     p.paragraph_format.space_before = Pt(3)
     p.paragraph_format.space_after  = Pt(3)
-    _add_runs_with_placeholders(p, text, italic=True, size_pt=10,
+    _add_runs_with_placeholders(p, text, italic=True, size_pt=11,
                                  color=_TEXT_MID, font=font)
     return p
 
@@ -177,7 +177,7 @@ def _bullet_para(doc, text, font=DEFAULT_FONT):
     p.paragraph_format.left_indent   = Inches(0.2)
     p.paragraph_format.space_before  = Pt(0)
     p.paragraph_format.space_after   = Pt(2)
-    _add_runs_with_placeholders(p, text, size_pt=10, color=_TEXT_MID, font=font)
+    _add_runs_with_placeholders(p, text, size_pt=11, color=_TEXT_MID, font=font)
     return p
 
 
@@ -186,7 +186,7 @@ def _body_para(doc, text, centered=False, font=DEFAULT_FONT):
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER if centered else WD_ALIGN_PARAGRAPH.LEFT
     p.paragraph_format.space_before = Pt(0)
     p.paragraph_format.space_after  = Pt(4)
-    _add_runs_with_placeholders(p, _strip_bold(text), size_pt=10,
+    _add_runs_with_placeholders(p, _strip_bold(text), size_pt=11,
                                  color=_TEXT_MID, font=font)
     return p
 
@@ -209,7 +209,7 @@ def resume_to_docx(resume_text: str, font: str = DEFAULT_FONT) -> bytes:
 
     style = doc.styles["Normal"]
     style.font.name = font
-    style.font.size = Pt(10)
+    style.font.size = Pt(11)
 
     lines  = resume_text.splitlines()
     state  = "HEADER"
