@@ -150,104 +150,102 @@ def _positioning_css(client_name):
   --amber:#7a4f00;--amber-bg:#fff0cc;
 }}
 @page{{
-  size:letter;margin:0.75in 0.85in 0.9in 0.85in;
+  size:letter;margin:0.5in 0.6in 0.6in 0.6in;
   @bottom-left{{content:"{cn}  —  Where to Look";
     font-family:'Roboto',sans-serif;font-size:7pt;color:#9ba0a6;
-    padding-top:10pt;border-top:0.5pt solid #e0dbd4;}}
+    padding-top:7pt;border-top:0.5pt solid #e0dbd4;}}
   @bottom-right{{content:"Page " counter(page) " of " counter(pages) "  |  Confidential";
     font-family:'Roboto',sans-serif;font-size:7pt;color:#9ba0a6;
-    padding-top:10pt;border-top:0.5pt solid #e0dbd4;}}
+    padding-top:7pt;border-top:0.5pt solid #e0dbd4;}}
 }}
 @page :first{{margin-top:0;}}
-body{{font-family:'Roboto','DejaVu Sans',sans-serif;font-size:10pt;
-  line-height:1.7;color:var(--text);background:white;}}
+body{{font-family:'Roboto','DejaVu Sans',sans-serif;font-size:9.5pt;
+  line-height:1.5;color:var(--text);background:white;}}
 .doc-header{{border-top:3pt solid var(--charcoal);border-bottom:0.5pt solid var(--border);
-  padding:22pt 0.85in 18pt;margin:-0.75in -0.85in 0;}}
+  padding:16pt 0.6in 12pt;margin:-0.5in -0.6in 0;}}
 .eyebrow{{font-size:7.5pt;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--text-dim);margin-bottom:8pt;}}
-.client-name{{font-family:'Roboto Slab',serif;font-size:24pt;font-weight:700;
-  color:var(--charcoal);margin-bottom:3pt;line-height:1.1;}}
-.doc-sub{{font-size:10pt;font-weight:300;color:var(--text-mid);margin-bottom:10pt;}}
+  color:var(--text-dim);margin-bottom:6pt;}}
+.client-name{{font-family:'Roboto Slab',serif;font-size:21pt;font-weight:700;
+  color:var(--charcoal);margin-bottom:2pt;line-height:1.1;}}
+.doc-sub{{font-size:9.5pt;font-weight:300;color:var(--text-mid);margin-bottom:8pt;}}
 .pill{{display:inline-block;font-size:8pt;padding:2pt 8pt;
   border:0.5pt solid var(--border);color:var(--text-dim);
   border-radius:100pt;margin-right:5pt;margin-bottom:4pt;}}
 .header-rule{{display:none;}}
-.doc-body{{padding-top:26pt;}}
+.doc-body{{padding-top:16pt;}}
 .section-label{{font-size:7.5pt;letter-spacing:.18em;text-transform:uppercase;
-  color:var(--text-dim);margin-bottom:10pt;padding-bottom:7pt;
-  border-bottom:0.5pt solid var(--border);margin-top:22pt;}}
+  color:var(--text-dim);margin-bottom:7pt;padding-bottom:5pt;
+  border-bottom:0.5pt solid var(--border);margin-top:14pt;}}
 .section-label:first-child{{margin-top:0;}}
 .confirmed-block{{border-left:2pt solid var(--charcoal-mid);
-  padding:12pt 16pt;margin-bottom:22pt;}}
+  padding:9pt 12pt;margin-bottom:14pt;}}
 .confirmed-label{{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--text-dim);margin-bottom:5pt;}}
-.confirmed-text{{font-size:10pt;color:var(--charcoal-mid);line-height:1.7;}}
+  color:var(--text-dim);margin-bottom:4pt;}}
+.confirmed-text{{font-size:9.5pt;color:var(--charcoal-mid);line-height:1.55;}}
 .brand-card{{border:0.5pt solid var(--border);border-radius:2pt;
-  padding:18pt 20pt;margin-bottom:4pt;break-inside:avoid;}}
-.brand-quote{{font-family:'Roboto Slab',serif;font-size:11pt;color:var(--charcoal);
-  line-height:1.8;font-style:italic;border-left:2pt solid var(--charcoal-mid);
-  padding-left:14pt;font-weight:400;}}
-.brand-note{{font-size:8.5pt;color:var(--text-dim);margin-top:9pt;
-  padding-left:17pt;font-style:italic;}}
+  padding:12pt 15pt;margin-bottom:4pt;break-inside:avoid;}}
+.brand-quote{{font-family:'Roboto Slab',serif;font-size:10pt;color:var(--charcoal);
+  line-height:1.6;font-style:italic;border-left:2pt solid var(--charcoal-mid);
+  padding-left:12pt;font-weight:400;}}
+.brand-note{{font-size:8.5pt;color:var(--text-dim);margin-top:7pt;
+  padding-left:14pt;font-style:italic;}}
 .lane-header{{border-top:2pt solid var(--charcoal);
   border-left:0.5pt solid var(--border);border-right:0.5pt solid var(--border);
-  padding:12pt 16pt;break-after:avoid;margin-top:4pt;}}
+  padding:9pt 12pt;break-after:avoid;margin-top:4pt;}}
 .lane-label{{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--text-dim);margin-bottom:4pt;}}
-.lane-title{{font-family:'Roboto Slab',serif;font-size:13pt;font-weight:700;
+  color:var(--text-dim);margin-bottom:3pt;}}
+.lane-title{{font-family:'Roboto Slab',serif;font-size:12pt;font-weight:700;
   color:var(--charcoal);line-height:1.2;}}
 .lane-body{{border:0.5pt solid var(--border);border-top:none;
-  border-radius:0 0 2pt 2pt;padding:16pt 18pt;margin-bottom:20pt;}}
+  border-radius:0 0 2pt 2pt;padding:12pt 14pt;margin-bottom:14pt;}}
 .hook{{border-left:2pt solid var(--charcoal-mid);
-  padding:10pt 14pt;margin-bottom:12pt;break-inside:avoid;}}
+  padding:8pt 11pt;margin-bottom:9pt;break-inside:avoid;}}
 .hook-label{{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--text-dim);margin-bottom:5pt;}}
-.hook-text{{font-size:10pt;color:var(--charcoal);font-style:italic;line-height:1.7;}}
-.lane-why{{font-size:10pt;color:var(--text-mid);line-height:1.75;margin-bottom:10pt;}}
+  color:var(--text-dim);margin-bottom:4pt;}}
+.hook-text{{font-size:9.5pt;color:var(--charcoal);font-style:italic;line-height:1.55;}}
+.lane-why{{font-size:9.5pt;color:var(--text-mid);line-height:1.55;margin-bottom:9pt;}}
 .comp-note{{font-size:9pt;color:var(--text-mid);padding:6pt 10pt;
-  border:0.5pt solid var(--border);border-radius:2pt;margin-bottom:14pt;}}
+  border:0.5pt solid var(--border);border-radius:2pt;margin-bottom:12pt;}}
 .comp-note strong{{color:var(--charcoal);font-weight:600;}}
 .company-card{{border:0.5pt solid var(--border);border-radius:2pt;
-  margin-bottom:12pt;break-inside:avoid;}}
-.company-top{{padding:12pt 15pt 10pt;border-bottom:0.5pt solid var(--border);}}
+  margin-bottom:9pt;break-inside:avoid;}}
+.company-top{{padding:9pt 12pt 8pt;border-bottom:0.5pt solid var(--border);}}
 .company-fit{{font-size:7pt;letter-spacing:.12em;text-transform:uppercase;
   color:var(--charcoal-mid);margin-bottom:3pt;font-weight:600;}}
 .company-fit.stretch{{color:var(--charcoal-mid);}}
-.company-name{{font-family:'Roboto Slab',serif;font-size:13pt;font-weight:700;
+.company-name{{font-family:'Roboto Slab',serif;font-size:12pt;font-weight:700;
   color:var(--charcoal);margin-bottom:2pt;}}
 .company-desc{{font-size:9pt;color:var(--text-dim);}}
-.tag{{display:inline-block;font-size:8pt;padding:2pt 7pt;
+.tag{{display:inline-block;font-size:8pt;padding:1pt 7pt;
   border:0.5pt solid var(--border);border-radius:2pt;color:var(--text-dim);
-  margin-right:4pt;margin-top:6pt;background:white;}}
-.company-body{{padding:12pt 15pt 14pt;}}
+  margin-right:4pt;margin-top:5pt;background:white;}}
+.company-body{{padding:9pt 12pt 10pt;}}
 .why-label{{font-size:7pt;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--text-dim);margin-bottom:6pt;}}
-.why-text{{font-size:10pt;color:var(--text-mid);line-height:1.75;margin-bottom:12pt;}}
+  color:var(--text-dim);margin-bottom:5pt;}}
+.why-text{{font-size:9.5pt;color:var(--text-mid);line-height:1.55;margin-bottom:9pt;}}
 .search-block{{border:0.5pt solid var(--border);border-radius:2pt;overflow:hidden;}}
 .search-header{{font-size:7pt;letter-spacing:.16em;text-transform:uppercase;
-  color:var(--text-dim);padding:5pt 11pt;background:#f0f0f0;
+  color:var(--text-dim);padding:4pt 10pt;background:#f0f0f0;
   border-bottom:0.5pt solid var(--border);}}
-.search-row{{border-bottom:0.5pt solid var(--border);padding:9pt 11pt;}}
+.search-row{{border-bottom:0.5pt solid var(--border);padding:6pt 10pt;break-inside:avoid;}}
 .search-row:last-child{{border-bottom:none;}}
-.search-type-label{{font-size:7.5pt;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--charcoal-mid);font-weight:600;margin-bottom:3pt;}}
-.search-instruction{{font-size:9.5pt;color:var(--text-mid);margin-bottom:4pt;line-height:1.6;}}
-.search-string{{font-family:'DejaVu Sans Mono',monospace;font-size:7.5pt;
-  color:var(--charcoal);border:0.5pt solid var(--border);
-  border-radius:2pt;padding:4pt 7pt;display:block;word-break:break-all;line-height:1.5;}}
+.search-type-label{{display:inline-block;font-size:7.5pt;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--charcoal-mid);font-weight:600;
+  margin-right:6pt;}}
+.search-instruction{{display:inline;font-size:9pt;color:var(--text-mid);line-height:1.5;}}
 .search-note{{font-size:8pt;color:var(--text-dim);font-style:italic;
-  margin-top:4pt;line-height:1.5;}}
+  margin-top:3pt;line-height:1.45;}}
 .action-card{{border:0.5pt solid var(--border);border-radius:2pt;
-  padding:16pt 18pt;margin-top:4pt;}}
-.action-item{{padding:9pt 0;border-bottom:0.5pt solid var(--border);
+  padding:12pt 14pt;margin-top:4pt;}}
+.action-item{{padding:7pt 0;border-bottom:0.5pt solid var(--border);
   break-inside:avoid;overflow:hidden;}}
 .action-item:last-child{{border-bottom:none;}}
-.action-num{{display:inline-block;width:22pt;font-size:8.5pt;
+.action-num{{display:inline-block;width:20pt;font-size:8.5pt;
   color:var(--charcoal);border:1pt solid var(--charcoal);text-align:center;
-  padding:3pt 0;border-radius:2pt;font-weight:700;
+  padding:2pt 0;border-radius:2pt;font-weight:700;
   float:left;margin-right:10pt;margin-top:1pt;}}
-.action-text{{display:block;overflow:hidden;font-size:10pt;
-  color:var(--text);line-height:1.7;}}
+.action-text{{display:block;overflow:hidden;font-size:9.5pt;
+  color:var(--text);line-height:1.55;}}
 """
 
 # ── HTML builders ──────────────────────────────────────────────────────────────
@@ -297,9 +295,7 @@ def build_positioning_html(pos, client_name):
                 fallback_html = (f'<div class="search-note">{esc(s.get("fallback",""))}</div>'
                                  if s.get("fallback") else "")
                 rows_html += f"""<div class="search-row">
-  <div class="search-type-label">{esc(label)}</div>
-  <div class="search-instruction">{esc(s.get("instruction",""))}</div>
-  <div class="search-string">{esc(s.get("url",""))}</div>
+  <span class="search-type-label">{esc(label)}</span><span class="search-instruction">{esc(s.get("instruction",""))}</span>
   {fallback_html}
 </div>"""
             fit_text = co.get("fit", "")

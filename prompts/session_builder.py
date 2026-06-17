@@ -165,7 +165,7 @@ LANES: Generate 2-3 lanes based on what actually landed in the session.
 
 COMPANIES (exactly 3 per lane):
 - name, descriptor, fit ("Strong Fit" or "Stretch Fit"), size, workStyle, whyItFits (3-4 sentences specific to this client, second person)
-- For peer/hiringMgr/recruiter: instruction (one sentence), url (linkedin.com/search/results/people/?keywords=[terms] using + for spaces), fallback (manual search instruction)
+- For peer/hiringMgr/recruiter: instruction (one self-contained sentence the client can act on directly, naming the exact search terms to type into LinkedIn's people search and any filter to apply, e.g. "On LinkedIn, search 'Kaiser Permanente health plan operations' and filter People to Northern California."). url (linkedin.com/search/results/people/?keywords=[terms] using + for spaces — retained for reference but not shown). fallback (a short alternate approach if the search returns little, or leave empty).
 
 ACTION SEQUENCE: 5-7 specific, actionable first-week items in second person.
 
