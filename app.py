@@ -687,6 +687,20 @@ def builder2_resume_docx():
                      as_attachment=True, download_name=f"{slug}_resume.docx")
 
 
+@app.route("/api/builder2/training.pdf", methods=["POST"])
+def builder2_training_pdf():
+    data        = request.get_json()
+    content     = data.get("content", "")
+    client_name = (data.get("client_name") or "client").strip()
+    slug        = re.sub(r"[^a-z0-9_]", "", client_name.lower().replace(" ", "_"))
+    pdf_bytes   = render_pdf(build_client_html(
+        content, client_name, "Training Assessment — Coach Reference",
+        eyebrow="Challenger, Gray &amp; Christmas  /  Coach Reference",
+    ))
+    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+                     as_attachment=True, download_name=f"{slug}_training_assessment.pdf")
+
+
 @app.route("/api/builder2/training.html", methods=["POST"])
 def builder2_training_html():
     import markdown as md_lib

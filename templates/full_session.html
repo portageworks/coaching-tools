@@ -168,6 +168,7 @@
     <div class="deliverable-row">
       <button class="download-link primary" id="dlPackage" onclick="downloadPackage()">&#8595; Strategy Package (PDF)</button>
       <button class="download-link" id="dlResume" onclick="downloadResume()" disabled>&#8595; Revised Resume (DOCX)</button>
+      <button class="download-link" id="dlTrainingPdf" onclick="downloadTrainingPdf()" disabled>&#8595; Training Assessment (PDF)</button>
       <button class="download-link" id="dlTraining" onclick="downloadTraining()" disabled>&#8595; Training Assessment (HTML)</button>
     </div>
   </div>
@@ -255,7 +256,7 @@ async function runAll(){
           if(payload.state==='done'){
             setStatus(payload.id,'done','Done');
             if(payload.id==='resume'){resumeContent=payload.content;document.getElementById('dlResume').disabled=false;}
-            if(payload.id==='training'){trainingContent=payload.content;document.getElementById('dlTraining').disabled=false;}
+            if(payload.id==='training'){trainingContent=payload.content;document.getElementById('dlTraining').disabled=false;document.getElementById('dlTrainingPdf').disabled=false;}
           }else{setStatus(payload.id,'error',`Error: ${payload.message||''}`);}
         }else if(ev[1]==='error'){showError(payload.message||'Generation failed.');}
         else if(ev[1]==='complete'){
@@ -295,6 +296,10 @@ function downloadResume(){
 function downloadTraining(){
   if(!trainingContent)return;
   postDownload('/api/builder2/training.html',{content:trainingContent,client_name:clientName},'training_assessment.html','dlTraining');
+}
+function downloadTrainingPdf(){
+  if(!trainingContent)return;
+  postDownload('/api/builder2/training.pdf',{content:trainingContent,client_name:clientName},'training_assessment.pdf','dlTrainingPdf');
 }
 
 function showError(msg){const el=document.getElementById('errorMsg');el.textContent=msg;el.className='error-msg visible';}

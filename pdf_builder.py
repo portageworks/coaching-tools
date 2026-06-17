@@ -249,13 +249,14 @@ body{{font-family:'Roboto','DejaVu Sans',sans-serif;font-size:9.5pt;
 """
 
 # ── HTML builders ──────────────────────────────────────────────────────────────
-def build_client_html(markdown_text, client_name, subtitle):
+def build_client_html(markdown_text, client_name, subtitle,
+                      eyebrow="Challenger, Gray &amp; Christmas  /  Strategy Session"):
     today = datetime.now().strftime("%B %d, %Y")
     body = _md_to_html(markdown_text, strip_emoji=False)
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <style>{_client_css(client_name, subtitle)}</style></head><body>
 <div class="doc-header">
-  <div class="eyebrow">Challenger, Gray &amp; Christmas  /  Strategy Session</div>
+  <div class="eyebrow">{eyebrow}</div>
   <div class="client-name">{esc(client_name)}</div>
   <div class="doc-sub">{esc(subtitle)}  —  {today}</div>
   <div class="header-rule"></div>

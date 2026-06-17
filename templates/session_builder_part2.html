@@ -338,9 +338,35 @@ function wireDownload(id, content, clientName) {
     setDone('branding', 'Branding Profile (PDF)',
       () => downloadFile('/api/builder2/branding.pdf', { content, client_name: clientName }, 'branding', 'pdf'));
   } else if (id === 'training') {
-    setDone('training', 'Training Assessment (HTML)',
-      () => downloadFile('/api/builder2/training.html', { content, client_name: clientName }, 'training', 'html'));
+    document.getElementById('card-training').className = 'prompt-card done';
+    const s = document.getElementById('status-training');
+    s.innerHTML = '';
+    const pdfBtn = makeDownloadBtn('Training (PDF)', '/api/builder2/training.pdf', { content, client_name: clientName }, 'pdf');
+    pdfBtn.style.marginRight = '8px';
+    s.appendChild(pdfBtn);
+    s.appendChild(makeDownloadBtn('Training (HTML)', '/api/builder2/training.html', { content, client_name: clientName }, 'html'));
   }
+}
+
+function makeDownloadBtn(label, endpoint, body, ext) {
+  const btn = document.createElement('button');
+  btn.className = 'download-link';
+  btn.textContent = '↓ ' + label;
+  btn.onclick = () => {
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Building...';
+    fetch(endpoint, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then(res => { if (!res.ok) throw new Error(`Server error ${res.status}`);
+        const disp = res.headers.get('Content-Disposition') || '';
+        const m = disp.match(/filename="?([^"]+)"?/);
+        return res.blob().then(blob => ({ blob, name: m ? m[1] : `document.${ext}` })); })
+      .then(({ blob, name }) => { const url = URL.createObjectURL(blob); const a = document.createElement('a');
+        a.download = name; a.href = url; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 1000); })
+      .catch(e => showError('Download failed: ' + e.message))
+      .finally(() => { btn.disabled = false; btn.textContent = orig; });
+  };
+  return btn;
 }
 
 async function downloadFile(endpoint, body, cardId, ext) {
