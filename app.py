@@ -28,6 +28,13 @@ app = Flask(__name__)
 
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
+# ── Model selection ───────────────────────────────────────────────────────────
+# SMART = higher-quality, client-facing deliverables (resume rewrites, branding,
+#         session guides, roleplay). FAST = cheap internal jobs (diagnostics,
+#         coach-only training notes). Flip these in one place.
+MODEL_SMART = "claude-opus-4-8"
+MODEL_FAST  = "claude-sonnet-4-6"
+
 
 # ── Generic endpoints ─────────────────────────────────────────────────────────
 
@@ -77,7 +84,7 @@ def resume_diagnose():
         user_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth — overrides resume where they conflict):\n\n{transcript}"
 
     resp = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=MODEL_FAST,
         max_tokens=4000,
         system=DIAGNOSTIC_SYSTEM,
         messages=[{"role": "user", "content": user_msg}],
@@ -122,7 +129,7 @@ def resume_rewrite():
         user_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth):\n\n{transcript}"
 
     resp = client.messages.create(
-        model="claude-sonnet-4-6",
+        model=MODEL_SMART,
         max_tokens=8000,
         system=REWRITE_SYSTEM,
         messages=[{"role": "user", "content": user_msg}],
@@ -188,7 +195,7 @@ def session_generate():
         synthesis_chunks = []
         try:
             with client.messages.stream(
-                model="claude-sonnet-4-6",
+                model=MODEL_SMART,
                 max_tokens=12000,
                 system=SYNTHESIS_SYSTEM,
                 messages=[{"role": "user", "content":
@@ -207,7 +214,7 @@ def session_generate():
         guide_chunks = []
         try:
             with client.messages.stream(
-                model="claude-sonnet-4-6",
+                model=MODEL_SMART,
                 max_tokens=32000,
                 system=COACH_GUIDE_SYSTEM,
                 messages=[{"role": "user", "content":
@@ -289,7 +296,7 @@ def builder_generate():
     def run_job(job_id, system_prompt, max_tokens):
         try:
             resp = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=MODEL_SMART,
                 max_tokens=max_tokens,
                 system=system_prompt,
                 messages=[{"role": "user", "content": _user_msg()}],
@@ -303,7 +310,7 @@ def builder_generate():
         try:
             # Step 1: diagnostic brief
             diag_resp = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=MODEL_FAST,
                 max_tokens=1500,
                 system=resume_diagnostic_prompt(),
                 messages=[{"role": "user", "content": _user_msg()}],
@@ -314,7 +321,7 @@ def builder_generate():
             # Step 2: rewrite informed by brief
             rewrite_msg = f"STRATEGY BRIEF:\n{brief_raw}\n\n---\n\n{_user_msg()}"
             rewrite_resp = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=MODEL_SMART,
                 max_tokens=8000,
                 system=resume_rewrite_prompt(),
                 messages=[{"role": "user", "content": rewrite_msg}],
@@ -458,8 +465,10 @@ def builder2_generate():
 
     def run_job(job_id, system_prompt, max_tokens):
         try:
+            # Training is coach-only internal notes; everything else is client-facing.
+            job_model = MODEL_FAST if job_id == "training" else MODEL_SMART
             resp = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=job_model,
                 max_tokens=max_tokens,
                 system=system_prompt,
                 messages=[{"role": "user", "content": _user_msg()}],
@@ -471,14 +480,14 @@ def builder2_generate():
     def run_roleplay_job():
         try:
             resp_a = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=MODEL_SMART,
                 max_tokens=16000,
                 system=roleplay_a_prompt(client_name),
                 messages=[{"role": "user", "content": _user_msg()}],
             )
             part_a = (resp_a.content[0].text or "").strip()
             resp_b = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=MODEL_SMART,
                 max_tokens=16000,
                 system=roleplay_b_prompt(client_name),
                 messages=[{"role": "user", "content": _user_msg()}],
@@ -494,7 +503,7 @@ def builder2_generate():
             if transcript:
                 diag_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth — overrides resume where they conflict):\n\n{transcript}"
             diag_resp = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=MODEL_FAST,
                 max_tokens=2000,
                 system=DIAGNOSTIC_SYSTEM,
                 messages=[{"role": "user", "content": diag_msg}],
@@ -517,7 +526,7 @@ def builder2_generate():
             if transcript:
                 rw_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth):\n\n{transcript}"
             rw_resp = client.messages.create(
-                model="claude-sonnet-4-6",
+                model=MODEL_SMART,
                 max_tokens=8000,
                 system=REWRITE_SYSTEM,
                 messages=[{"role": "user", "content": rw_msg}],
