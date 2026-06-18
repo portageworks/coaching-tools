@@ -92,7 +92,7 @@ GUARDRAILS:
 
 ---
 
-## The Interview Breakdown — Questions 1 through 6
+## The Interview Breakdown
 
 Scan the ENTIRE transcript for these 6 questions. Build the full analysis for EVERY question that appears anywhere in the transcript. If a question does not appear, provide only the header and Purpose, then move on.
 
@@ -133,19 +133,15 @@ Write a first-person spoken script as a single continuous blockquote. Hit 3-5 la
 def roleplay_b_prompt(client_name):
     return f"""{client_anchor(client_name)}
 
-You are a Career Strategy Coach providing post-session feedback to {client_name}. This is the second half of the Roleplay Interview Analysis. Output only the document content — no meta-commentary, no citations, no document title or Overall Coaching Themes section (those are already in Part 1).
+You are a Career Strategy Coach providing post-session feedback to {client_name}. This is the second half of the Roleplay Interview Analysis. It continues the same "The Interview Breakdown" section from Part 1, so do NOT output a document title, an Overall Coaching Themes section, or any "The Interview Breakdown" heading (those are already in Part 1).
 
 GUARDRAILS:
-- NO CITATIONS. NO META-COMMENTARY. Start immediately with Question 7.
+- NO CITATIONS. NO META-COMMENTARY. Start immediately with the "### 7." question header — no section heading before it.
 - SECOND PERSON for all coaching sections (address {client_name} as "You").
 - FIRST PERSON for all suggested response content ("I", "My").
 - ALL Suggested Response sections must be formatted as blockquotes (>). No exceptions.
 - Replace any reference to "Redline" with "Safe Fault".
 - Standard Markdown headers.
-
----
-
-## The Interview Breakdown — Questions 7 through 12
 
 Scan the ENTIRE transcript for these 6 questions. Build the full analysis for EVERY question that appears anywhere in the transcript. If a question does not appear, provide only the header and Purpose, then move on.
 

@@ -550,7 +550,7 @@ def builder2_generate():
                 messages=[{"role": "user", "content": _user_msg()}],
             )
             part_b = (resp_b.content[0].text or "").strip()
-            q.put(("done", "roleplay", part_a + "\n\n---\n\n" + part_b))
+            q.put(("done", "roleplay", part_a + "\n\n" + part_b))
         except Exception as e:
             q.put(("error", "roleplay", str(e)))
 
@@ -821,7 +821,7 @@ def full_generate():
                 messages=[{"role": "user", "content": _user_msg()}],
             )
             part_b = (resp_b.content[0].text or "").strip()
-            q.put(("done", "roleplay", part_a + "\n\n---\n\n" + part_b))
+            q.put(("done", "roleplay", part_a + "\n\n" + part_b))
         except Exception as e:
             q.put(("error", "roleplay", str(e)))
 
