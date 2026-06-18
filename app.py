@@ -7,7 +7,7 @@ import json
 import io
 import queue
 import threading
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_file
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_file, send_from_directory
 import anthropic
 
 from prompts.session_generator import SYNTHESIS_SYSTEM, COACH_GUIDE_SYSTEM, WORKSHEET_SYSTEM
@@ -45,6 +45,12 @@ MODEL_FAST  = "claude-sonnet-4-6"
 @app.route("/")
 def index():
     return render_template("index.html")
+
+
+@app.route("/prompt-library")
+def prompt_library():
+    # Self-contained client-facing static page; served as-is (no templating).
+    return send_from_directory(app.static_folder, "prompt_library.html")
 
 
 @app.route("/api/chat", methods=["POST"])

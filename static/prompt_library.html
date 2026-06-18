@@ -1,0 +1,1588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzNhNWE3YyIvPjxwb2x5bGluZSBwb2ludHM9IjIsMTYgMTEsMTYgMTMsOCAxNiwyNCAxOSwxNiAzMCwxNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+">
+<title>AI Job Search Prompt Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f5f3f0; --surface:#fff; --surface2:#f0ede9; --border:#e0dbd4;
+  --border-mid:#ccc8c0; --charcoal:#1e2022; --charcoal-mid:#3d4145;
+  --charcoal-faint:#9ba0a6; --text:#2c3035; --text-mid:#4a5058;
+  --text-dim:#7a8088; --slate:#3a5a7c; --slate-mid:#5579a0;
+  --slate-light:#dce8f5; --slate-pale:#eef4fb;
+  --green:#2e6b4a; --green-bg:#ddf0e8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Roboto',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+
+/* HEADER */
+.header{background:var(--charcoal);padding:48px 48px 40px;text-align:center;position:relative;overflow:hidden;}
+.header::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 25% 50%,rgba(58,90,124,0.4) 0%,transparent 60%),radial-gradient(ellipse at 75% 30%,rgba(85,121,160,0.25) 0%,transparent 55%);pointer-events:none;}
+.header-eyebrow{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:14px;position:relative;}
+.header h1{font-family:'Roboto Slab',serif;font-size:clamp(1.8rem,4vw,2.8rem);font-weight:700;color:#fff;line-height:1.15;position:relative;letter-spacing:-.02em;}
+.header-sub{font-size:14px;font-weight:300;color:var(--charcoal-faint);max-width:520px;margin:12px auto 0;line-height:1.7;position:relative;}
+.header-pills{display:flex;justify-content:center;gap:8px;margin-top:24px;flex-wrap:wrap;position:relative;}
+.header-pill{font-size:11px;font-weight:400;padding:5px 13px;border-radius:100px;border:1px solid rgba(85,121,160,.35);color:rgba(220,232,245,.75);background:rgba(58,90,124,.3);}
+
+/* HOW TO USE */
+.how-to{background:var(--slate-pale);border:1px solid var(--slate-light);border-left:3px solid var(--slate);border-radius:0 3px 3px 0;padding:20px 24px;margin:32px auto;max-width:860px;}
+.how-to h3{font-family:'Roboto Slab',serif;font-size:15px;font-weight:600;color:var(--charcoal);margin-bottom:10px;}
+.how-to ol{padding-left:18px;font-size:13px;color:var(--text-mid);line-height:1.9;}
+.how-to ol li strong{color:var(--charcoal);font-weight:600;}
+
+/* CONTAINER */
+.container{max-width:860px;margin:0 auto;padding:0 24px 80px;}
+
+/* SEARCH + FILTER */
+.controls{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap;align-items:center;}
+.search-wrap{flex:1;min-width:200px;position:relative;}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:14px;pointer-events:none;}
+.search-input{width:100%;font-family:'Roboto',sans-serif;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:10px 12px 10px 36px;color:var(--text);outline:none;transition:border-color .15s;}
+.search-input:focus{border-color:var(--slate-mid);}
+.search-input::placeholder{color:var(--border-mid);}
+.filter-btns{display:flex;gap:6px;flex-wrap:wrap;}
+.filter-btn{font-family:'Roboto Mono',monospace;font-size:10px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:8px 14px;border-radius:3px;border:1px solid var(--border);background:var(--surface);color:var(--text-dim);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.filter-btn:hover{border-color:var(--slate-mid);color:var(--slate);}
+.filter-btn.active{background:var(--charcoal);border-color:var(--charcoal);color:#fff;}
+
+/* RESULTS COUNT */
+.results-count{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-dim);margin-bottom:20px;letter-spacing:.04em;}
+
+/* CATEGORY HEADER */
+.category-section{margin-bottom:8px;}
+.category-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-top:12px;}
+.category-title{font-family:'Roboto Slab',serif;font-size:18px;font-weight:700;color:var(--charcoal);}
+.category-count{font-family:'Roboto Mono',monospace;font-size:10px;color:var(--text-dim);background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:2px 8px;}
+
+/* PROMPT CARD */
+.prompt-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;margin-bottom:12px;overflow:hidden;transition:border-color .15s;}
+.prompt-card:hover{border-color:var(--border-mid);}
+.prompt-card.hidden{display:none;}
+
+.card-top{padding:18px 20px 14px;}
+.card-purpose{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--slate-mid);margin-bottom:6px;}
+.card-title{font-family:'Roboto Slab',serif;font-size:15px;font-weight:600;color:var(--charcoal);line-height:1.4;}
+.card-toggle{display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:10px 20px;border-top:1px solid var(--border);background:var(--surface2);font-size:12px;font-weight:500;color:var(--text-dim);transition:all .15s;user-select:none;}
+.card-toggle:hover{color:var(--slate);background:var(--slate-pale);}
+.toggle-arrow{transition:transform .22s;font-size:10px;}
+.toggle-arrow.open{transform:rotate(90deg);}
+
+/* CARD BODY */
+.card-body{display:none;border-top:1px solid var(--border);}
+.card-body.open{display:block;}
+
+/* PLACEHOLDER FIELDS */
+.fields-section{padding:16px 20px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.fields-label{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;}
+.fields-grid{display:flex;flex-direction:column;gap:8px;}
+.field-item{display:grid;grid-template-columns:160px 1fr;gap:8px;align-items:center;}
+.field-name{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--slate);font-weight:500;}
+.field-input{font-family:'Roboto',sans-serif;font-size:13px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:7px 10px;color:var(--text);outline:none;transition:border-color .15s;width:100%;}
+.field-input:focus{border-color:var(--slate-mid);}
+.field-input::placeholder{color:var(--border-mid);font-size:12px;}
+
+/* PROMPT TEXT */
+.prompt-section{padding:16px 20px;}
+.prompt-box{font-family:'Roboto Mono',monospace;font-size:12px;line-height:1.8;color:var(--text-mid);background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:16px;white-space:pre-wrap;word-break:break-word;max-height:320px;overflow-y:auto;}
+.prompt-box .placeholder{background:#fff3b0;border-radius:2px;padding:0 2px;color:#5c4a00;font-weight:500;}
+
+/* COPY ROW */
+.copy-row{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;border-top:1px solid var(--border);gap:12px;}
+.copy-hint-text{font-size:12px;font-weight:300;color:var(--text-dim);}
+.copy-btn{font-family:'Roboto',sans-serif;font-size:12px;font-weight:600;background:var(--charcoal);color:#fff;border:none;border-radius:2px;padding:9px 18px;cursor:pointer;transition:background .15s;display:inline-flex;align-items:center;gap:7px;flex-shrink:0;}
+.copy-btn:hover{background:var(--charcoal-mid);}
+.copy-btn.copied{background:var(--green);}
+
+/* NO RESULTS */
+.no-results{text-align:center;padding:60px 20px;color:var(--text-dim);}
+.no-results-icon{font-size:32px;margin-bottom:12px;}
+.no-results-text{font-size:15px;font-weight:300;}
+
+/* FOOTER */
+.footer{background:var(--charcoal);padding:28px 48px;text-align:center;font-size:12px;font-weight:300;color:var(--charcoal-faint);line-height:1.8;}
+.footer a{color:var(--slate-mid);text-decoration:none;}
+
+@media(max-width:600px){
+  .header{padding:36px 24px 28px;}
+  .container{padding:0 16px 60px;}
+  .controls{flex-direction:column;}
+  .field-item{grid-template-columns:1fr;}
+  .copy-row{flex-direction:column;align-items:flex-start;}
+  .copy-btn{width:100%;justify-content:center;}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">AI-Powered Job Search</div>
+  <h1>Prompt Library</h1>
+  <div class="header-sub">35 expert-crafted prompts to accelerate every stage of your job search. Fill in the fields, copy, and paste into any AI assistant.</div>
+  <div class="header-pills">
+    <span class="header-pill">Works with Claude</span>
+    <span class="header-pill">Works with ChatGPT</span>
+    <span class="header-pill">Works with any AI</span>
+  </div>
+</div>
+
+<div style="max-width:860px;margin:0 auto;padding:0 24px;">
+  <div class="how-to">
+    <h3>How to use this library</h3>
+    <ol>
+      <li><strong>Find a prompt</strong> — use the search bar or category filters to find the prompt you need.</li>
+      <li><strong>Open the prompt</strong> — click "Fill in & copy" to expand it.</li>
+      <li><strong>Fill in your details</strong> — type your information into the fields. The prompt updates automatically.</li>
+      <li><strong>Copy it</strong> — hit the Copy button to get the completed prompt.</li>
+      <li><strong>Paste into any AI</strong> — Claude, ChatGPT, or any other AI assistant. Attach your resume if the prompt asks for it.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search prompts..." oninput="filterPrompts()">
+    </div>
+    <div class="filter-btns">
+      <button class="filter-btn active" data-cat="all" onclick="setFilter('all',this)">All</button>
+      <button class="filter-btn" data-cat="resume" onclick="setFilter('resume',this)">Resume</button>
+      <button class="filter-btn" data-cat="cover" onclick="setFilter('cover',this)">Cover Letters</button>
+      <button class="filter-btn" data-cat="search" onclick="setFilter('search',this)">Job Search</button>
+      <button class="filter-btn" data-cat="network" onclick="setFilter('network',this)">Networking</button>
+      <button class="filter-btn" data-cat="interview" onclick="setFilter('interview',this)">Interview</button>
+      <button class="filter-btn" data-cat="salary" onclick="setFilter('salary',this)">Salary</button>
+      <button class="filter-btn" data-cat="pivot" onclick="setFilter('pivot',this)">Career Pivots</button>
+    </div>
+  </div>
+
+  <div class="results-count" id="resultsCount">Showing 35 prompts</div>
+  <div id="noResults" class="no-results" style="display:none;">
+    <div class="no-results-icon">🔍</div>
+    <div class="no-results-text">No prompts match your search. Try different keywords.</div>
+  </div>
+
+  <!-- ═══════════════════════════
+       RESUME OPTIMIZATION
+  ═══════════════════════════ -->
+  <div class="category-section" data-cat="resume">
+    <div class="category-header">
+      <div class="category-title">Resume Optimization & Writing</div>
+      <span class="category-count">5 prompts</span>
+    </div>
+
+    <!-- P1 -->
+    <div class="prompt-card" data-cat="resume" data-search="resume customize industry role tailor adapt">
+      <div class="card-top">
+        <div class="card-purpose">Customize for a target role</div>
+        <div class="card-title">Adapt my resume for a new direction</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Industry or role</span>
+              <input type="text" class="field-input" placeholder="e.g. Supply Chain Director" oninput="updatePrompt(this)" data-field="SPECIFIC INDUSTRY OR ROLE">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert resume strategist specializing in career positioning and targeted job applications. Review the attached resume and provide specific, actionable suggestions to customize it for a [SPECIFIC INDUSTRY OR ROLE] position. Focus on: (1) language and terminology adjustments that align with this industry or role, (2) achievements or experiences to emphasize or reframe, (3) sections that need strengthening or could be condensed. Do not rewrite the resume — provide prioritized recommendations only. Base all suggestions strictly on the experience present in the attached document.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P2 -->
+    <div class="prompt-card" data-cat="resume" data-search="resume job description tailor evaluate ATS keywords gaps">
+      <div class="card-top">
+        <div class="card-purpose">Evaluate resume against a job description</div>
+        <div class="card-title">Tailor my resume to a specific role</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Role title</span>
+              <input type="text" class="field-input" placeholder="e.g. VP of Operations" oninput="updatePrompt(this)" data-field="ROLE TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Company name</span>
+              <input type="text" class="field-input" placeholder="e.g. Acme Corp" oninput="updatePrompt(this)" data-field="COMPANY NAME">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert resume strategist and ATS optimization specialist. I am applying for a [ROLE TITLE] position at [COMPANY NAME]. Below is the job description, followed by my resume. Analyze both documents and provide: (1) a gap analysis identifying requirements in the job description not reflected in my resume, (2) specific language from the job description I should incorporate, and (3) achievements or experiences I should elevate for this application. Do not rewrite the resume. Do not add experience I do not have. Prioritize your suggestions by impact.
+
+Job Description:
+[PASTE THE JOB DESCRIPTION HERE]
+
+Resume:
+[PASTE YOUR RESUME HERE]"></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">Paste job description and resume into the prompt after copying</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P3 -->
+    <div class="prompt-card" data-cat="resume" data-search="resume keywords ATS bypass recruiter terminology industry">
+      <div class="card-top">
+        <div class="card-purpose">Identify ATS keywords</div>
+        <div class="card-title">Find the right keywords for my industry</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Job title or industry</span>
+              <input type="text" class="field-input" placeholder="e.g. Healthcare Operations Manager" oninput="updatePrompt(this)" data-field="JOB TITLE OR INDUSTRY">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an ATS optimization expert and recruiter with deep knowledge of [JOB TITLE OR INDUSTRY] hiring practices. Identify the most impactful keywords and phrases I should incorporate into my resume for a [JOB TITLE OR INDUSTRY] role. Organize your response into three groups: (1) hard skills and technical terms, (2) soft skills and leadership language, and (3) industry-specific certifications, methodologies, or tools. For each keyword, provide one sentence explaining why it matters to recruiters or ATS systems in this field."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P4 -->
+    <div class="prompt-card" data-cat="resume" data-search="resume shorten condense concise word count impact bullets">
+      <div class="card-top">
+        <div class="card-purpose">Condense a lengthy resume</div>
+        <div class="card-title">Make my resume shorter and more impactful</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Target role / level</span>
+              <input type="text" class="field-input" placeholder="e.g. Senior Director, Manufacturing" oninput="updatePrompt(this)" data-field="TARGET ROLE, INDUSTRY, OR LEVEL">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an executive resume editor specializing in concise, high-impact career documents. Review the attached resume line by line. My career goal is [TARGET ROLE, INDUSTRY, OR LEVEL]. For each section and bullet point, provide: (1) a recommended revision that reduces word count while preserving or strengthening impact, (2) any bullets that can be removed without loss of positioning value, and (3) any achievement statements that are missing quantification and would benefit from it. Do not add experience I have not provided. Flag any inferred improvements with a note.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P5 -->
+    <div class="prompt-card" data-cat="resume" data-search="resume gap analysis job description strengths gaps language alignment">
+      <div class="card-top">
+        <div class="card-purpose">Gap analysis against a job description</div>
+        <div class="card-title">See exactly where my resume falls short</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career strategist conducting an objective gap analysis. Compare the attached resume to the attached job description. Provide a structured analysis with three sections: (1) Strengths — where the resume clearly meets or exceeds the role's requirements, with specific evidence; (2) Gaps — requirements or qualifications in the job description that are absent or underrepresented in the resume; (3) Language Alignment — specific phrases or terminology from the job description that should be incorporated. Do not rewrite the resume. Do not infer or add experience not present in the resume. Summarize findings only.
+
+Job Description:
+[PASTE THE JOB DESCRIPTION HERE]
+
+Resume:
+[PASTE YOUR RESUME HERE]"></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No fields to fill in — paste your documents after copying</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       COVER LETTERS
+  ═══════════════════════════ -->
+  <div class="category-section" data-cat="cover">
+    <div class="category-header">
+      <div class="category-title">Cover Letters</div>
+      <span class="category-count">2 prompts</span>
+    </div>
+
+    <!-- P6 -->
+    <div class="prompt-card" data-cat="cover" data-search="cover letter write draft personalized application job company">
+      <div class="card-top">
+        <div class="card-purpose">Write a cover letter from scratch</div>
+        <div class="card-title">Generate a targeted cover letter draft</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Job title</span>
+              <input type="text" class="field-input" placeholder="e.g. Director of Operations" oninput="updatePrompt(this)" data-field="JOB TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Company name</span>
+              <input type="text" class="field-input" placeholder="e.g. Acme Corp" oninput="updatePrompt(this)" data-field="COMPANY NAME">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career writer specializing in executive and professional cover letters. Write a personalized, targeted cover letter for a [JOB TITLE] position at [COMPANY NAME]. The letter should: open with a compelling hook that is not a restatement of the job title, highlight 2–3 specific achievements from the attached resume that directly address the role's likely priorities, and close with a confident, action-oriented paragraph. Tone: professional, direct, and human — not generic or overly formal. Length: 3–4 paragraphs. Do not fabricate achievements or experience not present in the attached resume.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P7 -->
+    <div class="prompt-card" data-cat="cover" data-search="cover letter tailor skills achievements integrate edit improve">
+      <div class="card-top">
+        <div class="card-purpose">Improve an existing cover letter</div>
+        <div class="card-title">Make my achievements stand out in my cover letter</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Skills or achievements to highlight</span>
+              <input type="text" class="field-input" placeholder="e.g. my turnaround experience and cost savings results" oninput="updatePrompt(this)" data-field="SPECIFIC SKILLS OR ACHIEVEMENTS">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Tone preference</span>
+              <input type="text" class="field-input" placeholder="Professional / Conversational" oninput="updatePrompt(this)" data-field="PROFESSIONAL / CONVERSATIONAL — choose one">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert cover letter editor. I have a cover letter draft and I want to more effectively highlight [SPECIFIC SKILLS OR ACHIEVEMENTS]. Review the draft below and provide: (1) specific edits that integrate these strengths more naturally and compellingly, (2) any existing language that undercuts or buries the achievements I want to feature, and (3) a revised version of any paragraph you recommend changing. Preserve the existing structure unless a structural change clearly strengthens the letter. Tone should remain [PROFESSIONAL / CONVERSATIONAL — choose one].
+
+Cover Letter Draft:
+[PASTE YOUR COVER LETTER HERE]"></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">Paste your cover letter draft after copying</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       JOB SEARCH
+  ═══════════════════════════ -->
+  <div class="category-section" data-cat="search">
+    <div class="category-header">
+      <div class="category-title">Job Search Strategies & Planning</div>
+      <span class="category-count">3 prompts</span>
+    </div>
+
+    <!-- P8 -->
+    <div class="prompt-card" data-cat="search" data-search="job search strategies industry niche find job hunting avenues">
+      <div class="card-top">
+        <div class="card-purpose">Find industry-specific job search strategies</div>
+        <div class="card-title">Build a targeted search strategy for my industry</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Job title or level</span>
+              <input type="text" class="field-input" placeholder="e.g. VP of Finance" oninput="updatePrompt(this)" data-field="JOB TITLE OR LEVEL">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Industry</span>
+              <input type="text" class="field-input" placeholder="e.g. Healthcare Technology" oninput="updatePrompt(this)" data-field="SPECIFIC INDUSTRY">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Location or remote</span>
+              <input type="text" class="field-input" placeholder="e.g. Dallas, TX or Remote" oninput="updatePrompt(this)" data-field="LOCATION OR REMOTE">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career strategist with deep knowledge of job search methods across industries. I am searching for a [JOB TITLE OR LEVEL] role in the [SPECIFIC INDUSTRY] industry, based in [LOCATION OR REMOTE]. Provide a prioritized list of job search strategies tailored specifically to this industry — including niche job boards, professional associations, events, and networking approaches that are most effective here. For each strategy, provide one sentence on why it works particularly well in this field. Distinguish between strategies I can execute immediately and those that require 30+ days to show results."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P9 -->
+    <div class="prompt-card" data-cat="search" data-search="job search calendar daily routine schedule plan month 8 hours">
+      <div class="card-top">
+        <div class="card-purpose">Create a structured daily job search plan</div>
+        <div class="card-title">Build a month-long job search calendar</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Target role or industry</span>
+              <input type="text" class="field-input" placeholder="e.g. Operations Director in Manufacturing" oninput="updatePrompt(this)" data-field="TARGET ROLE OR INDUSTRY">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career coach and productivity strategist. Create a detailed, realistic month-long job search calendar for someone devoting 8 hours per day to their search. My target role is [TARGET ROLE OR INDUSTRY]. Structure each week around a clear weekly theme (e.g., Week 1: Foundation & Setup; Week 2: Outreach; Week 3: Applications & Follow-Up; Week 4: Interviews & Refinement). Within each week, provide a day-by-day breakdown of specific activities with approximate time allocations. Include a mix of: direct applications, networking outreach, skill development, LinkedIn optimization, and recovery/reflection time. Be specific — name the platforms, tools, and activity types. Do not pad with generic advice."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P10 -->
+    <div class="prompt-card" data-cat="search" data-search="linkedin network job search apply optimize profile strategy">
+      <div class="card-top">
+        <div class="card-purpose">Build a LinkedIn job search strategy</div>
+        <div class="card-title">Use LinkedIn more strategically than just applying</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Your current title or level</span>
+              <input type="text" class="field-input" placeholder="e.g. Senior Manager" oninput="updatePrompt(this)" data-field="JOB TITLE OR LEVEL">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Target industry or function</span>
+              <input type="text" class="field-input" placeholder="e.g. Supply Chain, Fortune 500" oninput="updatePrompt(this)" data-field="TARGET INDUSTRY OR FUNCTION">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are a LinkedIn strategy expert specializing in professional networking and job search optimization. I am a [JOB TITLE OR LEVEL] professional searching for roles in [TARGET INDUSTRY OR FUNCTION]. Provide a specific, step-by-step LinkedIn action plan that goes beyond passive scrolling and basic applications. Cover: (1) profile optimization priorities for my target role, (2) a content and engagement strategy to increase visibility with the right people, (3) a direct outreach framework for connecting with hiring managers and industry contacts, and (4) how to use LinkedIn's job search tools effectively for my target. Be tactical — provide specific language, frequency, and sequencing guidance."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       NETWORKING
+  ═══════════════════════════ -->
+  <div class="category-section" data-cat="network">
+    <div class="category-header">
+      <div class="category-title">Networking & Outreach</div>
+      <span class="category-count">4 prompts</span>
+    </div>
+
+    <!-- P11 -->
+    <div class="prompt-card" data-cat="network" data-search="linkedin message connect cold outreach networking contact industry">
+      <div class="card-top">
+        <div class="card-purpose">Cold LinkedIn connection request</div>
+        <div class="card-title">Write a LinkedIn message to connect with someone new</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Their name or title</span>
+              <input type="text" class="field-input" placeholder="e.g. Sarah Chen, VP of Logistics" oninput="updatePrompt(this)" data-field="INDUSTRY PROFESSIONAL'S NAME OR TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Their company or industry</span>
+              <input type="text" class="field-input" placeholder="e.g. Amazon Logistics" oninput="updatePrompt(this)" data-field="THEIR COMPANY OR INDUSTRY">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Your background (brief)</span>
+              <input type="text" class="field-input" placeholder="e.g. Operations Director with 15 years in manufacturing" oninput="updatePrompt(this)" data-field="YOUR ROLE OR BRIEF CONTEXT">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert in professional networking and concise business communication. Write a LinkedIn connection request message to [INDUSTRY PROFESSIONAL'S NAME OR TITLE] who works in [THEIR COMPANY OR INDUSTRY]. My background is [YOUR ROLE OR BRIEF CONTEXT]. The message should: be under 300 characters (LinkedIn's connection note limit), lead with a genuine, specific reason for connecting rather than a generic request, and avoid asking for anything in the first message. Tone: warm, peer-level, and non-transactional."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">Note: LinkedIn connection notes have a 300 character limit</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P12 -->
+    <div class="prompt-card" data-cat="network" data-search="referral ask professional job recommendation contact request">
+      <div class="card-top">
+        <div class="card-purpose">Ask for a job referral</div>
+        <div class="card-title">Request a referral without being awkward about it</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Contact name & relationship</span>
+              <input type="text" class="field-input" placeholder="e.g. James, former manager at Dell" oninput="updatePrompt(this)" data-field="CONTACT'S NAME AND YOUR RELATIONSHIP TO THEM">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Role you're applying for</span>
+              <input type="text" class="field-input" placeholder="e.g. Director of Supply Chain" oninput="updatePrompt(this)" data-field="JOB TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Company</span>
+              <input type="text" class="field-input" placeholder="e.g. Amazon" oninput="updatePrompt(this)" data-field="COMPANY NAME">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Message channel</span>
+              <input type="text" class="field-input" placeholder="Email / LinkedIn / Text" oninput="updatePrompt(this)" data-field="EMAIL / LINKEDIN / TEXT — choose one">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career coach specializing in professional communication and relationship management. I need to ask [CONTACT'S NAME AND YOUR RELATIONSHIP TO THEM] for a referral for a [JOB TITLE] role at [COMPANY NAME]. Draft a message I can send via [EMAIL / LINKEDIN / TEXT — choose one] that: makes it easy for them to say yes or no without pressure, provides everything they need to advocate for me without requiring them to do research, and maintains the relationship regardless of the outcome. Include a brief context line I can customize, a one-sentence summary of why I'm a strong fit, and a clear, low-pressure ask. Length: 150–200 words."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P13 -->
+    <div class="prompt-card" data-cat="network" data-search="reconnect former colleague networking dormant relationship catch up message">
+      <div class="card-top">
+        <div class="card-purpose">Re-engage a dormant connection</div>
+        <div class="card-title">Reach out to someone I haven't talked to in a while</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Their name</span>
+              <input type="text" class="field-input" placeholder="e.g. Maria" oninput="updatePrompt(this)" data-field="THEIR NAME">
+            </div>
+            <div class="field-item">
+              <span class="field-name">How long it's been</span>
+              <input type="text" class="field-input" placeholder="e.g. about 2 years" oninput="updatePrompt(this)" data-field="APPROXIMATE TIME">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Where you worked together</span>
+              <input type="text" class="field-input" placeholder="e.g. Honeywell, 2019–2021" oninput="updatePrompt(this)" data-field="COMPANY OR CONTEXT">
+            </div>
+            <div class="field-item">
+              <span class="field-name">What you'd like</span>
+              <input type="text" class="field-input" placeholder="15-minute catch-up / introduction / advice" oninput="updatePrompt(this)" data-field="15-minute catch-up / introduction / advice — choose one">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert in professional relationship management and business communication. Draft a brief, warm message to a former colleague, [THEIR NAME], whom I haven't spoken to in [APPROXIMATE TIME]. We worked together at [COMPANY OR CONTEXT]. I'd like to reconnect and eventually ask for a [15-minute catch-up / introduction / advice — choose one], but this first message should feel genuinely reconnective rather than transactional — no ask yet. Reference something specific and authentic about our time working together if I provide it. Tone: warm, peer-level, and human. Length: 3–5 sentences."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P14 -->
+    <div class="prompt-card" data-cat="network" data-search="executive local networking strategy location industry connections career coach">
+      <div class="card-top">
+        <div class="card-purpose">Build a local networking strategy</div>
+        <div class="card-title">Find the right people to connect with in my area</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Your current or recent title</span>
+              <input type="text" class="field-input" placeholder="e.g. VP of Operations" oninput="updatePrompt(this)" data-field="CURRENT OR MOST RECENT ROLE TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">City, State</span>
+              <input type="text" class="field-input" placeholder="e.g. Atlanta, GA" oninput="updatePrompt(this)" data-field="CITY, STATE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Industry 1</span>
+              <input type="text" class="field-input" placeholder="e.g. Aerospace" oninput="updatePrompt(this)" data-field="INDUSTRY 1">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Industry 2</span>
+              <input type="text" class="field-input" placeholder="e.g. Defense" oninput="updatePrompt(this)" data-field="INDUSTRY 2">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Industry 3</span>
+              <input type="text" class="field-input" placeholder="e.g. Advanced Manufacturing" oninput="updatePrompt(this)" data-field="INDUSTRY 3">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Target level</span>
+              <input type="text" class="field-input" placeholder="e.g. VP / Director" oninput="updatePrompt(this)" data-field="TARGET ROLE LEVEL">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career coach specializing in executive-level networking strategy. I am a [CURRENT OR MOST RECENT ROLE TITLE] based in [CITY, STATE]. My target industries are [INDUSTRY 1], [INDUSTRY 2], and [INDUSTRY 3]. I am actively searching for [TARGET ROLE LEVEL] opportunities. Using the attached resume as context, develop a specific local networking strategy that includes: (1) industry associations, conferences, or events in my area worth joining or attending, (2) types of people I should prioritize connecting with and how to find them locally, (3) a suggested outreach sequence for the first 30 days, and (4) any geographic or industry-specific considerations that affect how I should position myself in this market. Be specific to my background — do not provide generic networking advice.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       INTERVIEW PREP
+  ═══════════════════════════ -->
+  <div class="category-section" data-cat="interview">
+    <div class="category-header">
+      <div class="category-title">Interview Preparation</div>
+      <span class="category-count">5 prompts</span>
+    </div>
+
+    <!-- P15 -->
+    <div class="prompt-card" data-cat="interview" data-search="interview questions common behavioral role preparation anticipate">
+      <div class="card-top">
+        <div class="card-purpose">Anticipate common interview questions</div>
+        <div class="card-title">Get the most likely questions for my target role</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Role title</span>
+              <input type="text" class="field-input" placeholder="e.g. Director of Engineering" oninput="updatePrompt(this)" data-field="ROLE TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Level</span>
+              <input type="text" class="field-input" placeholder="Entry / Mid / Senior / Executive" oninput="updatePrompt(this)" data-field="ENTRY / MID / SENIOR / EXECUTIVE — choose one">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert interview coach with deep knowledge of hiring practices across industries. List the 15 most commonly asked interview questions for a [ROLE TITLE] position at the [ENTRY / MID / SENIOR / EXECUTIVE — choose one] level. For each question, provide: (1) the underlying competency or concern the interviewer is evaluating, and (2) one sentence on what a strong answer must include to land well. Organize questions into three groups: behavioral, situational, and role-specific technical."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P16 -->
+    <div class="prompt-card" data-cat="interview" data-search="interview difficult question negative experience reframe learning narrative regret">
+      <div class="card-top">
+        <div class="card-purpose">Answer a difficult "what went wrong" question</div>
+        <div class="card-title">Turn a hard experience into a strong answer</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Brief description of the situation</span>
+              <input type="text" class="field-input" placeholder="e.g. A product launch that missed deadline due to scope creep" oninput="updatePrompt(this)" data-field="BRIEFLY DESCRIBE THE SITUATION">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert interview coach specializing in narrative reframing and difficult interview questions. Help me craft a strong, authentic answer to the interview question: 'What work situation do you wish had never happened, and what are you doing to make sure it doesn't happen again?' The situation I have in mind is: [BRIEFLY DESCRIBE THE SITUATION]. My answer should: acknowledge the difficulty honestly without being self-flagellating, focus primarily on what I learned and what I changed as a result, and end on a forward-looking note that demonstrates professional growth. Draft a 90–120 second spoken response in first person. Tone: grounded, self-aware, and confident."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P17 -->
+    <div class="prompt-card" data-cat="interview" data-search="tell me about yourself TMAY elevator pitch introduction resume interview">
+      <div class="card-top">
+        <div class="card-purpose">Craft a "Tell me about yourself" response</div>
+        <div class="card-title">Build a compelling personal introduction for interviews</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Target role or industry</span>
+              <input type="text" class="field-input" placeholder="e.g. Operations VP in Defense Manufacturing" oninput="updatePrompt(this)" data-field="TARGET ROLE OR INDUSTRY">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert interview coach specializing in executive positioning and personal narrative. Using the attached resume, help me craft a compelling, natural-sounding response to 'Tell me about yourself' for a [TARGET ROLE OR INDUSTRY] interview. The response should follow a three-part structure: (1) a strong identity statement that captures who I am professionally — not a recitation of my job history, (2) 2–3 sentences of evidence highlighting my most relevant pattern of impact, and (3) a forward-looking close that connects my background to why I'm interested in this opportunity. Length: 90–120 seconds spoken (approximately 225–300 words). First person. No corporate jargon.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P18 -->
+    <div class="prompt-card" data-cat="interview" data-search="mock interview practice simulate live feedback behavioral questions roleplay">
+      <div class="card-top">
+        <div class="card-purpose">Simulate a live interview with feedback</div>
+        <div class="card-title">Practice interview questions with instant coaching</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Target role</span>
+              <input type="text" class="field-input" placeholder="e.g. VP of Supply Chain" oninput="updatePrompt(this)" data-field="TARGET ROLE TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Start with questions about</span>
+              <input type="text" class="field-input" placeholder="Leadership / Problem-Solving / Conflict / Results" oninput="updatePrompt(this)" data-field="LEADERSHIP / PROBLEM-SOLVING / CONFLICT / RESULTS — choose one">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are a senior hiring manager conducting a behavioral interview for a [TARGET ROLE TITLE] position. Ask me one behavioral interview question at a time. After I respond, provide structured feedback covering: (1) what worked in my answer — specific language or content that was effective, (2) what to strengthen — one or two specific improvements, and (3) a revised version of my opening sentence if it could be stronger. Then ask the next question. Continue until I tell you to stop. Start with a question that probes [LEADERSHIP / PROBLEM-SOLVING / CONFLICT / RESULTS — choose one]. Do not ask more than one question at a time."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">This is interactive — paste into AI and start answering questions</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P19 -->
+    <div class="prompt-card" data-cat="interview" data-search="STAR success story behavioral interview executive coach dimension leadership career transition">
+      <div class="card-top">
+        <div class="card-purpose">Build a high-impact STAR story with an AI coach</div>
+        <div class="card-title">Success Story Architect</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="# ROLE
+
+You are the &quot;Success Story Architect.&quot; Your goal is to help me build high-impact, STAR-method success stories for job interviews. You are an expert executive coach: warm, direct, and focused on uncovering the &quot;hidden&quot; value in my experience.
+
+# CONTEXT
+
+I am in a high-stakes career transition. I need stories that sound authentic and powerful, not like corporate jargon. We are using the STAR framework (Situation, Task, Action, Result).
+
+# OPERATING PROTOCOL
+
+You will guide me through a 6-step interactive process. Do NOT skip ahead. Wait for my response after every step.
+
+### STEP 1: CONTEXT MAPPING
+
+Ask me for:
+
+1. My target job title/level.
+2. Whether I am a &quot;Strategic Leader&quot; or a &quot;Technical/Operational Expert.&quot;
+
+### STEP 2: THE DIMENSION MENU
+
+Present this menu and ask me to choose ONE dimension for this story:
+
+1. Leading through Change &amp; Uncertainty
+2. Crisis Response &amp; Problem Solving
+3. Operational Efficiency &amp; Scaling
+4. Cross-Functional Leadership &amp; Stakeholder Influence
+5. People Development &amp; Culture
+6. Strategic Vision &amp; Alignment
+7. Specialized Technical/Project Delivery
+
+### STEP 3: THE INTERVIEW
+
+Propose 3 specific behavioral interview questions based on my choice. Ask me to pick ONE or provide a story I already have in mind.
+
+### STEP 4: THE PROBE
+
+Analyze my story for STAR components.
+
+* The &quot;I&quot; Factor: If the story uses &quot;we,&quot; ask me to clarify exactly what I did, what I decided, and how I led.
+* The Meat: Ask 1-2 probing questions to uncover specific metrics (savings, revenue, time) or the &quot;logic&quot; behind a key decision.
+
+### STEP 5: THE FINAL ARCHITECTURE
+
+Output the final story using this exact format:
+
+[Story Title]
+Primary Question: [The interview question this was built for]
+Leadership Dimension: [The dimension chosen]
+
+The Hook: A 1-sentence 'Contrast Hook' bridging the initial problem with the ultimate result.
+
+The Strategy (2nd Person): 3-4 sentences explaining the 'competency' this story proves. Focus on why this success is a repeatable ROI for a future employer.
+
+The Script (1st Person): A polished, conversational STAR script (approx. 250-300 words). Use the Hook as the opening line. Ensure the 'Action' section is the longest part, detailing the specific steps YOU took.
+
+The Pivot Guide: Provide 3 alternate interview questions this same story could answer (e.g., 'If asked about [Conflict/Failure/Innovation], you can pivot this story by emphasizing [Specific Aspect].')
+
+### STEP 6: THE LOOP &amp; REFINEMENT
+
+After providing the Final Architecture, ask me: &quot;Would you like to refine this story further, or should we go back to the Dimension Menu to build a new one?&quot;
+
+Refinement Logic: If I choose to refine, you will exit the structured 6-step process and act as an open-ended editor. You will take my feedback (e.g., &quot;make it punchier,&quot; &quot;add more detail to the Result,&quot; &quot;adjust the tone&quot;) and provide an updated Final Architecture until I am satisfied.
+
+Ready? Let's begin. Start with STEP 1."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">This is a multi-step interactive session — the AI will guide you</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       SALARY
+  ═══════════════════════════ -->
+  <div class="category-section" data-cat="salary">
+    <div class="category-header">
+      <div class="category-title">Salary & Negotiation Strategy</div>
+      <span class="category-count">3 prompts</span>
+    </div>
+
+    <!-- P20 -->
+    <div class="prompt-card" data-cat="salary" data-search="salary negotiate higher compensation strategy script offer">
+      <div class="card-top">
+        <div class="card-purpose">Build a salary negotiation strategy</div>
+        <div class="card-title">Learn how to negotiate a higher salary</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Job title</span>
+              <input type="text" class="field-input" placeholder="e.g. Director of Finance" oninput="updatePrompt(this)" data-field="JOB TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Level</span>
+              <input type="text" class="field-input" placeholder="Entry / Mid / Senior / Executive" oninput="updatePrompt(this)" data-field="ENTRY / MID / SENIOR / EXECUTIVE — choose one">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Industry</span>
+              <input type="text" class="field-input" placeholder="e.g. Financial Services" oninput="updatePrompt(this)" data-field="INDUSTRY">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Location</span>
+              <input type="text" class="field-input" placeholder="e.g. Chicago, IL" oninput="updatePrompt(this)" data-field="LOCATION">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert compensation strategist and negotiation coach. I am preparing to negotiate salary for a [JOB TITLE] role at the [ENTRY / MID / SENIOR / EXECUTIVE — choose one] level in [INDUSTRY] in [LOCATION]. Provide a practical negotiation strategy that covers: (1) how and when to bring up compensation in the interview process, (2) how to anchor the conversation to market data without naming a number first, (3) specific language I can use when asked for my salary expectations, and (4) how to negotiate once an offer is extended, including how to respond to pushback. Provide example scripts for each step."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P21 -->
+    <div class="prompt-card" data-cat="salary" data-search="salary range average market rate role location benchmark compensation">
+      <div class="card-top">
+        <div class="card-purpose">Research market salary for a role</div>
+        <div class="card-title">Find out what I should be earning</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Role title</span>
+              <input type="text" class="field-input" placeholder="e.g. VP of Operations" oninput="updatePrompt(this)" data-field="ROLE TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">City, State or Region</span>
+              <input type="text" class="field-input" placeholder="e.g. Houston, TX" oninput="updatePrompt(this)" data-field="CITY, STATE OR REGION">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Level</span>
+              <input type="text" class="field-input" placeholder="Entry / Mid / Senior / Executive" oninput="updatePrompt(this)" data-field="ENTRY / MID / SENIOR / EXECUTIVE — choose one">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Industry</span>
+              <input type="text" class="field-input" placeholder="e.g. Aerospace & Defense" oninput="updatePrompt(this)" data-field="INDUSTRY">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert compensation analyst with knowledge of current labor market data. Provide the current salary range for a [ROLE TITLE] position in [CITY, STATE OR REGION] at the [ENTRY / MID / SENIOR / EXECUTIVE — choose one] level in the [INDUSTRY] sector. Include: (1) base salary range (low, median, high), (2) total compensation range if equity or bonus is standard for this role, (3) the primary data sources informing this estimate (e.g., BLS, Glassdoor, Levels.fyi), and (4) any factors that would push compensation toward the higher end of the range (company size, specific skills, certifications). Note the date of your most recent data for this role."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P22 -->
+    <div class="prompt-card" data-cat="salary" data-search="offer negotiation playbook executive compensation equity benefits benchmark scripts">
+      <div class="card-top">
+        <div class="card-purpose">Full executive offer negotiation playbook</div>
+        <div class="card-title">Build a complete strategy to negotiate my offer</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in & copy</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are a senior career strategist, compensation analyst, and expert negotiator operating on win-win negotiation principles. Using the attached documents — my resume, the offer letter, and my completed job and benefits-fit matrix — produce a comprehensive negotiation playbook structured as follows:
+
+1. Market Benchmark: Salary, equity, and benefits benchmark for this role, level, and geography based on current market data. Identify where the offer stands relative to market (below, at, or above).
+2. Negotiation Strategy: Specific strategies for negotiating each component of the offer — base, bonus, equity, benefits, and any non-monetary terms. Prioritize by impact.
+3. Scripts: Word-for-word language I can use at each stage: (a) expressing enthusiasm while opening negotiation, (b) making the ask with market anchoring, (c) responding to pushback, and (d) closing gracefully regardless of outcome.
+4. Career Trajectory: Assessment of how this role and compensation package positions me for the next 3–5 years.
+5. Risks & Gaps: Anything in the offer or role that warrants caution — vague language, missing protections, below-market components I may be overlooking.
+6. Action Plan: Step-by-step sequence with fallback positions for each negotiating point.
+
+📎 Attach: Resume, Offer Letter, and Job & Benefits-Fit Matrix before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach resume, offer letter, and benefits matrix before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════
+       CAREER PIVOTS
+  ═══════════════════════════ -->
+  <div class="category-section" data-cat="pivot">
+    <div class="category-header">
+      <div class="category-title">Career Pivots, Skills & Upskilling</div>
+      <span class="category-count">13 prompts</span>
+    </div>
+
+    <!-- P23 -->
+    <div class="prompt-card" data-cat="pivot" data-search="adjacent roles transferable skills career pivot expand job search options">
+      <div class="card-top">
+        <div class="card-purpose">Find adjacent roles I'm qualified for</div>
+        <div class="card-title">Discover what other roles I could target right now</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career strategist specializing in skills-based career development and lateral transitions. Based on the attached resume, identify 5–7 adjacent roles where my skills, experience, and career capital would transfer strongly. For each role, provide: (1) the specific skills from my background that map directly to it, (2) any gaps I would need to address and how significant they are, and (3) a one-sentence assessment of how competitive I would be as a candidate today without additional preparation. Rank suggestions from strongest to weakest transferability. Do not suggest roles that require entirely new credentials or more than 12 months of upskilling.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P24 -->
+    <div class="prompt-card" data-cat="pivot" data-search="learning plan upskill skill gaps online courses target role career pivot budget">
+      <div class="card-top">
+        <div class="card-purpose">Build a learning plan for a career pivot</div>
+        <div class="card-title">Find the right online courses to bridge my skill gaps</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item">
+              <span class="field-name">Target role</span>
+              <input type="text" class="field-input" placeholder="e.g. Product Manager" oninput="updatePrompt(this)" data-field="TARGET ROLE TITLE">
+            </div>
+            <div class="field-item">
+              <span class="field-name">Target industry</span>
+              <input type="text" class="field-input" placeholder="e.g. SaaS / Tech" oninput="updatePrompt(this)" data-field="TARGET INDUSTRY">
+            </div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career development coach and learning strategist. Based on the attached resume and my target role of [TARGET ROLE TITLE] in [TARGET INDUSTRY], identify the skill gaps I need to address to be competitive. Then recommend a prioritized learning plan using online resources only. Organize recommendations in a table with columns: Skill Gap, Recommended Resource, Provider/Website, Cost (Free / Paid), and Estimated Time to Complete. Rank by priority (address first = highest leverage for job search). Do not recommend resources you cannot verify exist.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P25 -->
+    <div class="prompt-card" data-cat="pivot" data-search="skills assessment career pivot hard soft transferable gap analysis target role level salary location">
+      <div class="card-top">
+        <div class="card-purpose">Map your skills to a specific career target</div>
+        <div class="card-title">See exactly how competitive I am for my target role</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Target career pivot</span><input type="text" class="field-input" placeholder="e.g. From Operations to Consulting" oninput="updatePrompt(this)" data-field="TARGET CAREER PIVOT"></div>
+            <div class="field-item"><span class="field-name">Target career level</span><input type="text" class="field-input" placeholder="e.g. Senior Director" oninput="updatePrompt(this)" data-field="TARGET CAREER LEVEL"></div>
+            <div class="field-item"><span class="field-name">Desired salary range</span><input type="text" class="field-input" placeholder="e.g. $180k–$220k" oninput="updatePrompt(this)" data-field="SALARY RANGE"></div>
+            <div class="field-item"><span class="field-name">Target location</span><input type="text" class="field-input" placeholder="e.g. Austin, TX" oninput="updatePrompt(this)" data-field="TARGET LOCATION"></div>
+            <div class="field-item"><span class="field-name">Target industry</span><input type="text" class="field-input" placeholder="e.g. Clean Energy" oninput="updatePrompt(this)" data-field="TARGET INDUSTRY"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career coach specializing in skills-based career transitions and market positioning. Review the attached resume and complete the following analysis:
+
+Step 1 — Skills Extraction: Identify and categorize all hard skills, soft skills, and transferable skills present in my background.
+
+Step 2 — Contextual Analysis: Evaluate those skills against my specific target:
+- Target pivot: [TARGET CAREER PIVOT]
+- Target level: [TARGET CAREER LEVEL]
+- Desired salary range: [SALARY RANGE]
+- Target market/location: [TARGET LOCATION]
+- Target industry: [TARGET INDUSTRY]
+
+Step 3 — Assessment: Identify (a) the skills that transfer most directly and create immediate competitive advantage, (b) the skills that transfer partially and need reframing, and (c) the gaps that represent the most significant barriers to making this pivot at the target level and compensation.
+
+Be specific and direct. Do not provide generic career pivot advice.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P26 -->
+    <div class="prompt-card" data-cat="pivot" data-search="upskilling roadmap skill development plan free paid online programs current role target role">
+      <div class="card-top">
+        <div class="card-purpose">Create a budget-conscious upskilling roadmap</div>
+        <div class="card-title">Build a prioritized plan to develop the skills I need</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Current role</span><input type="text" class="field-input" placeholder="e.g. Operations Manager" oninput="updatePrompt(this)" data-field="CURRENT ROLE"></div>
+            <div class="field-item"><span class="field-name">Target role</span><input type="text" class="field-input" placeholder="e.g. Head of Strategy" oninput="updatePrompt(this)" data-field="TARGET ROLE"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert learning and development strategist. Create a prioritized online skill development plan to support my transition from [CURRENT ROLE] to [TARGET ROLE]. Organize the plan in a table ranked first by cost (free before paid) and then by program length (shortest first). For each item include: Skill addressed, Program name, Provider, URL, Cost, and Estimated duration. Include only programs that currently exist and are accessible online. After the table, provide a recommended sequencing narrative: which skills to tackle first and why, based on what will most quickly make me competitive for the target role."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P27 -->
+    <div class="prompt-card" data-cat="pivot" data-search="career pivot budget financial plan 12 month savings upskill expenses bridge job transition">
+      <div class="card-top">
+        <div class="card-purpose">Plan the finances of a career pivot</div>
+        <div class="card-title">Build a 12-month budget plan for my career transition</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Current career</span><input type="text" class="field-input" placeholder="e.g. Corporate Attorney" oninput="updatePrompt(this)" data-field="CURRENT CAREER"></div>
+            <div class="field-item"><span class="field-name">Target career</span><input type="text" class="field-input" placeholder="e.g. UX Designer" oninput="updatePrompt(this)" data-field="TARGET CAREER"></div>
+            <div class="field-item"><span class="field-name">Current savings</span><input type="text" class="field-input" placeholder="e.g. $45,000" oninput="updatePrompt(this)" data-field="AMOUNT"></div>
+            <div class="field-item"><span class="field-name">Monthly fixed expenses</span><input type="text" class="field-input" placeholder="e.g. $3,200/month (rent, car, insurance)" oninput="updatePrompt(this)" data-field="LIST OR AMOUNT"></div>
+            <div class="field-item"><span class="field-name">Monthly variable spending</span><input type="text" class="field-input" placeholder="e.g. $800/month" oninput="updatePrompt(this)" data-field="AMOUNT"></div>
+            <div class="field-item"><span class="field-name">Other financial obligations</span><input type="text" class="field-input" placeholder="e.g. student loans $400/month" oninput="updatePrompt(this)" data-field="DETAILS"></div>
+            <div class="field-item"><span class="field-name">Upskilling costs identified</span><input type="text" class="field-input" placeholder="e.g. UX bootcamp $8,000, software $200/yr" oninput="updatePrompt(this)" data-field="LIST"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career transition strategist and personal finance advisor. I am transitioning from [CURRENT CAREER] to [TARGET CAREER] and need a realistic 12-month financial plan to support this pivot including upskilling costs. Using the information I provide below, create: (1) a month-by-month budget showing income, fixed expenses, variable spending, upskilling costs, and net monthly position, (2) a risk buffer recommendation based on my runway, (3) specific suggestions for expense reduction, and (4) bridge job options that leverage my existing skills and could provide income during the transition without derailing the pivot. Flag any months where my financial position becomes precarious and recommend action triggers.
+
+My financial information:
+- Current savings: [AMOUNT]
+- Monthly fixed expenses: [LIST OR AMOUNT]
+- Monthly variable spending: [AMOUNT]
+- Other financial obligations: [DETAILS]
+- Upskilling costs identified: [LIST]
+
+📎 Optionally attach your resume for bridge job suggestions tailored to your background."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">Fill in the fields above — they'll appear in the prompt automatically</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P28 -->
+    <div class="prompt-card" data-cat="pivot" data-search="transferable strengths cross industry value statement summary professional brand">
+      <div class="card-top">
+        <div class="card-purpose">Create a cross-industry value statement</div>
+        <div class="card-title">Distill what makes me valuable across any industry</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Target role or industry (optional)</span><input type="text" class="field-input" placeholder="Leave blank to keep it general" oninput="updatePrompt(this)" data-field="TARGET ROLE OR INDUSTRY — optional"></div>
+            <div class="field-item"><span class="field-name">Perspective</span><input type="text" class="field-input" placeholder="First person (interview) / Third person (bio)" oninput="updatePrompt(this)" data-field="THIRD PERSON / FIRST PERSON"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career branding strategist. Based on the attached resume, identify the 3–5 transferable strengths that apply most powerfully across industries — look for patterns of impact, not just job titles or functions. Then write a 2–3 sentence professional value statement that: leads with the candidate's most distinctive capability, references specific scale or impact where possible, and positions them for [TARGET ROLE OR INDUSTRY — optional]. The statement should be written in [THIRD PERSON / FIRST PERSON].
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P29 -->
+    <div class="prompt-card" data-cat="pivot" data-search="skills inventory gap analysis resume job description diagnostic rapid hard soft transferable">
+      <div class="card-top">
+        <div class="card-purpose">Rapid resume-to-JD diagnostic</div>
+        <div class="card-title">See my skills vs. what the job actually requires</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career strategist. Complete a two-part rapid diagnostic:
+
+Part 1 — Skills Inventory: Based on the attached resume, identify and categorize all hard skills, soft skills, and transferable skills. Be comprehensive.
+
+Part 2 — Gap Analysis: Compare those skills against the attached job description. Identify: (a) skills the job requires that are well-represented in my background, (b) skills the job requires that are partially present or need strengthening, and (c) skills the job requires that are absent from my background entirely.
+
+Present Part 2 as a three-column table: Requirement | Status (Strong / Partial / Gap) | Notes.
+
+Resume: [PASTE YOUR RESUME HERE]
+Job Description: [PASTE THE JOB DESCRIPTION HERE]"></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">Paste resume and job description into the prompt after copying</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P30 -->
+    <div class="prompt-card" data-cat="pivot" data-search="skills learn acquire target role career leap gap new career development">
+      <div class="card-top">
+        <div class="card-purpose">Identify exactly what skills I need to learn</div>
+        <div class="card-title">Find out what's standing between me and my target role</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Target role</span><input type="text" class="field-input" placeholder="e.g. Chief Operating Officer" oninput="updatePrompt(this)" data-field="TARGET ROLE"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career development strategist with deep knowledge of the [TARGET ROLE] function and its requirements. I want to become a [TARGET ROLE]. Based on my attached resume, identify only the skills I need to learn or significantly upskill — do not list skills I already have. For each skill gap, assess: (1) how critical it is for success in the target role (Essential / Important / Nice-to-Have), (2) a realistic estimate of how long it would take me to develop it given my existing background, and (3) the best learning pathway (on-the-job, online course, certification, mentorship, etc.). Sort by priority: Essential gaps first.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P31 -->
+    <div class="prompt-card" data-cat="pivot" data-search="reskilling upskilling AI future proof long term plan transferable gaps credible institutions">
+      <div class="card-top">
+        <div class="card-purpose">Build a long-term reskilling plan that accounts for AI</div>
+        <div class="card-title">Future-proof my career with a comprehensive development plan</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career development strategist and future-of-work analyst. Review the attached resume and develop a comprehensive, personalized reskilling and upskilling plan. The plan must: (1) identify transferable skills from my background that are genuinely competitive and worth building on, (2) identify specific skill gaps that will limit my competitiveness in the next 3–5 years, (3) recommend credible, verifiable learning resources with links for each gap, (4) explicitly address how AI is likely to affect my current function and the roles I am targeting — which skills will become more valuable, which will become less relevant, and what I should prioritize learning in the next 6–12 months to stay ahead of that curve. Be direct and specific. Do not provide generic future-of-work commentary.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P32 -->
+    <div class="prompt-card" data-cat="pivot" data-search="career transition analysis current area target area skills market growth adjacent emerging roles">
+      <div class="card-top">
+        <div class="card-purpose">Analyze a major career transition</div>
+        <div class="card-title">Get a full picture of what my career change actually involves</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Current area / function</span><input type="text" class="field-input" placeholder="e.g. Corporate Finance" oninput="updatePrompt(this)" data-field="CURRENT AREA / FUNCTION"></div>
+            <div class="field-item"><span class="field-name">Target area / function</span><input type="text" class="field-input" placeholder="e.g. Venture Capital" oninput="updatePrompt(this)" data-field="TARGET AREA / FUNCTION"></div>
+            <div class="field-item"><span class="field-name">Location or remote preference</span><input type="text" class="field-input" placeholder="e.g. New York, NY or Remote" oninput="updatePrompt(this)" data-field="MY TARGET LOCATION OR REMOTE"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert career transition strategist and labor market analyst. Analyze my career transition from [CURRENT AREA / FUNCTION] to [TARGET AREA / FUNCTION]. Provide: (1) a skills comparison — how my current capabilities map to typical [TARGET AREA / FUNCTION] roles, with transferable strengths and specific gaps identified, (2) market growth assessment — the current growth trajectory and outlook for [TARGET AREA / FUNCTION] roles in [MY TARGET LOCATION OR REMOTE], (3) adjacent and emerging roles — specific job titles adjacent to [TARGET AREA / FUNCTION] that I may be competitive for now or with minimal preparation, including any emerging titles driven by technology or market changes, and (4) a recommended entry strategy — the most realistic path into [TARGET AREA / FUNCTION] given my specific background, not a generic pivot framework.
+
+📎 Attach your resume before sending."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">📎 Attach your resume before sending</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P33 -->
+    <div class="prompt-card" data-cat="pivot" data-search="industry job growth outlook 5 10 years future roles fastest growing BLS labor market">
+      <div class="card-top">
+        <div class="card-purpose">Research where an industry is heading</div>
+        <div class="card-title">Find the fastest-growing roles in my target industry</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Industry name</span><input type="text" class="field-input" placeholder="e.g. Renewable Energy" oninput="updatePrompt(this)" data-field="INDUSTRY NAME"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert labor market analyst and career strategist. Summarize the job growth outlook for the [INDUSTRY NAME] industry over the next 5–10 years. Specifically: (1) identify the roles projected to grow fastest and why, citing available data sources (BLS, McKinsey, WEF, or similar), (2) identify roles within the industry that are at risk of contraction or automation, and (3) highlight emerging roles or functions within the industry that may not yet be widely recognized but represent significant opportunity. Where data is limited or projections are speculative, say so clearly."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P34 -->
+    <div class="prompt-card" data-cat="pivot" data-search="compare two career paths salary growth BLS data role X vs Y decision">
+      <div class="card-top">
+        <div class="card-purpose">Compare two potential career paths</div>
+        <div class="card-title">Make a data-driven decision between two career directions</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Role Option A</span><input type="text" class="field-input" placeholder="e.g. Data Scientist" oninput="updatePrompt(this)" data-field="ROLE X"></div>
+            <div class="field-item"><span class="field-name">Role Option B</span><input type="text" class="field-input" placeholder="e.g. Machine Learning Engineer" oninput="updatePrompt(this)" data-field="ROLE Y"></div>
+            <div class="field-item"><span class="field-name">Career level</span><input type="text" class="field-input" placeholder="Entry / Mid / Senior" oninput="updatePrompt(this)" data-field="ENTRY / MID / SENIOR — choose one"></div>
+            <div class="field-item"><span class="field-name">Location or national</span><input type="text" class="field-input" placeholder="e.g. San Francisco, CA or National" oninput="updatePrompt(this)" data-field="LOCATION OR NATIONAL"></div>
+            <div class="field-item"><span class="field-name">Your background (brief)</span><input type="text" class="field-input" placeholder="e.g. 8 years in analytics, Python skills" oninput="updatePrompt(this)" data-field="BRIEF DESCRIPTION OF YOUR BACKGROUND"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert labor market analyst. Using Bureau of Labor Statistics data and other credible compensation sources, compare [ROLE X] and [ROLE Y] across the following dimensions: (1) current median salary and total compensation range at the [ENTRY / MID / SENIOR — choose one] level in [LOCATION OR NATIONAL], (2) projected 10-year job growth rate, (3) current demand and hiring volume, (4) typical career trajectory and ceiling for each path, and (5) key factors that would make one path significantly more advantageous than the other for someone with [BRIEF DESCRIPTION OF YOUR BACKGROUND]. Cite your data sources and note the publication date for salary and growth figures."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- P35 -->
+    <div class="prompt-card" data-cat="pivot" data-search="AI disruption future proof current role skills valuable decline automation 3 5 years competitive">
+      <div class="card-top">
+        <div class="card-purpose">Future-proof your current role against AI</div>
+        <div class="card-title">Understand how AI is changing my role and what to do about it</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)"><span>Fill in & copy</span><span class="toggle-arrow">▶</span></div>
+      <div class="card-body">
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            <div class="field-item"><span class="field-name">Your job title</span><input type="text" class="field-input" placeholder="e.g. Financial Analyst" oninput="updatePrompt(this)" data-field="JOB TITLE"></div>
+            <div class="field-item"><span class="field-name">Brief skill summary</span><input type="text" class="field-input" placeholder="e.g. financial modeling, forecasting, Excel, SQL" oninput="updatePrompt(this)" data-field="BRIEF SKILL SUMMARY"></div>
+          </div>
+        </div>
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="You are an expert future-of-work analyst and career strategist specializing in AI's impact on professional roles. I am a [JOB TITLE] with experience in [BRIEF SKILL SUMMARY]. Analyze how AI is changing this role over the next 3–5 years and provide: (1) specific tasks or responsibilities in this role that AI is most likely to automate or significantly disrupt, (2) skills and capabilities that will become more valuable as AI handles routine work — be specific, not generic, (3) skills that are likely to decline in market value, (4) a concrete 6-month learning plan with specific resources to strengthen my position, and (5) an honest assessment of the long-term viability of this role and what adjacent moves would provide the most career security. Base your analysis on current AI capabilities and near-term development trajectory, not speculation."></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">No file attachment needed for this one</span>
+          <button class="copy-btn" onclick="copyPrompt(this)"><svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>Copy prompt</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end pivot section -->
+
+</div><!-- end container -->
+
+<div class="footer">
+  <p>AI Job Search Prompt Library · 35 expert-crafted prompts · Works with Claude, ChatGPT, or any AI assistant</p>
+</div>
+
+<script>
+let activeFilter = 'all';
+
+function toggleCard(toggleEl) {
+  const body = toggleEl.nextElementSibling;
+  const arrow = toggleEl.querySelector('.toggle-arrow');
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  arrow.classList.toggle('open', !isOpen);
+  if (!isOpen) renderPrompt(body);
+}
+
+function renderPrompt(body) {
+  const box = body.querySelector('.prompt-box');
+  if (!box) return;
+  const template = box.dataset.template;
+  if (!template) return;
+  const fields = body.querySelectorAll('.field-input');
+  let rendered = template;
+  fields.forEach(f => {
+    const placeholder = f.dataset.field;
+    const val = f.value.trim();
+    if (val) {
+      rendered = rendered.split('[' + placeholder + ']').join(val);
+    }
+  });
+  // Highlight remaining unfilled placeholders
+  rendered = rendered.replace(/\[([^\]]+)\]/g, (m, p1) =>
+    `<span class="placeholder">[${p1}]</span>`
+  );
+  box.innerHTML = rendered;
+}
+
+function updatePrompt(inputEl) {
+  const body = inputEl.closest('.card-body');
+  if (body && body.classList.contains('open')) renderPrompt(body);
+}
+
+function copyPrompt(btn) {
+  const body = btn.closest('.card-body');
+  const box = body.querySelector('.prompt-box');
+  if (!box) return;
+  // Get plain text — strip placeholder spans
+  const text = box.innerText || box.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><path d="M3 8l4 4 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg> Copy prompt';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(() => {
+    const range = document.createRange();
+    range.selectNodeContents(box);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+  });
+}
+
+function setFilter(cat, btn) {
+  activeFilter = cat;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  filterPrompts();
+}
+
+function filterPrompts() {
+  const query = document.getElementById('searchInput').value.toLowerCase().trim();
+  let visible = 0;
+
+  document.querySelectorAll('.prompt-card').forEach(card => {
+    const catMatch = activeFilter === 'all' || card.dataset.cat === activeFilter;
+    const searchMatch = !query || card.dataset.search.includes(query) ||
+      card.querySelector('.card-title').textContent.toLowerCase().includes(query) ||
+      card.querySelector('.card-purpose').textContent.toLowerCase().includes(query);
+    const show = catMatch && searchMatch;
+    card.classList.toggle('hidden', !show);
+    if (show) visible++;
+  });
+
+  // Show/hide category headers
+  document.querySelectorAll('.category-section').forEach(section => {
+    const visibleCards = section.querySelectorAll('.prompt-card:not(.hidden)').length;
+    section.style.display = visibleCards ? '' : 'none';
+  });
+
+  document.getElementById('resultsCount').textContent =
+    `Showing ${visible} prompt${visible !== 1 ? 's' : ''}`;
+  document.getElementById('noResults').style.display = visible ? 'none' : 'block';
+}
+</script>
+</body>
+</html>
