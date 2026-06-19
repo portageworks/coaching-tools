@@ -42,6 +42,33 @@ client = anthropic.Anthropic(
 # SMART = higher-quality, client-facing deliverables (resume rewrites, branding,
 #         session guides, roleplay). FAST = cheap internal jobs (diagnostics,
 #         coach-only training notes). Flip these in one place.
+def complete_json(system, user_content, model, max_tokens, attempts=3):
+    """Call the model and parse a JSON object from its reply. If the reply
+    isn't valid JSON, hand the model its own output back with a correction and
+    re-ask, up to `attempts` times. This catches malformed-JSON failures, which
+    the client's transient-error retries do not. Raises ValueError if it never
+    returns parseable JSON."""
+    messages = [{"role": "user", "content": user_content}]
+    last_raw = ""
+    for _ in range(attempts):
+        resp = client.messages.create(
+            model=model, max_tokens=max_tokens, system=system, messages=messages,
+        )
+        last_raw = (resp.content[0].text or "").strip()
+        cleaned = last_raw.replace("```json", "").replace("```", "").strip()
+        try:
+            return json.loads(cleaned)
+        except json.JSONDecodeError:
+            messages = [
+                {"role": "user", "content": user_content},
+                {"role": "assistant", "content": last_raw},
+                {"role": "user", "content": "That was not valid JSON. Reply with ONLY "
+                 "the JSON object — no preface, no explanation, no markdown code fences."},
+            ]
+    raise ValueError(f"Model did not return valid JSON after {attempts} attempts. "
+                     f"Last reply began: {last_raw[:200]}")
+
+
 MODEL_SMART = "claude-opus-4-8"
 MODEL_FAST  = "claude-sonnet-4-6"
 
@@ -93,18 +120,10 @@ def resume_diagnose():
     if transcript:
         user_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth — overrides resume where they conflict):\n\n{transcript}"
 
-    resp = client.messages.create(
-        model=MODEL_FAST,
-        max_tokens=4000,
-        system=DIAGNOSTIC_SYSTEM,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    raw = (resp.content[0].text or "").strip()
-    raw = raw.replace("```json", "").replace("```", "").strip()
     try:
-        result = json.loads(raw)
+        result = complete_json(DIAGNOSTIC_SYSTEM, user_msg, MODEL_FAST, 4000)
     except Exception as e:
-        return jsonify({"error": f"JSON parse error: {e}", "raw": raw}), 500
+        return jsonify({"error": f"Evaluation failed: {e}"}), 500
     return jsonify(result)
 
 
@@ -326,6 +345,7 @@ def builder_generate():
     resume      = (data.get("resume") or "").strip()
     intake      = (data.get("intake") or "").strip()
     client_name = (data.get("client_name") or "").strip()
+    client_id   = (data.get("client_id") or "").strip()
 
     if not transcript:
         return jsonify({"error": "Transcript is required."}), 400
@@ -418,7 +438,7 @@ def builder_generate():
             remaining -= 1
             if event_type == "done":
                 try:
-                    strategy_store.save_piece(client_name, job_id, payload)
+                    strategy_store.save_piece(client_name, job_id, payload, client_id=client_id)
                 except Exception:
                     pass
                 yield _sse("result", {"id": job_id, "state": "done", "content": payload})
@@ -507,6 +527,7 @@ def builder2_generate():
     resume      = (data.get("resume") or "").strip()
     intake      = (data.get("intake") or "").strip()
     client_name = (data.get("client_name") or "").strip()
+    client_id   = (data.get("client_id") or "").strip()
 
     if not transcript:
         return jsonify({"error": "Transcript is required."}), 400
@@ -565,15 +586,7 @@ def builder2_generate():
             diag_msg = f"RESUME:\n\n{resume}" if resume else "No resume provided."
             if transcript:
                 diag_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth — overrides resume where they conflict):\n\n{transcript}"
-            diag_resp = client.messages.create(
-                model=MODEL_FAST,
-                max_tokens=2000,
-                system=DIAGNOSTIC_SYSTEM,
-                messages=[{"role": "user", "content": diag_msg}],
-            )
-            cleaned = diag_resp.content[0].text.strip()
-            cleaned = cleaned.replace("```json", "").replace("```", "").strip()
-            diag = json.loads(cleaned)
+            diag = complete_json(DIAGNOSTIC_SYSTEM, diag_msg, MODEL_FAST, 2000)
 
             rw_msg = f"CANDIDATE LEVEL: {diag.get('level','EXECUTIVE')}\n"
             rw_msg += f"READINESS SCORE: {diag.get('readinessScore', 5)}/10\n"
@@ -632,7 +645,7 @@ def builder2_generate():
             remaining -= 1
             if event_type == "done":
                 try:
-                    strategy_store.save_piece(client_name, job_id, payload)
+                    strategy_store.save_piece(client_name, job_id, payload, client_id=client_id)
                 except Exception:
                     pass
                 yield _sse("result", {"id": job_id, "state": "done", "content": payload})
@@ -776,6 +789,7 @@ def full_generate():
     resume      = (data.get("resume") or "").strip()
     intake      = (data.get("intake") or "").strip()
     client_name = (data.get("client_name") or "").strip()
+    client_id   = (data.get("client_id") or "").strip()
 
     if not transcript:
         return jsonify({"error": "Transcript is required."}), 400
@@ -870,7 +884,7 @@ def full_generate():
             remaining -= 1
             if event_type == "done":
                 try:
-                    strategy_store.save_piece(client_name, job_id, payload)
+                    strategy_store.save_piece(client_name, job_id, payload, client_id=client_id)
                 except Exception:
                     pass
                 yield _sse("result", {"id": job_id, "state": "done", "content": payload})
@@ -902,16 +916,20 @@ def package_clients():
 def package_build_pdf():
     data        = request.get_json()
     client_name = (data.get("client_name") or "").strip()
+    # The package page sends back the storage slug from list_clients() so we
+    # load the exact folder that was saved (identifier slug or legacy name
+    # slug); fall back to the name slug for older clients that send only a name.
+    storage_key = (data.get("client_key") or "").strip() or strategy_store.slugify(client_name)
     if not client_name:
         return jsonify({"error": "Client name is required."}), 400
 
-    pieces = strategy_store.load_all(client_name)
+    pieces = strategy_store.load_all(storage_key)
     if not pieces:
         return jsonify({"error": f"No saved content found for {client_name}. Run the Session Builder for this client first."}), 404
 
     html      = build_strategy_package_html(client_name, pieces)
     pdf_bytes = render_pdf(html)
-    slug      = strategy_store.slugify(client_name)
+    slug      = storage_key
     return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
                      as_attachment=True, download_name=f"{slug}_strategy_package.pdf")
 
