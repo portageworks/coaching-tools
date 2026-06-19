@@ -168,6 +168,11 @@
       <input type="text" id="clientNameInput" class="client-name-input" placeholder="e.g. Jason Cochran">
     </div>
     <div>
+      <label class="field-label" for="clientIdInput">Client ID or Email</label>
+      <div class="field-sub">Optional — keeps two clients with the same name separate</div>
+      <input type="text" id="clientIdInput" class="client-name-input" placeholder="e.g. jason@email.com">
+    </div>
+    <div>
       <label class="field-label" for="fontSelect">Resume Font</label>
       <div class="field-sub">Applied to the downloaded Word doc</div>
       <select id="fontSelect" class="font-select">
@@ -284,6 +289,7 @@ async function runAll() {
   const resume      = getResume();
   const intake      = getIntake();
   const clientName  = document.getElementById('clientNameInput').value.trim();
+  const clientId    = document.getElementById('clientIdInput').value.trim();
 
   hideError();
   if (!transcript)  { showError('Please upload or paste a transcript.');   return; }
@@ -296,7 +302,7 @@ async function runAll() {
     const res = await fetch('/api/builder/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript, resume, intake, client_name: clientName }),
+      body: JSON.stringify({ transcript, resume, intake, client_name: clientName, client_id: clientId }),
     });
 
     if (!res.ok) {

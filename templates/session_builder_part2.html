@@ -160,6 +160,9 @@
     <label class="field-label" for="clientNameInput">Client Name <span style="color:var(--red)">*</span></label>
     <div class="field-sub">First and last name — used in all output headers</div>
     <input type="text" id="clientNameInput" class="client-name-input" placeholder="e.g. Jason Cochran">
+    <label class="field-label" for="clientIdInput" style="margin-top:16px;">Client ID or Email</label>
+    <div class="field-sub">Optional — keeps two clients with the same name separate</div>
+    <input type="text" id="clientIdInput" class="client-name-input" placeholder="e.g. jason@email.com">
   </div>
 
   <!-- Output cards -->
@@ -264,6 +267,7 @@ async function runAll() {
   const resume     = getResume();
   const intake     = getIntake();
   const clientName = document.getElementById('clientNameInput').value.trim();
+  const clientId   = document.getElementById('clientIdInput').value.trim();
 
   hideError();
   if (!transcript) { showError('Please upload or paste a transcript.'); return; }
@@ -278,7 +282,7 @@ async function runAll() {
     const res = await fetch('/api/builder2/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ transcript, resume, intake, client_name: clientName }),
+      body: JSON.stringify({ transcript, resume, intake, client_name: clientName, client_id: clientId }),
     });
     if (!res.ok) throw new Error(`Server error ${res.status}`);
 

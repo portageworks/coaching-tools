@@ -123,7 +123,8 @@ function renderClientCard(c){
   }).join('');
   const updated = c.updated ? new Date(c.updated).toLocaleString() : '';
   const safeName = c.name.replace(/"/g,'&quot;');
-  return `<div class="client-card" data-name="${safeName}" onclick="selectClient(this)">
+  const safeKey = (c.slug || '').replace(/"/g,'&quot;');
+  return `<div class="client-card" data-name="${safeName}" data-key="${safeKey}" onclick="selectClient(this)">
     <div class="client-card-top">
       <div class="client-name">${escapeHtml(c.name)}</div>
       <div class="client-updated">${escapeHtml(updated)}</div>
@@ -135,7 +136,7 @@ function renderClientCard(c){
 function selectClient(el){
   document.querySelectorAll('.client-card').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
-  selectedClient = el.getAttribute('data-name');
+  selectedClient = { name: el.getAttribute('data-name'), key: el.getAttribute('data-key') };
   document.getElementById('buildBtn').disabled = false;
 }
 
@@ -150,7 +151,7 @@ async function buildPackage(){
     const res = await fetch('/api/package/build.pdf', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ client_name: selectedClient }),
+      body: JSON.stringify({ client_name: selectedClient.name, client_key: selectedClient.key }),
     });
     if(!res.ok){
       const data = await res.json().catch(()=>({}));

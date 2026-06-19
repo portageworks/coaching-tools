@@ -152,6 +152,9 @@
     <label class="field-label" for="clientNameInput">Client Name <span style="color:var(--red)">*</span></label>
     <div class="field-sub">First and last name — used in all output headers</div>
     <input type="text" id="clientNameInput" class="client-name-input" placeholder="e.g. Michael Poole">
+    <label class="field-label" for="clientIdInput" style="margin-top:16px;">Client ID or Email</label>
+    <div class="field-sub">Optional — keeps two clients with the same name separate</div>
+    <input type="text" id="clientIdInput" class="client-name-input" placeholder="e.g. michael@email.com">
   </div>
 
   <div class="section-title">Generates Everything</div>
@@ -185,7 +188,7 @@ const CARDS = [
   ['positioning','Where to Look'],['roleplay','Roleplay Analysis'],
   ['resume','Revised Resume'],['training','Training Assessment'],
 ];
-let resumeContent = '', trainingContent = '', clientName = '';
+let resumeContent = '', trainingContent = '', clientName = '', clientId = '';
 
 document.getElementById('cards').innerHTML = CARDS.map(([id,name]) =>
   `<div class="prompt-card" id="card-${id}">
@@ -223,6 +226,7 @@ function setStatus(id,state,msg){
 async function runAll(){
   const transcript=getTranscript(), resume=getResume(), intake=getIntake();
   clientName=document.getElementById('clientNameInput').value.trim();
+  clientId=document.getElementById('clientIdInput').value.trim();
   hideError();
   if(!transcript){showError('Transcript is required.');return;}
   if(!clientName){showError('Client name is required.');return;}
@@ -236,7 +240,7 @@ async function runAll(){
   try{
     const res=await fetch('/api/full/generate',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({transcript,resume,intake,client_name:clientName}),
+      body:JSON.stringify({transcript,resume,intake,client_name:clientName,client_id:clientId}),
     });
     if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.error||`Server error ${res.status}`);}
 
