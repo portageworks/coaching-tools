@@ -30,7 +30,13 @@ import strategy_store
 
 app = Flask(__name__)
 
-client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+# max_retries handles transient API failures (overloaded, rate limits, timeouts,
+# 5xx) with exponential backoff so a run succeeds the first time instead of
+# erroring out and forcing a full re-run. Default is 2; raised for reliability.
+client = anthropic.Anthropic(
+    api_key=os.environ.get("ANTHROPIC_API_KEY"),
+    max_retries=5,
+)
 
 # ── Model selection ───────────────────────────────────────────────────────────
 # SMART = higher-quality, client-facing deliverables (resume rewrites, branding,
