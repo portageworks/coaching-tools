@@ -311,6 +311,9 @@ blockquote p{{margin-bottom:0;color:var(--charcoal);font-size:11pt;line-height:1
 hr{{border:none;border-top:0.5pt solid var(--border);margin:14pt 0;}}
 .note{{margin:6pt 0 12pt;}}
 .note .rule{{height:30pt;border-bottom:0.75pt solid var(--rule);}}
+li.chk{{list-style:none;margin-left:-12pt;}}
+li.chk::before{{content:"\\2610";font-size:15pt;line-height:1;margin-right:9pt;color:var(--charcoal);vertical-align:-1pt;}}
+li.chk-done::before{{content:"\\2611";}}
 """
 
 
@@ -331,6 +334,11 @@ def build_worksheet_html(worksheet_md, client_name):
                 body += _md_to_html(chunk, strip_emoji=True)
         else:
             body += _ruled_note(chunk)  # chunk is the captured size (or None)
+    # Render markdown task-list items ("- [ ] item") as printable checkboxes.
+    body = re.sub(r"<li>(\s*<p>)?\s*\[ \]\s*",
+                  lambda m: '<li class="chk">' + (m.group(1) or ""), body)
+    body = re.sub(r"<li>(\s*<p>)?\s*\[[xX]\]\s*",
+                  lambda m: '<li class="chk chk-done">' + (m.group(1) or ""), body)
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <style>{_worksheet_css(client_name)}</style></head><body>
 <div class="doc-header">

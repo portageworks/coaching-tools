@@ -849,6 +849,17 @@ STRUCTURE -- follow exactly:
 # SESSION WORKSHEET -- [CLIENT FULL NAME]
 ## Single-Day Coaching Session
 
+## BEFORE YOU START
+
+**North Star Phrase:**
+[Reproduce the north star phrase from the synthesis verbatim, on its own line. The phrase only -- do not include the derivation note.]
+
+**Identity Gap:**
+[A 2-3 sentence summary of the identity gap from the synthesis: how their resume positions them versus who their stories and answers reveal them to be, and the gap between the two.]
+
+**What they're carrying in:**
+[A 2-3 sentence summary of the emotional subtext from the synthesis: what they are not saying directly, and what needs air before the work begins.]
+
 ## IN THEIR WORDS
 
 Reproduce these fields verbatim from the pre-work, each as a blockquote under a bold label. If a field is genuinely absent from the pre-work, write "(not provided)". Include every one of these, in this order:
@@ -895,9 +906,18 @@ For each subsection within the block, use a level-3 header, then the questions e
 Rules for the blocks:
 - Questions only. Pull them verbatim from the Coach Guide. Do not invent new questions and do not drop any.
 - No coaching narrative, no "listen for", no "why", no synthesis fields, no block close notes.
-- For the three stories (Zone/Save/Swerve): the level-3 header is the working title. You may include ONE blockquote line giving the situation verbatim for context, then the build questions, then [[NOTES:large]].
+- For the three stories (Zone/Save/Swerve): the level-3 header is the working title. Under it, reproduce all four of the client's pre-work answers verbatim, each as its own labeled THEY SAID blockquote, in this exact order:
+> THEY SAID -- situation:
+> [verbatim]
+> THEY SAID -- what they did:
+> [verbatim]
+> THEY SAID -- what changed:
+> [verbatim]
+> THEY SAID -- what they learned:
+> [verbatim]
+  Then the build questions, then [[NOTES:large]]. If the "what they learned" answer is genuinely absent from the pre-work, write "(not provided)".
 - Keep the lines the coach says out loud (setups, the TMAY 90-second prompt, the Safe Fault build structure, the survey ask, the closing reflection questions, and the final words). Keep them tight. Mark them in italics so they are visually distinct from questions.
-- Live Intake administrative items stay as a short checklist followed by [[NOTES:small]].
+- Live Intake administrative items must be formatted as a markdown checkbox list, each line written exactly as "- [ ] item" with the empty brackets, followed by [[NOTES:small]].
 - The Action Plan gets [[NOTES:large]].
 
 End after the Final Words. Output nothing after them.
@@ -907,4 +927,6 @@ CRITICAL:
 2. Same block order and titles as the guide. Questions verbatim from the guide.
 3. A note marker after every question cluster. Never place two question clusters back to back without a marker between them.
 4. No narrative. If a line explains rather than asks or scripts something to say, cut it.
-5. No em dashes. No tables. Clean markdown only."""
+5. No em dashes. No tables. Clean markdown only.
+6. The BEFORE YOU START anchors (North Star Phrase, Identity Gap, what they're carrying in) are drawn from the synthesis and must always be present at the top.
+7. Each of the three stories must include all four verbatim THEY SAID blocks (situation, what they did, what changed, what they learned). Never include only the situation."""
