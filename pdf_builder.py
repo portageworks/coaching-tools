@@ -311,6 +311,9 @@ blockquote p{{margin-bottom:0;color:var(--charcoal);font-size:11pt;line-height:1
 hr{{border:none;border-top:0.5pt solid var(--border);margin:14pt 0;}}
 .note{{margin:6pt 0 12pt;}}
 .note .rule{{height:30pt;border-bottom:0.75pt solid var(--rule);}}
+/* One question cluster (+ its note space) per page. */
+.qpage{{break-before:page;}}
+.qpage:first-of-type{{break-before:auto;}}
 li.chk{{list-style:none;margin-left:-12pt;}}
 li.chk::before{{content:"\\2610";font-size:15pt;line-height:1;margin-right:9pt;color:var(--charcoal);vertical-align:-1pt;}}
 li.chk-done::before{{content:"\\2611";}}
@@ -327,13 +330,21 @@ def build_worksheet_html(worksheet_md, client_name):
     today = datetime.now().strftime("%B %d, %Y")
     # Split on note markers; the optional size is captured.
     parts = re.split(r"(?m)^[ \t]*\[\[NOTES(?::([a-zA-Z]+))?\]\][ \t]*$", worksheet_md)
+    # parts alternates: [text, size, text, size, ..., text]. Each text chunk is
+    # one question cluster (heading + questions); the size that follows is its
+    # note area. Wrap each cluster + its notes in a .qpage section so the
+    # worksheet renders roughly one cluster per page with room to write.
+    texts = parts[0::2]
+    sizes = parts[1::2]
     body = ""
-    for i, chunk in enumerate(parts):
-        if i % 2 == 0:
-            if chunk and chunk.strip():
-                body += _md_to_html(chunk, strip_emoji=True)
-        else:
-            body += _ruled_note(chunk)  # chunk is the captured size (or None)
+    for i, chunk in enumerate(texts):
+        inner = ""
+        if chunk and chunk.strip():
+            inner += _md_to_html(chunk, strip_emoji=True)
+        if i < len(sizes):
+            inner += _ruled_note(sizes[i])  # sizes[i] is the captured size (or None)
+        if inner:
+            body += f'<section class="qpage">{inner}</section>'
     # Render markdown task-list items ("- [ ] item") as printable checkboxes.
     body = re.sub(r"<li>(\s*<p>)?\s*\[ \]\s*",
                   lambda m: '<li class="chk">' + (m.group(1) or ""), body)
