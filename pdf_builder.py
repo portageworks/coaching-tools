@@ -448,6 +448,57 @@ def _positioning_body_html(pos):
 {action_html}"""
 
 
+def positioning_warnings(pos):
+    """Return a list of human-readable problems with a positioning object.
+
+    Catches the failure that silently shipped to a client: a positioning block
+    that parses but is thin (no lanes, no companies, or — the one that bit us —
+    companies with empty LinkedIn search strings). Empty list means it's clean.
+    """
+    problems = []
+    if not isinstance(pos, dict):
+        return ["Positioning data is not a valid object."]
+    lanes = pos.get("lanes", []) or []
+    if len(lanes) < 2:
+        problems.append(f"Only {len(lanes)} target lane(s) — expected 2-3.")
+    total_companies = 0
+    companies_missing_search = 0
+    for lane in lanes:
+        cos = lane.get("companies", []) or []
+        if not cos:
+            problems.append(f'Lane "{lane.get("label","(unnamed)")}" has no companies.')
+        for co in cos:
+            total_companies += 1
+            has_any = any(
+                (co.get(st) or {}).get("instruction", "").strip()
+                for st in ("peer", "hiringMgr", "recruiter")
+            )
+            if not has_any:
+                companies_missing_search += 1
+    if companies_missing_search:
+        problems.append(
+            f"{companies_missing_search} of {total_companies} companies have NO "
+            f"LinkedIn search strings."
+        )
+    return problems
+
+
+def package_warnings(pieces):
+    """Pre-flight check before a client package ships. Returns a list of
+    warnings the coach should see (thin positioning, unparseable positioning).
+    Empty list means the package is clean to send."""
+    warnings = []
+    pos_raw = pieces.get("positioning")
+    if pos_raw:
+        try:
+            pos = json.loads(pos_raw) if isinstance(pos_raw, str) else pos_raw
+            for p in positioning_warnings(pos):
+                warnings.append(f"Where to Look — {p}")
+        except Exception:
+            warnings.append("Where to Look — saved positioning is not valid JSON; regenerate it.")
+    return warnings
+
+
 def build_positioning_html(pos, client_name):
     pills_html = "".join(
         f'<span class="pill">{esc(p)}</span>'

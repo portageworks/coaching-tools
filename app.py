@@ -24,7 +24,7 @@ from docx_builder import markdown_to_docx
 from resume_docx_builder import resume_to_docx
 from pdf_builder import (
     build_client_html, build_positioning_html, build_strategy_package_html,
-    build_worksheet_html, render_pdf,
+    build_worksheet_html, render_pdf, positioning_warnings, package_warnings,
 )
 import strategy_store
 
@@ -380,6 +380,11 @@ def builder_generate():
                 # and a genuine failure surfaces as an error instead of being
                 # silently dropped at package-build time.
                 data = complete_json(system_prompt, _user_msg(), MODEL_SMART, max_tokens)
+                problems = positioning_warnings(data)
+                if problems:
+                    # Don't save thin positioning silently — surface it loudly so
+                    # the coach re-runs instead of shipping a half-empty section.
+                    raise ValueError("Positioning came back incomplete: " + " ".join(problems))
                 content = json.dumps(data)
             else:
                 resp = client.messages.create(
@@ -835,6 +840,11 @@ def full_generate():
                 # and a genuine failure surfaces as an error instead of being
                 # silently dropped at package-build time.
                 data = complete_json(system_prompt, _user_msg(), model, max_tokens)
+                problems = positioning_warnings(data)
+                if problems:
+                    # Don't save thin positioning silently — surface it loudly so
+                    # the coach re-runs instead of shipping a half-empty section.
+                    raise ValueError("Positioning came back incomplete: " + " ".join(problems))
                 q.put(("done", job_id, json.dumps(data)))
                 return
             resp = client.messages.create(
@@ -946,8 +956,15 @@ def package_build_pdf():
     html      = build_strategy_package_html(client_name, pieces)
     pdf_bytes = render_pdf(html)
     slug      = storage_key
-    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+    resp = send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
                      as_attachment=True, download_name=f"{slug}_strategy_package.pdf")
+    # Pre-flight warnings (thin/invalid positioning, etc.) ride along in a
+    # header so the UI can flag problems before this package reaches a client.
+    warnings = package_warnings(pieces)
+    if warnings:
+        resp.headers["X-Package-Warnings"] = json.dumps(warnings)
+        resp.headers["Access-Control-Expose-Headers"] = "X-Package-Warnings"
+    return resp
 
 
 if __name__ == "__main__":

@@ -162,6 +162,7 @@
 
   <div class="prompts-grid" id="cards"></div>
 
+  <div class="warn-msg" id="warnMsg" style="display:none;background:#fff8e6;border:1px solid #e0c06a;border-radius:2px;padding:12px 16px;color:#7a5200;font-size:13px;margin-top:12px;line-height:1.5;"></div>
   <div class="error-msg" id="errorMsg"></div>
 
   <button class="run-btn" id="runBtn" onclick="runAll()">&#9889; Generate Full Session</button>
@@ -279,6 +280,8 @@ async function postDownload(endpoint,body,fallbackName,btnId){
   try{
     const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.error||`Server error ${res.status}`);}
+    const warnHeader=res.headers.get('X-Package-Warnings');
+    if(warnHeader){try{showWarnings(JSON.parse(warnHeader));}catch(_){}}
     const blob=await res.blob();const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
     const disp=res.headers.get('Content-Disposition')||'';
@@ -308,5 +311,13 @@ function downloadTrainingPdf(){
 
 function showError(msg){const el=document.getElementById('errorMsg');el.textContent=msg;el.className='error-msg visible';}
 function hideError(){document.getElementById('errorMsg').className='error-msg';}
+function showWarnings(list){
+  const el=document.getElementById('warnMsg'); if(!el) return;
+  if(!list || !list.length){el.style.display='none';return;}
+  el.innerHTML='<strong>⚠ Review before sending — this package looks incomplete:</strong><ul style="margin:6px 0 0 18px;">'
+    +list.map(w=>'<li>'+String(w).replace(/</g,'&lt;')+'</li>').join('')
+    +'</ul><div style="margin-top:8px;">Re-run this client\'s session (positioning step) to fix, then rebuild.</div>';
+  el.style.display='block';
+}
 </script>
 {% endblock %}
