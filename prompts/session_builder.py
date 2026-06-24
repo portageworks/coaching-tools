@@ -1,3 +1,6 @@
+from prompts.resume_summary import SUMMARY_RULES
+
+
 def client_anchor(client_name):
     return f"""CRITICAL CONTEXT: This is a career coaching session transcript. There are two speakers: the coach and the client. The client's name is {client_name}. ALL career history, professional achievements, success stories, employment history, and personal narrative in this output must belong to {client_name} only. The coach may share examples or background from their own experience to illustrate points — treat those as facilitative context only and never include them in any client-facing output. If you are uncertain which speaker contributed a story or achievement, default to attributing it to {client_name} only if it is clearly stated as their own experience."""
 
@@ -234,13 +237,7 @@ HOUSE STYLE — non-negotiable:
 - Do NOT insert horizontal rules or separator lines (---, ***, ___) between sections or roles. Section headers alone separate content.
 - Do NOT wrap scope paragraphs or bullets in asterisks. Write them as plain text. Only job titles use **bold** exactly as shown in the output format.
 
-SUMMARY RULES — the summary is where resumes get "precious." Write against that. Follow every rule:
-1. Implied first person — no subject, no candidate name, no pronouns. Open with a flat declarative positioning phrase stating who the candidate is by function: "Compliance-to-operations healthcare executive who fixes broken health plans and keeps them fixed." Not "Gary Davis is..." or "He brings..."
-2. No opening hook or throat-clearing, and no comparisons to other leaders, implicit or explicit. Cut "unlike most," "rare," "uniquely positioned."
-3. Use verbs, not nominalized abstractions. Do not let abstract nouns ("infrastructure," "ecosystem," "visibility," "alignment," "transformation") carry the sentence. Say what the person does.
-4. Every sentence must be falsifiable and specific to THIS person. If a different executive could say the identical sentence, cut it or sharpen it until they couldn't.
-5. Maximum 3 sentences before the targeting/positioning line. No metrics, no accomplishments.
-6. Write it the way you would describe the candidate to a peer recruiter on the phone: plain, direct, confident, no performance.
+""" + SUMMARY_RULES + """
 
 PLACEHOLDER RULES:
 - Use ((double parentheses)) ONLY for essential missing factual anchors: unknown date, company name, or title.
@@ -252,7 +249,7 @@ OUTPUT FORMAT — follow exactly:
 [City, State • Phone • Email • LinkedIn]
 
 ## EXECUTIVE SUMMARY
-[Summary — follow SUMMARY RULES: implied first person, declarative and falsifiable, max 3 sentences before the targeting line, no metrics, phone-to-peer voice]
+[Summary — follow SUMMARY RULES exactly: three sentences, Identity then Proof then Target, implied first person, falsifiable, phone-to-peer voice]
 
 ## CORE COMPETENCIES
 [Competency 1 | Competency 2 | Competency 3 | ...]
