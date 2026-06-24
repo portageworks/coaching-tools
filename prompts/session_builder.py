@@ -1,4 +1,5 @@
 from prompts.resume_summary import SUMMARY_RULES
+from prompts.resume_bullets import BULLET_RULES
 
 
 def client_anchor(client_name):
@@ -238,6 +239,8 @@ HOUSE STYLE — non-negotiable:
 - Do NOT wrap scope paragraphs or bullets in asterisks. Write them as plain text. Only job titles use **bold** exactly as shown in the output format.
 
 """ + SUMMARY_RULES + """
+
+""" + BULLET_RULES + """
 
 PLACEHOLDER RULES:
 - Use ((double parentheses)) ONLY for essential missing factual anchors: unknown date, company name, or title.

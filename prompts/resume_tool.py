@@ -1,4 +1,5 @@
 from prompts.resume_summary import SUMMARY_RULES
+from prompts.resume_bullets import BULLET_RULES
 
 
 DIAGNOSTIC_SYSTEM = """You are a senior career strategist at a boutique coaching firm. You evaluate resumes with a "yes, and" coaching posture: start by identifying what works, preserve strong material, and scale your intervention to the actual quality of the document. You are not a resume shredder. You are a coach who helps good professionals present themselves at their best.
@@ -106,6 +107,8 @@ PLACEHOLDER RULES:
 - Never fabricate numbers, percentages, or dollar amounts.
 
 """ + SUMMARY_RULES + """
+
+""" + BULLET_RULES + """
 
 CRITICAL RULES:
 - If a transcript is provided, it is Primary Truth. It overrides prior framing in the resume where they conflict.
