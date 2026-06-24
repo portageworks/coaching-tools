@@ -683,7 +683,14 @@ def build_strategy_package_html(client_name, pieces, target_title="", date=None)
             if not target_title:
                 target_title = pos.get("targetTitle", "")
         except Exception:
-            pass
+            # Don't silently drop the section — make the failure visible so a
+            # coach knows the data exists but couldn't be rendered, rather than
+            # wondering why "Where to Look" vanished from the package.
+            bodies["positioning"] = (
+                '<p style="color:#8b4040">The "Where to Look" data for this client '
+                "could not be rendered (the saved positioning content was not valid "
+                "JSON). Re-run the positioning step for this client to restore it.</p>"
+            )
 
     # Build ordered sections that actually have content.
     sections = [(k, title) for (k, title) in PACKAGE_ORDER if k in bodies]

@@ -369,18 +369,26 @@ def builder_generate():
     JOBS = [
         ("ip",          interview_program_prompt(client_name), 16000),
         ("stories",     stories_prompt(client_name),           16000),
-        ("positioning", positioning_prompt(client_name, bool(resume), bool(intake)), 8000),
+        ("positioning", positioning_prompt(client_name, bool(resume), bool(intake)), 16000),
     ]
 
     def run_job(job_id, system_prompt, max_tokens):
         try:
-            resp = client.messages.create(
-                model=MODEL_SMART,
-                max_tokens=max_tokens,
-                system=system_prompt,
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            content = (resp.content[0].text or "").strip()
+            if job_id == "positioning":
+                # Positioning returns a large structured JSON object. Route it
+                # through complete_json so a truncated/malformed reply self-heals
+                # and a genuine failure surfaces as an error instead of being
+                # silently dropped at package-build time.
+                data = complete_json(system_prompt, _user_msg(), MODEL_SMART, max_tokens)
+                content = json.dumps(data)
+            else:
+                resp = client.messages.create(
+                    model=MODEL_SMART,
+                    max_tokens=max_tokens,
+                    system=system_prompt,
+                    messages=[{"role": "user", "content": _user_msg()}],
+                )
+                content = (resp.content[0].text or "").strip()
             q.put(("done", job_id, content))
         except Exception as e:
             q.put(("error", job_id, str(e)))
@@ -815,12 +823,20 @@ def full_generate():
         ("stories",     stories_prompt(client_name),                                 16000, MODEL_SMART),
         ("summary",     summary_prompt(client_name),                                 12000, MODEL_SMART),
         ("branding",    branding_prompt(client_name, bool(resume), bool(intake)),    12000, MODEL_SMART),
-        ("positioning", positioning_prompt(client_name, bool(resume), bool(intake)),  8000, MODEL_SMART),
+        ("positioning", positioning_prompt(client_name, bool(resume), bool(intake)), 16000, MODEL_SMART),
         ("training",    training_prompt(client_name),                                 8000, MODEL_FAST),
     ]
 
     def run_job(job_id, system_prompt, max_tokens, model):
         try:
+            if job_id == "positioning":
+                # Positioning returns a large structured JSON object. Route it
+                # through complete_json so a truncated/malformed reply self-heals
+                # and a genuine failure surfaces as an error instead of being
+                # silently dropped at package-build time.
+                data = complete_json(system_prompt, _user_msg(), model, max_tokens)
+                q.put(("done", job_id, json.dumps(data)))
+                return
             resp = client.messages.create(
                 model=model, max_tokens=max_tokens, system=system_prompt,
                 messages=[{"role": "user", "content": _user_msg()}],
