@@ -42,6 +42,34 @@ client = anthropic.Anthropic(
 # SMART = higher-quality, client-facing deliverables (resume rewrites, branding,
 #         session guides, roleplay). FAST = cheap internal jobs (diagnostics,
 #         coach-only training notes). Flip these in one place.
+def msg_text(resp):
+    """Safely pull the text out of a messages response. The API can occasionally
+    return a message with no content blocks (or non-text blocks); indexing
+    content[0] blindly throws 'list index out of range'. Join all text blocks
+    and return '' if there are none."""
+    return "".join(
+        getattr(b, "text", "") for b in (resp.content or []) if getattr(b, "type", None) == "text"
+    ).strip()
+
+
+def complete_text(system, user_content, model, max_tokens, attempts=3):
+    """Call the model and return its text, retrying if the reply comes back
+    empty (an intermittent API condition that otherwise crashed jobs with
+    'list index out of range'). Raises ValueError if still empty after
+    `attempts` tries. user_content may be a string or a messages list."""
+    messages = ([{"role": "user", "content": user_content}]
+                if isinstance(user_content, str) else user_content)
+    for _ in range(attempts):
+        resp = client.messages.create(
+            model=model, max_tokens=max_tokens, system=system, messages=messages,
+        )
+        text = msg_text(resp)
+        if text:
+            return text
+    raise ValueError("Model returned an empty response after multiple attempts. "
+                     "This is usually transient — please run it again.")
+
+
 def complete_json(system, user_content, model, max_tokens, attempts=3):
     """Call the model and parse a JSON object from its reply. If the reply
     isn't valid JSON, hand the model its own output back with a correction and
@@ -54,7 +82,7 @@ def complete_json(system, user_content, model, max_tokens, attempts=3):
         resp = client.messages.create(
             model=model, max_tokens=max_tokens, system=system, messages=messages,
         )
-        last_raw = (resp.content[0].text or "").strip()
+        last_raw = msg_text(resp)
         cleaned = last_raw.replace("```json", "").replace("```", "").strip()
         try:
             return json.loads(cleaned)
@@ -94,7 +122,7 @@ def chat():
         system=system,
         messages=messages,
     )
-    return jsonify({"content": response.content[0].text})
+    return jsonify({"content": msg_text(response)})
 
 
 # ── Resume Tool ───────────────────────────────────────────────────────────────
@@ -157,13 +185,7 @@ def resume_rewrite():
     if transcript:
         user_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth):\n\n{transcript}"
 
-    resp = client.messages.create(
-        model=MODEL_SMART,
-        max_tokens=8000,
-        system=REWRITE_SYSTEM,
-        messages=[{"role": "user", "content": user_msg}],
-    )
-    content = (resp.content[0].text or "").strip()
+    content = complete_text(REWRITE_SYSTEM, user_msg, MODEL_SMART, 8000)
     return jsonify({"content": content})
 
 
@@ -387,13 +409,7 @@ def builder_generate():
                     raise ValueError("Positioning came back incomplete: " + " ".join(problems))
                 content = json.dumps(data)
             else:
-                resp = client.messages.create(
-                    model=MODEL_SMART,
-                    max_tokens=max_tokens,
-                    system=system_prompt,
-                    messages=[{"role": "user", "content": _user_msg()}],
-                )
-                content = (resp.content[0].text or "").strip()
+                content = complete_text(system_prompt, _user_msg(), MODEL_SMART, max_tokens)
             q.put(("done", job_id, content))
         except Exception as e:
             q.put(("error", job_id, str(e)))
@@ -401,24 +417,12 @@ def builder_generate():
     def run_resume_job():
         try:
             # Step 1: diagnostic brief
-            diag_resp = client.messages.create(
-                model=MODEL_FAST,
-                max_tokens=1500,
-                system=resume_diagnostic_prompt(),
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            brief_raw = (diag_resp.content[0].text or "").strip()
+            brief_raw = complete_text(resume_diagnostic_prompt(), _user_msg(), MODEL_FAST, 1500)
             brief_raw = brief_raw.replace("```json", "").replace("```", "").strip()
 
             # Step 2: rewrite informed by brief
             rewrite_msg = f"STRATEGY BRIEF:\n{brief_raw}\n\n---\n\n{_user_msg()}"
-            rewrite_resp = client.messages.create(
-                model=MODEL_SMART,
-                max_tokens=8000,
-                system=resume_rewrite_prompt(),
-                messages=[{"role": "user", "content": rewrite_msg}],
-            )
-            content = (rewrite_resp.content[0].text or "").strip()
+            content = complete_text(resume_rewrite_prompt(), rewrite_msg, MODEL_SMART, 8000)
             q.put(("done", "resume", content))
         except Exception as e:
             q.put(("error", "resume", str(e)))
@@ -564,32 +568,15 @@ def builder2_generate():
         try:
             # Training is coach-only internal notes; everything else is client-facing.
             job_model = MODEL_FAST if job_id == "training" else MODEL_SMART
-            resp = client.messages.create(
-                model=job_model,
-                max_tokens=max_tokens,
-                system=system_prompt,
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            q.put(("done", job_id, (resp.content[0].text or "").strip()))
+            content = complete_text(system_prompt, _user_msg(), job_model, max_tokens)
+            q.put(("done", job_id, content))
         except Exception as e:
             q.put(("error", job_id, str(e)))
 
     def run_roleplay_job():
         try:
-            resp_a = client.messages.create(
-                model=MODEL_SMART,
-                max_tokens=16000,
-                system=roleplay_a_prompt(client_name),
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            part_a = (resp_a.content[0].text or "").strip()
-            resp_b = client.messages.create(
-                model=MODEL_SMART,
-                max_tokens=16000,
-                system=roleplay_b_prompt(client_name),
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            part_b = (resp_b.content[0].text or "").strip()
+            part_a = complete_text(roleplay_a_prompt(client_name), _user_msg(), MODEL_SMART, 16000)
+            part_b = complete_text(roleplay_b_prompt(client_name), _user_msg(), MODEL_SMART, 16000)
             q.put(("done", "roleplay", part_a + "\n\n" + part_b))
         except Exception as e:
             q.put(("error", "roleplay", str(e)))
@@ -614,13 +601,8 @@ def builder2_generate():
                 rw_msg += f"RESUME:\n\n{resume}"
             if transcript:
                 rw_msg += f"\n\n---\nSESSION TRANSCRIPT (Primary Truth):\n\n{transcript}"
-            rw_resp = client.messages.create(
-                model=MODEL_SMART,
-                max_tokens=8000,
-                system=REWRITE_SYSTEM,
-                messages=[{"role": "user", "content": rw_msg}],
-            )
-            q.put(("done", "resume", (rw_resp.content[0].text or "").strip()))
+            content = complete_text(REWRITE_SYSTEM, rw_msg, MODEL_SMART, 8000)
+            q.put(("done", "resume", content))
         except Exception as e:
             q.put(("error", "resume", str(e)))
 
@@ -847,43 +829,26 @@ def full_generate():
                     raise ValueError("Positioning came back incomplete: " + " ".join(problems))
                 q.put(("done", job_id, json.dumps(data)))
                 return
-            resp = client.messages.create(
-                model=model, max_tokens=max_tokens, system=system_prompt,
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            q.put(("done", job_id, (resp.content[0].text or "").strip()))
+            content = complete_text(system_prompt, _user_msg(), model, max_tokens)
+            q.put(("done", job_id, content))
         except Exception as e:
             q.put(("error", job_id, str(e)))
 
     def run_roleplay_job():
         try:
-            resp_a = client.messages.create(
-                model=MODEL_SMART, max_tokens=16000, system=roleplay_a_prompt(client_name),
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            part_a = (resp_a.content[0].text or "").strip()
-            resp_b = client.messages.create(
-                model=MODEL_SMART, max_tokens=16000, system=roleplay_b_prompt(client_name),
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            part_b = (resp_b.content[0].text or "").strip()
+            part_a = complete_text(roleplay_a_prompt(client_name), _user_msg(), MODEL_SMART, 16000)
+            part_b = complete_text(roleplay_b_prompt(client_name), _user_msg(), MODEL_SMART, 16000)
             q.put(("done", "roleplay", part_a + "\n\n" + part_b))
         except Exception as e:
             q.put(("error", "roleplay", str(e)))
 
     def run_resume_job():
         try:
-            diag_resp = client.messages.create(
-                model=MODEL_FAST, max_tokens=1500, system=resume_diagnostic_prompt(),
-                messages=[{"role": "user", "content": _user_msg()}],
-            )
-            brief = (diag_resp.content[0].text or "").strip().replace("```json", "").replace("```", "").strip()
+            brief = complete_text(resume_diagnostic_prompt(), _user_msg(), MODEL_FAST, 1500)
+            brief = brief.replace("```json", "").replace("```", "").strip()
             rewrite_msg = f"STRATEGY BRIEF:\n{brief}\n\n---\n\n{_user_msg()}"
-            rewrite_resp = client.messages.create(
-                model=MODEL_SMART, max_tokens=8000, system=resume_rewrite_prompt(),
-                messages=[{"role": "user", "content": rewrite_msg}],
-            )
-            q.put(("done", "resume", (rewrite_resp.content[0].text or "").strip()))
+            content = complete_text(resume_rewrite_prompt(), rewrite_msg, MODEL_SMART, 8000)
+            q.put(("done", "resume", content))
         except Exception as e:
             q.put(("error", "resume", str(e)))
 
