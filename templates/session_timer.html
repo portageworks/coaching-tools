@@ -44,12 +44,12 @@
   .summary .cell.status-under .v{color:var(--amber);}
 
   /* Segment table */
-  .seg-head{display:grid;grid-template-columns:26px 1fr 96px 150px 30px;gap:10px;padding:0 14px 8px;align-items:center;}
+  .seg-head{display:grid;grid-template-columns:26px 1fr 104px 104px 82px 30px;gap:10px;padding:0 14px 8px;align-items:center;}
   .seg-head div{font-family:'Roboto Mono',monospace;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-dim);}
   .seg-head .h-right{text-align:right;}
 
   #segList{display:flex;flex-direction:column;gap:7px;}
-  .seg{display:grid;grid-template-columns:26px 1fr 96px 150px 30px;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:10px 14px;transition:border-color .12s,box-shadow .12s,opacity .12s;}
+  .seg{display:grid;grid-template-columns:26px 1fr 104px 104px 82px 30px;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:10px 14px;transition:border-color .12s,box-shadow .12s,opacity .12s;}
   .seg:hover{border-color:var(--border-mid);}
   .seg.dragging{opacity:.4;}
   .seg.drag-over{border-color:var(--slate-mid);box-shadow:0 0 0 2px var(--slate-light);}
@@ -68,9 +68,10 @@
   .seg input.dur:disabled{background:var(--surface2);color:var(--text-dim);}
   .dur-wrap .unit{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--text-dim);}
 
-  .times{text-align:right;font-family:'Roboto Mono',monospace;font-size:13px;color:var(--charcoal);white-space:nowrap;}
-  .times .dash{color:var(--border-mid);margin:0 4px;}
-  .times .end{color:var(--text-mid);}
+  .seg input.timeedit{width:100%;font-family:'Roboto Mono',monospace;font-size:13px;color:var(--charcoal);background:transparent;border:1px solid transparent;border-radius:2px;padding:5px 4px;outline:none;transition:border-color .12s,background .12s;}
+  .seg input.timeedit:hover{border-color:var(--border);}
+  .seg input.timeedit:focus{border-color:var(--slate-mid);background:var(--surface);}
+  .seg input.timeedit.end{color:var(--text-mid);}
 
   .row-actions{display:flex;justify-content:flex-end;}
   .icon-btn{background:none;border:none;cursor:pointer;color:var(--border-mid);font-size:15px;padding:4px;line-height:1;border-radius:2px;transition:color .12s,background .12s;}
@@ -104,15 +105,17 @@
     .header-title{color:#000;}
     .main{padding:18px 0;max-width:100%;}
     .controls,.seg-foot,.hint,.toolbar,.row-actions,.grip,.dur-wrap .unit{display:none !important;}
-    .seg input{border:none;}
+    .seg input{border:none;-webkit-appearance:none;appearance:none;}
     .seg{break-inside:avoid;border-color:#ccc;}
   }
 
   @media(max-width:680px){
     .main{padding:24px 18px 60px;}
     .page-header{padding:20px 22px;}
-    .seg-head,.seg{grid-template-columns:22px 1fr 78px 30px;}
-    .seg-head .h-times,.times{grid-column:2 / 4;text-align:left;margin-top:2px;}
+    .seg-head,.seg{grid-template-columns:16px 1fr 74px 74px 54px 20px;gap:6px;}
+    .seg input.timeedit{font-size:11px;padding:4px 2px;}
+    .seg input.dur{width:42px;font-size:12px;}
+    .dur-wrap .unit{display:none;}
     .controls{gap:16px;}
   }
 </style>
@@ -151,7 +154,7 @@
 
   <div class="toolbar">
     <div class="seg-head" style="padding-bottom:0;flex:1;">
-      <div></div><div>Segment</div><div>Length</div><div class="h-right h-times">Start &ndash; End</div><div></div>
+      <div></div><div>Segment</div><div>Start</div><div>End</div><div>Length</div><div></div>
     </div>
     <div class="saved" id="savedNote"></div>
   </div>
@@ -167,9 +170,11 @@
   </div>
 
   <div class="hint">
-    <strong>How it works:</strong> set a start time, then give each segment a length in minutes — start/end times fill in down the stack.
-    Change any length and everything below recalculates. <strong>Drag the <span style="color:var(--slate-mid)">⠿</span> handle</strong> to reorder.<br>
-    <strong>Anchor</strong> (the ⚲ icon) pins a segment to a fixed clock time — e.g. a hard 12:00 break. The gap before it auto-fills so earlier segments still flow into it.
+    <strong>How it works:</strong> set a start time, then edit any segment's <strong>Start</strong>, <strong>End</strong>, or <strong>Length</strong> —
+    the other two recompute and everything below cascades.
+    Editing <strong>End</strong> (or Length) resizes that segment; editing <strong>Start</strong> moves the boundary with the segment above it.
+    <strong>Drag the <span style="color:var(--slate-mid)">⠿</span> handle</strong> to reorder.<br>
+    <strong>Anchor</strong> (the ⚲ icon) pins a segment to a fixed clock time — e.g. a hard 12:00 break — so edits above it can't push it off.
     Set a <strong>target end</strong> to see if you're over or under at a glance. Everything saves automatically in this browser.
   </div>
 
@@ -261,13 +266,14 @@ function render(){
       <div class="grip" title="Drag to reorder">⠿</div>
       <div>
         <input class="name" value="${escapeAttr(seg.name)}" placeholder="Segment name">
-        ${seg.anchor ? `<div class="anchor-time">⚲ pinned to <input class="anchor-edit" type="time" value="${seg.anchor}"></div>` : ''}
+        ${seg.anchor ? `<div class="anchor-time">⚲ pinned</div>` : ''}
       </div>
+      <input class="timeedit start" type="time" value="${fmt0(r.start)}" title="Edit start time (adjusts the segment above)">
+      <input class="timeedit end" type="time" value="${fmt0(r.end)}" title="Edit end time (adjusts this segment's length)">
       <div class="dur-wrap">
         <input class="dur" type="number" min="0" step="5" value="${seg.dur}">
         <span class="unit">min</span>
       </div>
-      <div class="times"><span class="start">${fmt(r.start)}</span><span class="dash">–</span><span class="end">${fmt(r.end)}</span></div>
       <div class="row-actions">
         <button class="icon-btn anchor ${seg.anchor?'on':''}" title="${seg.anchor?'Unpin from fixed time':'Pin to a fixed clock time'}">⚲</button>
         <button class="icon-btn del" title="Delete segment">✕</button>
@@ -277,14 +283,15 @@ function render(){
     el.querySelector('.name').addEventListener('input', e => { seg.name = e.target.value; save(false); });
     // duration
     el.querySelector('.dur').addEventListener('input', e => { seg.dur = Math.max(0, Number(e.target.value)||0); rerenderTimes(); save(false); });
+    // start time edit (commit on change)
+    el.querySelector('.timeedit.start').addEventListener('change', e => editStart(i, e.target.value));
+    // end time edit (commit on change)
+    el.querySelector('.timeedit.end').addEventListener('change', e => editEnd(i, e.target.value));
     // anchor toggle
     el.querySelector('.anchor').addEventListener('click', () => {
       seg.anchor = seg.anchor ? null : fmt0(r.start);
       render(); save();
     });
-    // anchor time edit
-    const ae = el.querySelector('.anchor-edit');
-    if(ae) ae.addEventListener('input', e => { seg.anchor = e.target.value; render(); save(); });
     // delete
     el.querySelector('.del').addEventListener('click', () => {
       state.segments = state.segments.filter(s => s.id !== seg.id); render(); save();
@@ -297,15 +304,43 @@ function render(){
   renderSummary(endM);
 }
 
-// Lightweight refresh of just the computed time labels (while typing durations)
+// Lightweight refresh of just the computed time inputs (while typing durations)
 function rerenderTimes(){
   const { rows, endM } = compute();
   const els = listEl.querySelectorAll('.seg');
   rows.forEach((r,i)=>{
-    const t = els[i]?.querySelector('.times');
-    if(t){ t.querySelector('.start').textContent = fmt(r.start); t.querySelector('.end').textContent = fmt(r.end); }
+    const row = els[i]; if(!row) return;
+    const s = row.querySelector('.timeedit.start');
+    const e = row.querySelector('.timeedit.end');
+    if(s) s.value = fmt0(r.start);
+    if(e) e.value = fmt0(r.end);
   });
   renderSummary(endM);
+}
+
+// Edit a segment's END time → sets that segment's length, cascades the rest.
+function editEnd(i, val){
+  const m = toMin(val); if(m==null) return;
+  const { rows } = compute();
+  state.segments[i].dur = Math.max(0, m - rows[i].start);
+  render(); save();
+}
+
+// Edit a segment's START time → moves the boundary with the segment above.
+// First row (or an anchored row) edits its own start directly; others absorb
+// the change into the previous segment's length so the schedule stays gap-free.
+function editStart(i, val){
+  const m = toMin(val); if(m==null) return;
+  const seg = state.segments[i];
+  if(seg.anchor){ seg.anchor = fmt0(m); render(); save(); return; }
+  if(i === 0){
+    state.start = fmt0(m);
+    document.getElementById('startTime').value = state.start;
+    render(); save(); return;
+  }
+  const { rows } = compute();
+  state.segments[i-1].dur = Math.max(0, m - rows[i-1].start);
+  render(); save();
 }
 
 function renderSummary(endM){
