@@ -361,6 +361,140 @@ def build_worksheet_html(worksheet_md, client_name):
 </body></html>"""
 
 
+def _cue_css(client_name):
+    # No embedded FONT_FACES here — this is a live browser page (fonts are linked
+    # from Google Fonts in the head), so we avoid the multi-MB base64 font blob
+    # that the PDF stylesheets need.
+    return f"""
+*,*::before,*::after{{margin:0;padding:0;box-sizing:border-box;}}
+:root{{
+  --charcoal:#1e2022;--charcoal-mid:#3d4145;--slate:#3a5a7c;--slate-mid:#5579a0;
+  --slate-pale:#eef4fb;--text:#2c3035;--text-mid:#4a5058;--text-dim:#7a8088;
+  --border:#e0dbd4;--bg:#f5f3f0;--surface:#fff;
+}}
+html,body{{height:100%;}}
+body{{font-family:'Roboto','DejaVu Sans',sans-serif;background:var(--bg);color:var(--text);
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100vh;}}
+.cue-top{{background:var(--charcoal);color:#fff;padding:14px 22px;display:flex;
+  align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;}}
+.cue-top .eyebrow{{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);}}
+.cue-top .name{{font-family:'Roboto Slab',serif;font-size:18px;font-weight:600;margin-top:2px;}}
+.cue-progress{{font-family:'Roboto Mono',monospace;font-size:13px;color:#9ba0a6;text-align:right;white-space:nowrap;}}
+.cue-bar{{height:3px;background:#33373b;}}
+.cue-bar-fill{{height:100%;background:var(--slate-mid);transition:width .2s;}}
+.cue-stage{{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:34px 22px 120px;}}
+.card{{display:none;background:var(--surface);border:1px solid var(--border);border-radius:6px;
+  width:100%;max-width:760px;padding:36px 40px;box-shadow:0 1px 3px rgba(0,0,0,.05);}}
+.card.active{{display:block;}}
+.card h1{{display:none;}}
+.card h2{{font-family:'Roboto Slab',serif;font-size:26px;font-weight:700;color:var(--charcoal);
+  line-height:1.2;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid var(--charcoal);}}
+.card h3{{font-family:'Roboto',sans-serif;font-size:17px;font-weight:600;color:var(--slate);
+  margin-top:20px;margin-bottom:8px;}}
+.card p{{font-size:18px;line-height:1.6;color:var(--text-mid);margin-bottom:12px;}}
+.card p em{{color:var(--charcoal-mid);font-style:italic;}}
+.card strong{{color:var(--charcoal);font-weight:600;}}
+.card ul,.card ol{{margin:8px 0 14px 24px;}}
+.card li{{font-size:18px;line-height:1.55;color:var(--charcoal);margin-bottom:10px;}}
+.card li::marker{{color:var(--slate-mid);}}
+.card blockquote{{border-left:3px solid var(--slate);background:var(--slate-pale);
+  padding:12px 18px;margin:12px 0;border-radius:0 4px 4px 0;}}
+.card blockquote p{{margin-bottom:0;color:var(--charcoal);font-size:17px;}}
+.card hr{{border:none;border-top:1px solid var(--border);margin:18px 0;}}
+/* Tappable progress checkboxes (ephemeral — nothing is saved) */
+li.chk{{list-style:none;margin-left:-26px;cursor:pointer;user-select:none;
+  display:flex;align-items:flex-start;gap:12px;}}
+li.chk::before{{content:"\\2610";font-size:24px;line-height:1.2;color:var(--charcoal-mid);flex:none;}}
+li.chk.done::before{{content:"\\2611";color:var(--slate);}}
+li.chk.done{{color:var(--text-dim);}}
+.cue-nav{{position:fixed;bottom:0;left:0;right:0;background:var(--surface);
+  border-top:1px solid var(--border);padding:14px 22px;display:flex;
+  align-items:center;justify-content:space-between;gap:14px;z-index:5;}}
+.cue-btn{{font-family:'Roboto',sans-serif;font-size:16px;font-weight:600;border-radius:4px;
+  padding:14px 30px;cursor:pointer;border:1px solid var(--charcoal);background:var(--charcoal);
+  color:#fff;min-width:120px;}}
+.cue-btn.secondary{{background:var(--surface);color:var(--charcoal);}}
+.cue-btn:disabled{{opacity:.35;cursor:not-allowed;}}
+.cue-dots{{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--text-dim);}}
+@media(max-width:640px){{
+  .card{{padding:26px 22px;}}
+  .card h2{{font-size:22px;}}.card p,.card li{{font-size:17px;}}
+  .cue-btn{{padding:14px 20px;min-width:96px;}}
+}}
+"""
+
+
+def build_worksheet_cue_html(worksheet_md, client_name):
+    """Read-only 'cue screen' version of the worksheet: one question cluster per
+    card with Next/Back navigation, for glancing at on a second device while the
+    coach handwrites notes elsewhere. No note-writing areas, nothing is saved."""
+    today = datetime.now().strftime("%B %d, %Y")
+    parts = re.split(r"(?m)^[ \t]*\[\[NOTES(?::([a-zA-Z]+))?\]\][ \t]*$", worksheet_md)
+    texts = parts[0::2]  # cluster bodies; the note-area markers are dropped
+    cards = []
+    for chunk in texts:
+        if not (chunk and chunk.strip()):
+            continue
+        html = _md_to_html(chunk, strip_emoji=True)
+        html = re.sub(r"<li>(\s*<p>)?\s*\[ \]\s*",
+                      lambda m: '<li class="chk">' + (m.group(1) or ""), html)
+        html = re.sub(r"<li>(\s*<p>)?\s*\[[xX]\]\s*",
+                      lambda m: '<li class="chk done">' + (m.group(1) or ""), html)
+        cards.append(html)
+    cards_html = "".join(
+        f'<section class="card{" active" if i == 0 else ""}">{c}</section>'
+        for i, c in enumerate(cards)
+    )
+    total = len(cards)
+    return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{esc(client_name)} — Session Cue</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>{_cue_css(client_name)}</style></head><body>
+<div class="cue-top">
+  <div>
+    <div class="eyebrow">Challenger, Gray &amp; Christmas  /  Session Cue</div>
+    <div class="name">{esc(client_name)}</div>
+  </div>
+  <div class="cue-progress"><span id="counter">1</span> / {total}<br>{today}</div>
+</div>
+<div class="cue-bar"><div class="cue-bar-fill" id="bar" style="width:{(100/total) if total else 0:.1f}%"></div></div>
+<div class="cue-stage">{cards_html}</div>
+<div class="cue-nav">
+  <button class="cue-btn secondary" id="prev" onclick="step(-1)">&#8592; Back</button>
+  <div class="cue-dots">Tap a checkbox to mark it covered. Arrow keys or buttons to move.</div>
+  <button class="cue-btn" id="next" onclick="step(1)">Next &#8594;</button>
+</div>
+<script>
+var cards = document.querySelectorAll('.card');
+var idx = 0;
+function render() {{
+  cards.forEach(function(c,i){{ c.classList.toggle('active', i===idx); }});
+  document.getElementById('counter').textContent = idx+1;
+  document.getElementById('bar').style.width = ((idx+1)/cards.length*100) + '%';
+  document.getElementById('prev').disabled = (idx===0);
+  document.getElementById('next').disabled = (idx===cards.length-1);
+  window.scrollTo(0,0);
+}}
+function step(d) {{
+  var n = idx + d;
+  if (n>=0 && n<cards.length) {{ idx = n; render(); }}
+}}
+document.addEventListener('keydown', function(e){{
+  if (e.key==='ArrowRight') step(1);
+  if (e.key==='ArrowLeft') step(-1);
+}});
+document.addEventListener('click', function(e){{
+  var li = e.target.closest('li.chk');
+  if (li) li.classList.toggle('done');
+}});
+render();
+</script>
+</body></html>"""
+
+
 def _positioning_body_html(pos):
     """The inner content of the positioning guide (everything inside .doc-body),
     reusable both as a standalone PDF and as a section of the strategy package."""
