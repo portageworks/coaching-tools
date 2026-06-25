@@ -29,7 +29,7 @@
   .controls{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-end;background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:20px 22px;margin-bottom:22px;}
   .control input[type=time],.control input[type=text]{font-family:'Roboto Mono',monospace;font-size:15px;background:var(--surface);border:1px solid var(--border);border-radius:2px;padding:8px 12px;color:var(--text);outline:none;transition:border-color .15s;}
   .control input:focus{border-color:var(--slate-mid);}
-  .control input[type=time]{width:130px;}
+  .control input.time-input{width:130px;}
   .control input.title-input{width:280px;font-family:'Roboto',sans-serif;}
   .control{display:flex;flex-direction:column;}
 
@@ -144,11 +144,11 @@
     </div>
     <div class="control">
       <label class="field-label" for="startTime">Start time</label>
-      <input type="time" id="startTime" value="09:30">
+      <input type="text" id="startTime" class="time-input" inputmode="text" autocomplete="off" placeholder="9:30">
     </div>
     <div class="control">
-      <label class="field-label" for="targetEnd">Target end <span style="color:var(--border-mid)">(optional)</span></label>
-      <input type="time" id="targetEnd">
+      <label class="field-label" for="targetEnd">Hard stop <span style="color:var(--border-mid)">(optional)</span></label>
+      <input type="text" id="targetEnd" class="time-input" inputmode="text" autocomplete="off" placeholder="e.g. 3:30">
     </div>
   </div>
 
@@ -156,7 +156,7 @@
     <div class="cell"><div class="k">Segments</div><div class="v" id="sumCount">0</div></div>
     <div class="cell"><div class="k">Total length</div><div class="v" id="sumTotal">0m</div></div>
     <div class="cell"><div class="k">Finishes</div><div class="v" id="sumEnd">—</div></div>
-    <div class="cell" id="sumStatusCell"><div class="k">vs. target</div><div class="v" id="sumStatus">—</div></div>
+    <div class="cell" id="sumStatusCell"><div class="k">vs. hard stop</div><div class="v" id="sumStatus">—</div></div>
   </div>
 
   <div class="toolbar">
@@ -180,6 +180,7 @@
     <strong>How it works:</strong> set a start time, then edit any segment's <strong>Start</strong>, <strong>End</strong>, or <strong>Length</strong> —
     the other two recompute and everything below cascades.
     Editing <strong>End</strong> (or Length) resizes that segment; editing <strong>Start</strong> moves the boundary with the segment above it.
+    <strong>Just type times</strong> however you like — <code>9:30</code>, <code>930</code>, <code>1pm</code>, <code>3:30</code> — and press Enter or click away.
     <strong>Drag the <span style="color:var(--slate-mid)">⠿</span> handle</strong> to reorder.<br>
     <strong>Pin a fixed time</strong> (the ⚲ icon) — e.g. set Lunch to 12:30 and build the morning around it. Edits above can't push a pinned segment;
     instead a marker shows whether the morning lands on it: <span style="color:var(--amber)">open time to fill</span>,
@@ -222,6 +223,31 @@ function defaultSegments(){
 
 // ── Time helpers ─────────────────────────────────────────────────────────
 function toMin(hhmm){ if(!hhmm) return null; const [h,m]=hhmm.split(':').map(Number); return h*60+m; }
+
+// Parse free-typed time → minutes since midnight. Accepts 12:30, 1230, 3:30pm,
+// 330, 1, 9am, 12.30, etc. With no am/pm, assumes a workday: 1–6 → PM,
+// 7–12 → AM (12 = noon), 0 and 13–23 taken literally (24h).
+function parseTime(str){
+  if(str==null) return null;
+  let s = String(str).trim().toLowerCase();
+  if(!s) return null;
+  let mer = /p/.test(s) ? 'pm' : (/a/.test(s) ? 'am' : null);
+  s = s.replace(/[^0-9:.]/g,'').replace('.',':');
+  if(!s) return null;
+  let h, m;
+  if(s.includes(':')){
+    const [hp,mp=''] = s.split(':');
+    h = parseInt(hp,10); m = parseInt(mp||'0',10);
+  } else if(s.length <= 2){ h = parseInt(s,10); m = 0; }
+    else if(s.length === 3){ h = parseInt(s.slice(0,1),10); m = parseInt(s.slice(1),10); }
+    else { h = parseInt(s.slice(0,2),10); m = parseInt(s.slice(2,4),10); }
+  if(isNaN(h) || isNaN(m)) return null;
+  if(mer === 'pm'){ if(h < 12) h += 12; }
+  else if(mer === 'am'){ if(h === 12) h = 0; }
+  else if(h >= 1 && h <= 6){ h += 12; }   // workday: bare 1–6 means afternoon
+  if(h < 0 || h > 23 || m < 0 || m > 59) return null;
+  return h*60 + m;
+}
 function fmt(min){
   if(min==null||isNaN(min)) return '—';
   min=((min%1440)+1440)%1440;
@@ -286,8 +312,8 @@ function render(){
         <input class="name" value="${escapeAttr(seg.name)}" placeholder="Segment name">
         ${seg.anchor ? `<div class="anchor-time">⚲ pinned to ${fmt(toMin(seg.anchor))}</div>` : ''}
       </div>
-      <input class="timeedit start" type="time" value="${fmt0(r.start)}" title="Edit start time (adjusts the segment above)">
-      <input class="timeedit end" type="time" value="${fmt0(r.end)}" title="Edit end time (adjusts this segment's length)">
+      <input class="timeedit start" type="text" inputmode="text" autocomplete="off" value="${fmt(r.start)}" title="Type a start time — e.g. 9:30, 930, 1pm (adjusts the segment above)">
+      <input class="timeedit end" type="text" inputmode="text" autocomplete="off" value="${fmt(r.end)}" title="Type an end time — e.g. 10:20, 1020, 3:30 (adjusts this segment's length)">
       <div class="dur-wrap">
         <input class="dur" type="number" min="0" step="5" value="${seg.dur}">
         <span class="unit">min</span>
@@ -301,10 +327,14 @@ function render(){
     el.querySelector('.name').addEventListener('input', e => { seg.name = e.target.value; save(false); });
     // duration
     el.querySelector('.dur').addEventListener('input', e => { seg.dur = Math.max(0, Number(e.target.value)||0); rerenderTimes(); save(false); });
-    // start time edit (commit on change)
-    el.querySelector('.timeedit.start').addEventListener('change', e => editStart(i, e.target.value));
-    // end time edit (commit on change)
-    el.querySelector('.timeedit.end').addEventListener('change', e => editEnd(i, e.target.value));
+    // start time edit (commit on blur / Enter)
+    const startInp = el.querySelector('.timeedit.start');
+    startInp.addEventListener('change', e => editStart(i, e.target.value));
+    startInp.addEventListener('keydown', commitOnEnter);
+    // end time edit (commit on blur / Enter)
+    const endInp = el.querySelector('.timeedit.end');
+    endInp.addEventListener('change', e => editEnd(i, e.target.value));
+    endInp.addEventListener('keydown', commitOnEnter);
     // anchor toggle
     el.querySelector('.anchor').addEventListener('click', () => {
       seg.anchor = seg.anchor ? null : fmt0(r.start);
@@ -345,8 +375,8 @@ function rerenderTimes(){
     const row = els[i]; if(!row) return;
     const s = row.querySelector('.timeedit.start');
     const e = row.querySelector('.timeedit.end');
-    if(s) s.value = fmt0(r.start);
-    if(e) e.value = fmt0(r.end);
+    if(s) s.value = fmt(r.start);
+    if(e) e.value = fmt(r.end);
     if(r.seg.anchor){
       const mk = listEl.querySelector(`.gap-marker[data-for="${r.seg.id}"]`);
       if(mk) paintMarker(mk, r.seg, Math.round(r.gap));
@@ -355,9 +385,12 @@ function rerenderTimes(){
   renderSummary(endM);
 }
 
+function commitOnEnter(e){ if(e.key === 'Enter'){ e.preventDefault(); e.target.blur(); } }
+
 // Edit a segment's END time → sets that segment's length, cascades the rest.
 function editEnd(i, val){
-  const m = toMin(val); if(m==null) return;
+  const m = parseTime(val);
+  if(m==null){ render(); flash("Couldn't read that time"); return; }
   const { rows } = compute();
   state.segments[i].dur = Math.max(0, m - rows[i].start);
   render(); save();
@@ -367,13 +400,13 @@ function editEnd(i, val){
 // First row (or an anchored row) edits its own start directly; others absorb
 // the change into the previous segment's length so the schedule stays gap-free.
 function editStart(i, val){
-  const m = toMin(val); if(m==null) return;
+  const m = parseTime(val);
+  if(m==null){ render(); flash("Couldn't read that time"); return; }
   const seg = state.segments[i];
   if(seg.anchor){ seg.anchor = fmt0(m); render(); save(); return; }
   if(i === 0){
     state.start = fmt0(m);
-    document.getElementById('startTime').value = state.start;
-    render(); save(); return;
+    syncControls(); render(); save(); return;
   }
   const { rows } = compute();
   state.segments[i-1].dur = Math.max(0, m - rows[i-1].start);
@@ -398,7 +431,7 @@ function renderSummary(endM){
   else { cell.className='cell status-under'; out.textContent=fmtDur(-diff)+' to spare'; }
 }
 
-function fmt0(min){ // HH:MM 24h for <input type=time>
+function fmt0(min){ // HH:MM 24h for internal storage
   min=((min%1440)+1440)%1440;
   return String(Math.floor(min/60)).padStart(2,'0')+':'+String(min%60).padStart(2,'0');
 }
@@ -447,9 +480,8 @@ function copyText(){
 // ── Persistence ──────────────────────────────────────────────────────────
 let flashT;
 function save(showFlash=true){
-  state.title  = document.getElementById('sessionTitle').value;
-  state.start  = document.getElementById('startTime').value || '09:30';
-  state.target = document.getElementById('targetEnd').value;
+  state.title = document.getElementById('sessionTitle').value;
+  // state.start / state.target are kept canonical by their own commit handlers
   localStorage.setItem(STORE_KEY, JSON.stringify(state));
   if(showFlash) flash('Saved');
 }
@@ -466,13 +498,27 @@ function load(){
 }
 function syncControls(){
   document.getElementById('sessionTitle').value = state.title || '';
-  document.getElementById('startTime').value   = state.start || '09:30';
-  document.getElementById('targetEnd').value   = state.target || '';
+  document.getElementById('startTime').value    = fmt(toMin(state.start || '09:30'));
+  document.getElementById('targetEnd').value    = state.target ? fmt(toMin(state.target)) : '';
+}
+
+// Commit a free-typed control time → canonical state, then re-render.
+function commitControl(id, key){
+  const el  = document.getElementById(id);
+  const raw = el.value.trim();
+  if(key === 'target' && !raw){ state.target = ''; render(); save(); return; }
+  const m = parseTime(raw);
+  if(m == null){ syncControls(); flash("Couldn't read that time"); return; }
+  state[key === 'target' ? 'target' : 'start'] = fmt0(m);
+  syncControls(); render(); save();
 }
 
 // ── Boot ─────────────────────────────────────────────────────────────────
-['sessionTitle','startTime','targetEnd'].forEach(id =>
-  document.getElementById(id).addEventListener('input', ()=>{ save(false); render(); }));
+document.getElementById('sessionTitle').addEventListener('input', ()=>{ save(false); });
+document.getElementById('startTime').addEventListener('change', ()=> commitControl('startTime','start'));
+document.getElementById('startTime').addEventListener('keydown', commitOnEnter);
+document.getElementById('targetEnd').addEventListener('change', ()=> commitControl('targetEnd','target'));
+document.getElementById('targetEnd').addEventListener('keydown', commitOnEnter);
 
 load(); syncControls(); render();
 </script>
