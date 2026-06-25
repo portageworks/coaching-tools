@@ -401,8 +401,39 @@ body{{font-family:'Roboto','DejaVu Sans',sans-serif;background:var(--bg);color:v
   padding:12px 18px;margin:12px 0;border-radius:0 4px 4px 0;}}
 .card blockquote p{{margin-bottom:0;color:var(--charcoal);font-size:17px;}}
 .card hr{{border:none;border-top:1px solid var(--border);margin:18px 0;}}
+/* Eyebrow field label (**Label:**) */
+.card p.flabel{{font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--slate-mid);margin:18px 0 6px;font-weight:500;}}
+/* Block objective line under the title */
+.card p.objective{{font-size:15px;color:var(--text-dim);font-style:italic;
+  margin:-6px 0 18px;}}
+/* THEY SAID quote cards */
+.saids{{display:flex;flex-direction:column;gap:10px;margin:6px 0 16px;}}
+.said{{background:var(--slate-pale);border-left:3px solid var(--slate-mid);
+  border-radius:0 6px 6px 0;padding:11px 16px;}}
+.said-label{{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--slate);margin-bottom:5px;font-weight:500;}}
+.said-body{{font-size:17px;line-height:1.55;color:var(--charcoal);}}
+/* Question rows */
+.card ul{{list-style:none;margin:10px 0 16px;padding:0;}}
+li.q{{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}}
+.qtag{{flex:none;font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;padding:3px 9px;border-radius:4px;margin-top:3px;font-weight:500;}}
+li.q-ask .qtag{{background:var(--slate);color:#fff;}}
+li.q-surface .qtag,li.q-deep .qtag{{background:transparent;color:var(--slate-mid);
+  border:1px solid var(--slate-mid);}}
+.qtext{{font-size:19px;line-height:1.45;color:var(--charcoal);}}
+li.q-ask .qtext{{font-weight:500;}}
+li.q-surface .qtext,li.q-deep .qtext{{font-size:16px;color:var(--text-mid);}}
+/* Say-this callout */
+.sayline{{display:flex;align-items:flex-start;gap:10px;background:#fbf6ec;
+  border:1px solid #ead9b6;border-radius:6px;padding:11px 14px;margin:12px 0;}}
+.saytag{{flex:none;font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:#8a6d1f;background:#f3e6c4;border-radius:4px;
+  padding:3px 9px;margin-top:2px;font-weight:500;}}
+.saytext{{font-size:16px;line-height:1.5;color:var(--charcoal-mid);font-style:italic;}}
 /* Tappable progress checkboxes (ephemeral — nothing is saved) */
-li.chk{{list-style:none;margin-left:-26px;cursor:pointer;user-select:none;
+li.chk{{list-style:none;margin-left:0;cursor:pointer;user-select:none;
   display:flex;align-items:flex-start;gap:12px;}}
 li.chk::before{{content:"\\2610";font-size:24px;line-height:1.2;color:var(--charcoal-mid);flex:none;}}
 li.chk.done::before{{content:"\\2611";color:var(--slate);}}
@@ -424,6 +455,62 @@ li.chk.done{{color:var(--text-dim);}}
 """
 
 
+def _cue_saids(inner):
+    """Split a merged 'THEY SAID' blockquote into one styled quote card per
+    sub-answer (situation / what they did / etc.)."""
+    if "THEY SAID" not in inner:
+        return None
+    # segs = [pre, label1, body1, label2, body2, ...]
+    segs = re.split(r"THEY SAID\s*(?:--\s*([^:\n]+?))?\s*:", inner)
+    out = []
+    for i in range(1, len(segs), 2):
+        label = (segs[i] or "").strip()
+        body = segs[i + 1] if i + 1 < len(segs) else ""
+        body = re.sub(r"\s*\n\s*", " ", body).strip()
+        if not body:
+            continue
+        disp = "They said" + (" &middot; " + esc(label) if label else "")
+        out.append(f'<div class="said"><div class="said-label">{disp}</div>'
+                   f'<div class="said-body">{body}</div></div>')
+    return '<div class="saids">' + "".join(out) + "</div>" if out else None
+
+
+def _cue_enrich(html):
+    """Turn the generic markdown HTML into app-like cue components: split THEY
+    SAID blocks, style Ask/If-surface/If-deep questions, say-lines, eyebrow
+    labels, and tappable checkboxes."""
+    # Tappable checkboxes (ephemeral)
+    html = re.sub(r"<li>(\s*<p>)?\s*\[ \]\s*",
+                  lambda m: '<li class="chk">' + (m.group(1) or ""), html)
+    html = re.sub(r"<li>(\s*<p>)?\s*\[[xX]\]\s*",
+                  lambda m: '<li class="chk done">' + (m.group(1) or ""), html)
+    # Split merged THEY SAID blockquotes into individual quote cards
+    def _bq(m):
+        return _cue_saids(m.group(1)) or m.group(0)
+    html = re.sub(r"<blockquote>\s*<p>(.*?)</p>\s*</blockquote>", _bq, html, flags=re.S)
+    # Question rows: Ask / If surface / If deep
+    qmap = {"Ask": "ask", "If surface": "surface", "If deep": "deep"}
+    def _q(m):
+        label, text = m.group(1), m.group(2).strip()
+        slug = qmap.get(label, "ask")
+        return (f'<li class="q q-{slug}"><span class="qtag">{label}</span>'
+                f'<span class="qtext">{text}</span></li>')
+    html = re.sub(r"<li>\s*(Ask|If surface|If deep):\s*(.*?)</li>", _q, html, flags=re.S)
+    # Italic paragraphs: block objective (starts with a time/number) vs say-lines
+    def _em(m):
+        t = m.group(1).strip()
+        if re.match(r"^\d", t):
+            return f'<p class="objective">{t}</p>'
+        t = re.sub(r"^Say:\s*", "", t)
+        return (f'<div class="sayline"><span class="saytag">Say</span>'
+                f'<span class="saytext">{t}</span></div>')
+    html = re.sub(r"<p><em>(.*?)</em></p>", _em, html, flags=re.S)
+    # Eyebrow field labels (**Label:**)
+    html = re.sub(r"<p><strong>([^<]+?:)</strong></p>",
+                  r'<p class="flabel">\1</p>', html)
+    return html
+
+
 def build_worksheet_cue_html(worksheet_md, client_name):
     """Read-only 'cue screen' version of the worksheet: one question cluster per
     card with Next/Back navigation, for glancing at on a second device while the
@@ -435,12 +522,7 @@ def build_worksheet_cue_html(worksheet_md, client_name):
     for chunk in texts:
         if not (chunk and chunk.strip()):
             continue
-        html = _md_to_html(chunk, strip_emoji=True)
-        html = re.sub(r"<li>(\s*<p>)?\s*\[ \]\s*",
-                      lambda m: '<li class="chk">' + (m.group(1) or ""), html)
-        html = re.sub(r"<li>(\s*<p>)?\s*\[[xX]\]\s*",
-                      lambda m: '<li class="chk done">' + (m.group(1) or ""), html)
-        cards.append(html)
+        cards.append(_cue_enrich(_md_to_html(chunk, strip_emoji=True)))
     cards_html = "".join(
         f'<section class="card{" active" if i == 0 else ""}">{c}</section>'
         for i, c in enumerate(cards)

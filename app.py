@@ -24,9 +24,9 @@ from docx_builder import markdown_to_docx
 from resume_docx_builder import resume_to_docx
 from pdf_builder import (
     build_client_html, build_positioning_html, build_strategy_package_html,
-    build_worksheet_html, build_worksheet_cue_html, render_pdf,
-    positioning_warnings, package_warnings,
+    build_worksheet_html, render_pdf, positioning_warnings, package_warnings,
 )
+from pptx_builder import build_worksheet_pptx
 import strategy_store
 
 app = Flask(__name__)
@@ -340,16 +340,20 @@ def session_worksheet_pdf():
                      as_attachment=True, download_name=f"{slug}_session_worksheet.pdf")
 
 
-@app.route("/api/session/cue.html", methods=["POST"])
-def session_cue_html():
-    """Read-only interactive cue screen (stepper) for the worksheet — opened in a
-    new tab and glanced at during the session. Nothing is stored; the HTML is
-    rendered on demand from the worksheet content."""
+@app.route("/api/session/deck.pptx", methods=["POST"])
+def session_deck_pptx():
+    """Session Cue Deck — the worksheet content as a themed .pptx the coach flips
+    through during the session. Opens in PowerPoint or Google Slides. Generated
+    on demand and downloaded; nothing is stored."""
     data         = request.get_json()
     worksheet_md = data.get("worksheet", "")
     name         = _client_full_name(data)
-    html         = build_worksheet_cue_html(worksheet_md, name)
-    return Response(html, mimetype="text/html")
+    slug         = _session_slug(data)
+    pptx_bytes   = build_worksheet_pptx(worksheet_md, name)
+    return send_file(
+        io.BytesIO(pptx_bytes),
+        mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+        as_attachment=True, download_name=f"{slug}_session_cue.pptx")
 
 
 @app.route("/api/session/guide.docx", methods=["POST"])
