@@ -90,6 +90,13 @@
   .anchor-time{font-family:'Roboto Mono',monospace;font-size:11px;color:var(--slate);margin-top:2px;}
   .anchor-edit{font-family:'Roboto Mono',monospace;font-size:12px;border:1px solid var(--slate-light);border-radius:2px;padding:3px 5px;width:96px;outline:none;color:var(--slate);}
 
+  /* Fit marker shown at an anchored (pinned) segment */
+  .gap-marker{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.03em;padding:6px 14px;border-radius:3px;border:1px dashed;display:flex;align-items:center;gap:8px;}
+  .gap-marker .ico{font-size:13px;}
+  .gap-marker.open{color:var(--amber);background:var(--amber-bg);border-color:#e6cf9e;}
+  .gap-marker.over{color:var(--red);background:var(--red-bg);border-color:#d4a0a0;}
+  .gap-marker.fit{color:var(--green);background:var(--green-bg);border-color:#b0d9c4;}
+
   .hint{font-size:12px;color:var(--text-dim);font-weight:300;margin-top:18px;line-height:1.7;}
   .hint code{font-family:'Roboto Mono',monospace;background:var(--surface2);padding:1px 5px;border-radius:2px;font-size:11px;}
 
@@ -174,7 +181,9 @@
     the other two recompute and everything below cascades.
     Editing <strong>End</strong> (or Length) resizes that segment; editing <strong>Start</strong> moves the boundary with the segment above it.
     <strong>Drag the <span style="color:var(--slate-mid)">⠿</span> handle</strong> to reorder.<br>
-    <strong>Anchor</strong> (the ⚲ icon) pins a segment to a fixed clock time — e.g. a hard 12:00 break — so edits above it can't push it off.
+    <strong>Pin a fixed time</strong> (the ⚲ icon) — e.g. set Lunch to 12:30 and build the morning around it. Edits above can't push a pinned segment;
+    instead a marker shows whether the morning lands on it: <span style="color:var(--amber)">open time to fill</span>,
+    <span style="color:var(--red)">an overrun to trim</span>, or <span style="color:var(--green)">an exact fit</span>. The afternoon flows on from the pin's end.
     Set a <strong>target end</strong> to see if you're over or under at a glance. Everything saves automatically in this browser.
   </div>
 
@@ -257,6 +266,15 @@ function render(){
 
   rows.forEach((r, i) => {
     const seg = r.seg;
+
+    // Fit marker: when a segment is pinned, show whether the run-up lands on it.
+    if(seg.anchor && i > 0){
+      const mk = document.createElement('div');
+      mk.dataset.for = seg.id;
+      paintMarker(mk, seg, Math.round(r.gap));
+      listEl.appendChild(mk);
+    }
+
     const el = document.createElement('div');
     el.className = 'seg' + (seg.anchor ? ' anchored' : '');
     el.draggable = true;
@@ -266,7 +284,7 @@ function render(){
       <div class="grip" title="Drag to reorder">⠿</div>
       <div>
         <input class="name" value="${escapeAttr(seg.name)}" placeholder="Segment name">
-        ${seg.anchor ? `<div class="anchor-time">⚲ pinned</div>` : ''}
+        ${seg.anchor ? `<div class="anchor-time">⚲ pinned to ${fmt(toMin(seg.anchor))}</div>` : ''}
       </div>
       <input class="timeedit start" type="time" value="${fmt0(r.start)}" title="Edit start time (adjusts the segment above)">
       <input class="timeedit end" type="time" value="${fmt0(r.end)}" title="Edit end time (adjusts this segment's length)">
@@ -304,7 +322,22 @@ function render(){
   renderSummary(endM);
 }
 
-// Lightweight refresh of just the computed time inputs (while typing durations)
+// Paint a fit marker's class + text for a given gap (+open / −overrun / 0 exact).
+function paintMarker(mk, seg, gap){
+  const name = escapeAttr(seg.name) || 'pinned segment';
+  if(gap > 0){
+    mk.className = 'gap-marker open';
+    mk.innerHTML = `<span class="ico">◷</span> ${fmtDur(gap)} open before ${name} — add or lengthen something above to fill it`;
+  } else if(gap < 0){
+    mk.className = 'gap-marker over';
+    mk.innerHTML = `<span class="ico">⚠</span> ${fmtDur(-gap)} overrun into ${name} — trim the segments above`;
+  } else {
+    mk.className = 'gap-marker fit';
+    mk.innerHTML = `<span class="ico">✓</span> lands exactly on ${name}`;
+  }
+}
+
+// Lightweight refresh of computed time inputs + fit markers (while typing durations)
 function rerenderTimes(){
   const { rows, endM } = compute();
   const els = listEl.querySelectorAll('.seg');
@@ -314,6 +347,10 @@ function rerenderTimes(){
     const e = row.querySelector('.timeedit.end');
     if(s) s.value = fmt0(r.start);
     if(e) e.value = fmt0(r.end);
+    if(r.seg.anchor){
+      const mk = listEl.querySelector(`.gap-marker[data-for="${r.seg.id}"]`);
+      if(mk) paintMarker(mk, r.seg, Math.round(r.gap));
+    }
   });
   renderSummary(endM);
 }
