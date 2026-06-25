@@ -353,6 +353,13 @@ def session_guide_docx():
     )
 
 
+# ── Session Timer ─────────────────────────────────────────────────────────────
+
+@app.route("/session-timer")
+def session_timer():
+    return render_template("session_timer.html")
+
+
 # ── Session Builder ───────────────────────────────────────────────────────────
 
 @app.route("/session-builder")
