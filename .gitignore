@@ -13,3 +13,6 @@ Thumbs.db
 
 # Per-client strategy package storage (client PII — never commit)
 outputs/
+
+# Local scratch / preview artifacts (may contain client PII — never commit)
+_*

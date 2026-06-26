@@ -24,9 +24,11 @@ from docx_builder import markdown_to_docx
 from resume_docx_builder import resume_to_docx
 from pdf_builder import (
     build_client_html, build_positioning_html, build_strategy_package_html,
-    build_worksheet_html, render_pdf, positioning_warnings, package_warnings,
+    build_worksheet_html, build_worksheet_cue_html, render_pdf,
+    positioning_warnings, package_warnings,
 )
-from pptx_builder import build_worksheet_pptx
+import cue_store
+import segno
 import strategy_store
 
 app = Flask(__name__)
@@ -340,20 +342,51 @@ def session_worksheet_pdf():
                      as_attachment=True, download_name=f"{slug}_session_worksheet.pdf")
 
 
-@app.route("/api/session/deck.pptx", methods=["POST"])
-def session_deck_pptx():
-    """Session Cue Deck — the worksheet content as a themed .pptx the coach flips
-    through during the session. Opens in PowerPoint or Google Slides. Generated
-    on demand and downloaded; nothing is stored."""
+@app.route("/api/session/cue", methods=["POST"])
+def session_cue_create():
+    """Session Cue Screen — render the worksheet as a flip-through cue page, save
+    it to the volume under an unguessable token with a short expiry, and return a
+    shareable link (plus a QR code) to open on a tablet during the session."""
     data         = request.get_json()
     worksheet_md = data.get("worksheet", "")
     name         = _client_full_name(data)
-    slug         = _session_slug(data)
-    pptx_bytes   = build_worksheet_pptx(worksheet_md, name)
-    return send_file(
-        io.BytesIO(pptx_bytes),
-        mimetype="application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        as_attachment=True, download_name=f"{slug}_session_cue.pptx")
+    if not worksheet_md.strip():
+        return jsonify({"error": "No worksheet to build a cue screen from."}), 400
+    html = build_worksheet_cue_html(worksheet_md, name)
+    token, expires = cue_store.save_cue(html, client_name=name)
+    url = request.host_url.rstrip("/") + "/cue/" + token
+    buf = io.BytesIO()
+    segno.make(url, error="m").save(buf, kind="svg", scale=4, border=2, dark="#1e2022")
+    qr_svg = re.sub(r"^<\?xml[^>]*\?>\s*", "", buf.getvalue().decode("utf-8"))
+    return jsonify({"url": url, "expires": expires, "qr_svg": qr_svg})
+
+
+def _cue_message_page(title, message):
+    return Response(
+        f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title}</title><style>
+body{{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f3f0;
+  color:#2c3035;display:flex;align-items:center;justify-content:center;
+  min-height:100vh;margin:0;padding:24px;}}
+.box{{background:#fff;border:1px solid #e0dbd4;border-radius:8px;padding:40px 44px;
+  max-width:440px;text-align:center;}}
+h1{{font-size:20px;margin:0 0 10px;color:#1e2022;}}
+p{{font-size:15px;line-height:1.6;color:#6a7078;margin:0;}}
+</style></head><body><div class="box"><h1>{title}</h1><p>{message}</p></div></body></html>""",
+        mimetype="text/html", status=410)
+
+
+@app.route("/cue/<token>", methods=["GET"])
+def session_cue_view(token):
+    """Serve a saved cue page if the token is valid and not expired."""
+    html = cue_store.load_cue(token)
+    if html is None:
+        return _cue_message_page(
+            "Link expired or not found",
+            "This session cue link has expired or doesn't exist. Generate a new "
+            "one from the session screen.")
+    return Response(html, mimetype="text/html")
 
 
 @app.route("/api/session/guide.docx", methods=["POST"])
@@ -733,7 +766,7 @@ def builder2_training_pdf():
     slug        = re.sub(r"[^a-z0-9_]", "", client_name.lower().replace(" ", "_"))
     pdf_bytes   = render_pdf(build_client_html(
         content, client_name, "Training Assessment — Coach Reference",
-        eyebrow="Challenger, Gray &amp; Christmas  /  Coach Reference",
+        eyebrow="Coach Reference",
     ))
     return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
                      as_attachment=True, download_name=f"{slug}_training_assessment.pdf")

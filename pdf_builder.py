@@ -250,7 +250,7 @@ body{{font-family:'Roboto','DejaVu Sans',sans-serif;font-size:9.5pt;
 
 # ── HTML builders ──────────────────────────────────────────────────────────────
 def build_client_html(markdown_text, client_name, subtitle,
-                      eyebrow="Challenger, Gray &amp; Christmas  /  Strategy Session"):
+                      eyebrow="Strategy Session"):
     today = datetime.now().strftime("%B %d, %Y")
     body = _md_to_html(markdown_text, strip_emoji=False)
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
@@ -353,7 +353,7 @@ def build_worksheet_html(worksheet_md, client_name):
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <style>{_worksheet_css(client_name)}</style></head><body>
 <div class="doc-header">
-  <div class="eyebrow">Challenger, Gray &amp; Christmas  /  Coach Worksheet</div>
+  <div class="eyebrow">Coach Worksheet</div>
   <div class="client-name">{esc(client_name)}</div>
   <div class="doc-sub">Session Worksheet  —  {today}</div>
 </div>
@@ -387,6 +387,22 @@ body{{font-family:'Roboto','DejaVu Sans',sans-serif;background:var(--bg);color:v
   width:100%;max-width:760px;padding:36px 40px;box-shadow:0 1px 3px rgba(0,0,0,.05);}}
 .card.active{{display:block;}}
 .card h1{{display:none;}}
+.card-block-label{{font-family:'Roboto Slab',serif;font-size:17px;font-weight:700;
+  letter-spacing:.01em;color:var(--slate);margin-bottom:18px;padding-bottom:11px;
+  border-bottom:2px solid var(--slate-pale);}}
+.title-card{{text-align:center;padding:70px 10px 40px;}}
+.title-eyebrow{{font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--slate-mid);margin-bottom:26px;}}
+.title-name{{font-family:'Roboto Slab',serif;font-size:42px;font-weight:700;
+  color:var(--charcoal);line-height:1.1;margin-bottom:14px;}}
+.title-sub{{font-size:21px;color:var(--text-mid);margin-bottom:30px;}}
+.title-date{{font-family:'Roboto Mono',monospace;font-size:14px;color:var(--text-dim);}}
+.reminder{{background:#fbf6ec;border:1px solid #ead9b6;border-radius:8px;
+  padding:28px 30px;text-align:center;}}
+.reminder-eyebrow{{font-family:'Roboto Mono',monospace;font-size:12px;letter-spacing:.16em;
+  text-transform:uppercase;color:#8a6d1f;margin-bottom:14px;}}
+.reminder-body{{font-size:19px;line-height:1.6;color:var(--charcoal-mid);}}
+.reminder-body strong{{color:var(--charcoal);}}
 .card h2{{font-family:'Roboto Slab',serif;font-size:26px;font-weight:700;color:var(--charcoal);
   line-height:1.2;margin-bottom:14px;padding-bottom:12px;border-bottom:2px solid var(--charcoal);}}
 .card h3{{font-family:'Roboto',sans-serif;font-size:17px;font-weight:600;color:var(--slate);
@@ -394,7 +410,8 @@ body{{font-family:'Roboto','DejaVu Sans',sans-serif;background:var(--bg);color:v
 .card p{{font-size:18px;line-height:1.6;color:var(--text-mid);margin-bottom:12px;}}
 .card p em{{color:var(--charcoal-mid);font-style:italic;}}
 .card strong{{color:var(--charcoal);font-weight:600;}}
-.card ul,.card ol{{margin:8px 0 14px 24px;}}
+.card ul{{list-style:disc;margin:8px 0 14px 24px;}}
+.card ol{{list-style:decimal;margin:8px 0 14px 24px;}}
 .card li{{font-size:18px;line-height:1.55;color:var(--charcoal);margin-bottom:10px;}}
 .card li::marker{{color:var(--slate-mid);}}
 .card blockquote{{border-left:3px solid var(--slate);background:var(--slate-pale);
@@ -414,8 +431,8 @@ body{{font-family:'Roboto','DejaVu Sans',sans-serif;background:var(--bg);color:v
 .said-label{{font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.1em;
   text-transform:uppercase;color:var(--slate);margin-bottom:5px;font-weight:500;}}
 .said-body{{font-size:17px;line-height:1.55;color:var(--charcoal);}}
-/* Question rows */
-.card ul{{list-style:none;margin:10px 0 16px;padding:0;}}
+/* Question / checkbox rows carry no bullet marker; content lists keep theirs. */
+.card ul:has(> li.q),.card ul:has(> li.chk){{list-style:none;margin:10px 0 16px;padding:0;}}
 li.q{{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;}}
 .qtag{{flex:none;font-family:'Roboto Mono',monospace;font-size:11px;letter-spacing:.06em;
   text-transform:uppercase;padding:3px 9px;border-radius:4px;margin-top:3px;font-weight:500;}}
@@ -456,22 +473,34 @@ li.chk.done{{color:var(--text-dim);}}
 
 
 def _cue_saids(inner):
-    """Split a merged 'THEY SAID' blockquote into one styled quote card per
-    sub-answer (situation / what they did / etc.)."""
+    """Split a merged 'THEY SAID' blockquote into styled quote cards. `inner` is
+    already-escaped markdown HTML, so we never re-escape it (that would turn an
+    existing &amp; into &amp;amp;). Multi-paragraph quotes arrive with embedded
+    </p><p> tags; we split on those to render real paragraphs."""
     if "THEY SAID" not in inner:
         return None
-    # segs = [pre, label1, body1, label2, body2, ...]
+    item_re = re.compile(r'^(?:[*\-]|\d+\.)\s+')
     segs = re.split(r"THEY SAID\s*(?:--\s*([^:\n]+?))?\s*:", inner)
     out = []
     for i in range(1, len(segs), 2):
         label = (segs[i] or "").strip()
-        body = segs[i + 1] if i + 1 < len(segs) else ""
-        body = re.sub(r"\s*\n\s*", " ", body).strip()
+        body = (segs[i + 1] if i + 1 < len(segs) else "").strip()
+        body = re.sub(r'^\s*</?p>\s*|\s*</?p>\s*$', '', body)  # strip stray edge tags
         if not body:
             continue
-        disp = "They said" + (" &middot; " + esc(label) if label else "")
-        out.append(f'<div class="said"><div class="said-label">{disp}</div>'
-                   f'<div class="said-body">{body}</div></div>')
+        rendered = []
+        for para in re.split(r'</p>\s*<p>', body):
+            lines = [l.strip() for l in para.split('\n') if l.strip()]
+            if not lines:
+                continue
+            if all(item_re.match(l) for l in lines):
+                items = [item_re.sub('', l) for l in lines]
+                rendered.append('<ul>' + ''.join(f'<li>{b}</li>' for b in items) + '</ul>')
+            else:
+                rendered.append(f'<p>{" ".join(lines)}</p>')
+        label_html = (f'<div class="said-label">{label}</div>' if label else '')
+        out.append(f'<div class="said">{label_html}'
+                   f'<div class="said-body">{"".join(rendered)}</div></div>')
     return '<div class="saids">' + "".join(out) + "</div>" if out else None
 
 
@@ -495,12 +524,32 @@ def _cue_enrich(html):
         slug = qmap.get(label, "ask")
         return (f'<li class="q q-{slug}"><span class="qtag">{label}</span>'
                 f'<span class="qtext">{text}</span></li>')
-    html = re.sub(r"<li>\s*(Ask|If surface|If deep):\s*(.*?)</li>", _q, html, flags=re.S)
+    # Match both "tight" (<li>Ask: …</li>) and "loose" (<li><p>Ask: …</p></li>)
+    # list items — markdown produces either depending on surrounding blank lines.
+    html = re.sub(r"<li>\s*(?:<p>)?\s*(Ask|If surface|If deep):\s*(.*?)(?:</p>)?\s*</li>",
+                  _q, html, flags=re.S)
+    # Two stacked italic lines (a "Say this out loud:" cue directly above the line
+    # to say) collapse into one <p> with two <em>. Split them so each is handled
+    # on its own below.
+    def _split_em(m):
+        inner = m.group(1)
+        ems = re.findall(r'<em>(.*?)</em>', inner, re.S)
+        leftover = re.sub(r'<em>.*?</em>', '', inner, flags=re.S).strip()
+        if len(ems) > 1 and not leftover:
+            return ''.join(f'<p><em>{e}</em></p>' for e in ems)
+        return m.group(0)
+    html = re.sub(r'<p>((?:\s*<em>.*?</em>\s*)+)</p>', _split_em, html, flags=re.S)
     # Italic paragraphs: block objective (starts with a time/number) vs say-lines
     def _em(m):
         t = m.group(1).strip()
         if re.match(r"^\d", t):
             return f'<p class="objective">{t}</p>'
+        # Drop redundant coach stage-directions ("Say this out loud:", "Setup --
+        # say this out loud before asking:", etc.). The actual line to say follows
+        # in its own italic block and becomes the sayline.
+        if re.match(r'^(setup\s*[-–—]+\s*)?say this(,? or your version of it)?'
+                    r'( out loud)?( before asking)?\s*:?\s*$', t, re.I):
+            return ''
         t = re.sub(r"^Say:\s*", "", t)
         return (f'<div class="sayline"><span class="saytag">Say</span>'
                 f'<span class="saytext">{t}</span></div>')
@@ -508,26 +557,179 @@ def _cue_enrich(html):
     # Eyebrow field labels (**Label:**)
     html = re.sub(r"<p><strong>([^<]+?:)</strong></p>",
                   r'<p class="flabel">\1</p>', html)
+    # "Where they're starting: X | Y | Z" → bulleted list
+    def _starting(m):
+        # m.group(1) is already-escaped markdown HTML — do not re-escape.
+        items = [s.strip() for s in m.group(1).split('|') if s.strip()]
+        lis = ''.join(f'<li>{it}</li>' for it in items)
+        return f'<p class="flabel">Where they\'re starting:</p><ul>{lis}</ul>'
+    html = re.sub(r"<p><strong>Where they(?:'|&#x27;|&apos;|&#39;)re starting:</strong>\s*(.*?)</p>",
+                  _starting, html, flags=re.S)
+    # Also handle plain text version (not bolded)
+    html = re.sub(r"<p>Where they(?:'|&#x27;|&apos;|&#39;)re starting:\s*(.*?)</p>",
+                  _starting, html, flags=re.S)
     return html
 
 
+def _parse_fields(body):
+    """Parse a markdown body with **Label:** headers into a dict of
+    {normalized_label: full_markdown_chunk}. Each chunk keeps its bold label line
+    so it can be re-rendered standalone or moved onto another card."""
+    parts = re.split(r'(?m)^(\*\*[^*\n]+?:\*\*)', body)
+    fields = {}
+    for i in range(1, len(parts), 2):
+        label = parts[i].strip('* ').rstrip(':').strip().lower()
+        chunk = parts[i] + (parts[i + 1] if i + 1 < len(parts) else '')
+        fields[label] = chunk.strip()
+    return fields
+
+
+def _fix_tight_lists(md):
+    """Markdown needs a blank line before a list. The worksheet often writes a
+    lead-in line ('Follow-up probes:') immediately above a numbered/bulleted list,
+    which renders as one run-on paragraph. Insert the missing blank line."""
+    return re.sub(r'(?m)^([^\n].*:)\n((?:\d+\.|[*\-])\s)', r'\1\n\n\2', md)
+
+
+_NOTES_RE = re.compile(r'(?m)^[ \t]*\[\[NOTES(?::[a-zA-Z]+)?\]\][ \t]*$')
+
+
 def build_worksheet_cue_html(worksheet_md, client_name):
-    """Read-only 'cue screen' version of the worksheet: one question cluster per
-    card with Next/Back navigation, for glancing at on a second device while the
-    coach handwrites notes elsewhere. No note-writing areas, nothing is saved."""
+    """Read-only 'cue screen' version of the worksheet: a curated set of flip
+    cards with Next/Back navigation, for glancing at on a tablet while the coach
+    handwrites notes elsewhere. No note-writing areas, nothing is saved."""
     today = datetime.now().strftime("%B %d, %Y")
-    parts = re.split(r"(?m)^[ \t]*\[\[NOTES(?::([a-zA-Z]+))?\]\][ \t]*$", worksheet_md)
-    texts = parts[0::2]  # cluster bodies; the note-area markers are dropped
-    cards = []
-    for chunk in texts:
-        if not (chunk and chunk.strip()):
-            continue
-        cards.append(_cue_enrich(_md_to_html(chunk, strip_emoji=True)))
-    cards_html = "".join(
-        f'<section class="card{" active" if i == 0 else ""}">{c}</section>'
-        for i, c in enumerate(cards)
+    # Genericize CGC-specific product naming for the standalone tool.
+    worksheet_md = re.sub('careersuite', 'Career Tools', worksheet_md, flags=re.I)
+
+    def clean(md_chunk):
+        md_chunk = _NOTES_RE.sub('', md_chunk)
+        md_chunk = re.sub(r'(?m)^\s*-{3,}\s*$', '', md_chunk)  # drop separator rules
+        return md_chunk.strip()
+
+    def card(block, md_chunk):
+        return (block, _cue_enrich(_md_to_html(_fix_tight_lists(clean(md_chunk)),
+                                               strip_emoji=True)))
+
+    # Split into top-level sections by ## headings, preserving the heading text.
+    sec = re.split(r'(?m)^##\s+(.*)$', worksheet_md)
+    # sec = [preamble, heading1, body1, heading2, body2, ...]
+
+    # Pre-pass: front-matter fields and Block 2 subsections are generated from a
+    # fixed template, so labels are stable. Collect them up front so cards can be
+    # assembled in a curated order that crosses section boundaries.
+    fm = {}
+    b2_objective, b2_subs = '', []
+    for i in range(1, len(sec), 2):
+        key = sec[i].strip().lower().split('--')[0].strip()
+        body = sec[i + 1] if i + 1 < len(sec) else ''
+        if key in ('before you start', 'in their words'):
+            fm.update(_parse_fields(body))
+        elif key == 'block 2':
+            sp = re.split(r'(?m)^###\s+(.*)$', body)
+            b2_objective = sp[0].strip()
+            b2_subs = [(sp[j].strip(), sp[j + 1]) for j in range(1, len(sp), 2)]
+
+    def fields_md(*labels):
+        return '\n\n'.join(fm[l] for l in labels if l in fm and fm[l].strip())
+
+    def b2_sub(prefix):
+        for sh, sb in b2_subs:
+            if sh.lower().startswith(prefix):
+                return f'### {sh}\n{sb}'
+        return ''
+
+    cards = []  # list of (block_label, html)
+
+    for i in range(1, len(sec), 2):
+        heading = sec[i].strip()
+        body = sec[i + 1] if i + 1 < len(sec) else ''
+        key = heading.lower().split('--')[0].strip()
+        block_label = re.sub(r'\s*--\s*', ' · ', heading).title()
+
+        if key in ('single-day coaching session',) or 'session worksheet' in key:
+            continue  # the cover is rendered separately as the title card
+
+        elif key == 'before you start':
+            cards.append(card('Before You Start',
+                              fields_md('north star phrase', 'identity gap',
+                                        "what they're carrying in")))
+
+        elif key == 'in their words':
+            cards.append(card('In Their Words', fm.get('what they want me to know', '')))
+            cards.append(card('In Their Words',
+                              fields_md('three things they like about themselves',
+                                        "what they'd like more of from themselves",
+                                        'what fills their tank')))
+            # Readiness card: starting scores + AI Readiness (moved up from Block 2).
+            scores = fm.get("where they're starting", '')
+            ai = b2_sub('ai readiness')
+            readiness = '\n\n'.join(x for x in (scores, ai) if x.strip())
+            if readiness.strip():
+                cards.append(card('In Their Words', readiness))
+
+        elif key == 'block 1':
+            # One card: opening (cities) question, then "what would make today
+            # worthwhile", then the remaining ("setting aside the form") question.
+            chunks = [c for c in (clean(p) for p in _NOTES_RE.split(body)) if c]
+            worthwhile = fm.get('what would make today worthwhile', '')
+            parts = chunks[:1]
+            if worthwhile.strip():
+                parts.append(worthwhile)
+            parts.extend(chunks[1:])
+            cards.append(card(block_label, '\n\n'.join(parts)))
+
+        elif key == 'block 2':
+            sigwin = fields_md('signature win', "how they know they're winning")
+            first = True
+            for sh, sb in b2_subs:
+                shl = sh.lower()
+                if shl.startswith('ai readiness'):
+                    continue  # moved to In Their Words
+                core = f'### {sh}\n{sb}'
+                if first and b2_objective:
+                    core = b2_objective + '\n\n' + core
+                first = False
+                if shl.startswith("what they're done with") and sigwin:
+                    core = sigwin + '\n\n' + core
+                cards.append(card(block_label, core))
+
+        else:
+            # A transition reminder card sits just before the roleplay so the
+            # coach reviews the morning's Interview Program build first.
+            if key == 'block 5':
+                cards.append(('Before the Roleplay',
+                    '<div class="reminder">'
+                    '<div class="reminder-eyebrow">Pause &amp; prep</div>'
+                    '<div class="reminder-body">Before you start the roleplay, take a '
+                    'beat to review what you built together this morning &mdash; their '
+                    '<strong>TMAY</strong>, <strong>Ideal Role</strong>, and '
+                    '<strong>Safe Fault</strong>. The roleplay answers should draw '
+                    'directly on that Interview Program, not start from scratch.</div>'
+                    '</div>'))
+            # Blocks 3-7: one card per [[NOTES]]-delimited cluster.
+            for chunk in (clean(c) for c in _NOTES_RE.split(body)):
+                if chunk:
+                    cards.append(card(block_label, chunk))
+
+    # Title card (cover) — first card, no block label.
+    cover_sub = sec[1].strip() if len(sec) > 1 else 'Session Cue'
+    title_html = (
+        '<div class="title-card">'
+        '<div class="title-eyebrow">Session Cue</div>'
+        f'<div class="title-name">{esc(client_name)}</div>'
+        f'<div class="title-sub">{esc(cover_sub)}</div>'
+        f'<div class="title-date">{today}</div></div>'
     )
-    total = len(cards)
+    all_cards = [('', title_html)] + cards
+
+    cards_html = "".join(
+        f'<section class="card{" active" if i == 0 else ""}">'
+        + (f'<div class="card-block-label">{esc(blk)}</div>' if blk else '')
+        + html + '</section>'
+        for i, (blk, html) in enumerate(all_cards)
+    )
+    total = len(all_cards)
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{esc(client_name)} — Session Cue</title>
@@ -537,7 +739,7 @@ def build_worksheet_cue_html(worksheet_md, client_name):
 <style>{_cue_css(client_name)}</style></head><body>
 <div class="cue-top">
   <div>
-    <div class="eyebrow">Challenger, Gray &amp; Christmas  /  Session Cue</div>
+    <div class="eyebrow">Session Cue</div>
     <div class="name">{esc(client_name)}</div>
   </div>
   <div class="cue-progress"><span id="counter">1</span> / {total}<br>{today}</div>
@@ -729,7 +931,7 @@ def build_positioning_html(pos, client_name):
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
 <style>{_positioning_css(client_name)}</style></head><body>
 <div class="doc-header">
-  <div class="eyebrow">Challenger, Gray &amp; Christmas  /  Target Company Guide</div>
+  <div class="eyebrow">Target Company Guide</div>
   <div class="client-name">{esc(client_name)}</div>
   <div class="doc-sub">{esc(pos.get("targetTitle",""))}  —  {today}</div>
   <div>{pills_html}</div>
@@ -971,7 +1173,7 @@ def build_strategy_package_html(client_name, pieces, target_title="", date=None)
         is_positioning = (k == "positioning")
         body_class = "" if is_positioning else "pkg-body"
         sections_html += f"""<div class="pkg-section">
-  <div class="pkg-section-eyebrow">Challenger, Gray &amp; Christmas  /  Strategy Package</div>
+  <div class="pkg-section-eyebrow">Strategy Package</div>
   <h1 id="sec-{k}" class="pkg-section-title">{esc(title)}</h1>
   <hr class="pkg-section-rule">
   <div class="{body_class}">{bodies[k]}</div>
@@ -983,7 +1185,7 @@ def build_strategy_package_html(client_name, pieces, target_title="", date=None)
 <style>{_package_css(client_name)}</style></head><body>
 <div class="cover">
   <div>
-    <div class="cover-eyebrow">Challenger, Gray &amp; Christmas</div>
+    <div class="cover-eyebrow">Career Strategy</div>
     <div class="cover-name">{esc(client_name)}</div>
     <div class="cover-title">Strategy Package</div>
     <div class="cover-sub">{sub}</div>
