@@ -248,26 +248,17 @@ Your output must follow this exact structure in this exact order. Do not reorder
 
 ### Opening Questions
 
+NEVER ask why they are here, what brought them here, why they are in transition, or why they are job searching. The context is always a recent layoff and is already known to the coach. Do not generate any "why are you here" question in any form.
+
 - Ask: [Question that starts a conversation, not an interview. References something specific from their intake -- their tank-filler, a self-like, or something personal they mentioned.]
 - If surface: [Follow-up that invites more without pushing]
 - If deep: [Depth question that stays with what they just said]
 
-- Ask: [Question that establishes what today needs to accomplish in their words -- not what the form said]
+- Ask: [Question that establishes what they want to get out of today in their words -- not what the form said. Focused on the outcome of the session, never on the reason for their search.]
 - If surface: [Follow-up]
 - If deep: [Depth question]
 
 > **Listen for:** [Short paragraph -- 2-3 specific things to notice in their answer, specific to this client's profile and gaps. Not generic listening cues.]
-
-### Live Intake (Administrative -- outside session timer)
-
-- Full name confirmation
-- Age (if comfortable)
-- Married or partnered? Kids?
-- Available next week for implementation coaching?
-- What kind of resume support are you expecting from CGC?
-- Any questions before we dive in?
-
-> **Coach note:** [1-2 sentence paragraph on anything in their pre-work that suggests a specific tone for the live intake]
 
 ---
 
@@ -526,7 +517,7 @@ For each dimension: verbatim answer first, then the question sequence, then the 
 
 ### TMAY -- Scaffolded Build
 
-*Do not ask them to say their TMAY until Step 5. Build it in pieces first.*
+*Do not ask them to say their TMAY until Step 4 (the full run). Build it in pieces first. The "what are you looking for" / forward piece is intentionally NOT built here -- it comes from the Ideal Role work and is assembled later from the transcript.*
 
 **Step 1 -- The Anchor: Who are you?**
 
@@ -548,13 +539,7 @@ For each dimension: verbatim answer first, then the question sequence, then the 
 - Ask: [Question that asks them to name what they're genuinely better at than most people -- grounded in the story work just done]
 - Ask: [Reframe -- evidence, not bragging. What makes your value undeniable?]
 
-**Step 4 -- The Forward: What are you looking for?**
-
-*Build Ideal Role first, then return here.*
-
-- Ask: [One question -- how do you say what you're looking for specifically enough to be useful but broadly enough to open a conversation?]
-
-**Step 5 -- Full Run**
+**Step 4 -- Full Run**
 
 *Say this out loud:* "Let's put it together. I'm going to ask you to introduce yourself as if we just met at an industry event. You've got 90 seconds. Go."
 
@@ -783,6 +768,8 @@ For each dimension: verbatim answer first, then the question sequence, then the 
 - Ask: "And what's one thing you're going to do for yourself in the coming week?"
   - If they struggle: "Something that fills your tank, keeps you steady -- doesn't have to be big, just something that's for you."
 
+- Ask: "Quick logistics before we close -- are you available next week for implementation coaching? Let's make sure we get it on the calendar." [confirm availability for next-week implementation coaching]
+
 - Ask: "Anything else before we wrap?"
 
 ---
@@ -917,7 +904,6 @@ Rules for the blocks:
 > [verbatim]
   Then the build questions, then [[NOTES:large]]. If the "what they learned" answer is genuinely absent from the pre-work, write "(not provided)".
 - Keep the lines the coach says out loud (setups, the TMAY 90-second prompt, the Safe Fault build structure, the survey ask, the closing reflection questions, and the final words). Keep them tight. Mark them in italics so they are visually distinct from questions.
-- Live Intake administrative items must be formatted as a markdown checkbox list, each line written exactly as "- [ ] item" with the empty brackets, followed by [[NOTES:small]].
 - The Action Plan gets [[NOTES:large]].
 
 End after the Final Words. Output nothing after them.
