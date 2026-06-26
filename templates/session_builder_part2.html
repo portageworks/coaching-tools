@@ -194,12 +194,33 @@
       <span class="prompt-badge badge-pdf">PDF</span>
       <div class="prompt-status status-idle" id="status-branding">Ready</div>
     </div>
+    <div class="prompt-card" id="card-linkedin">
+      <div class="prompt-name">LinkedIn Strategy</div>
+      <div class="prompt-desc">Headline options, an About draft in the client's voice, level-aware platform decisions, and first-week moves.</div>
+      <span class="prompt-badge badge-pdf">PDF</span>
+      <div class="prompt-status status-idle" id="status-linkedin">Ready</div>
+    </div>
     <div class="prompt-card" id="card-training">
       <div class="prompt-name">Training Assessment</div>
       <div class="prompt-desc">Internal coach notes — session overview, barriers, interview performance, and evaluation. Coach reference only.</div>
       <span class="prompt-badge badge-html">HTML</span>
       <div class="prompt-status status-idle" id="status-training">Ready</div>
     </div>
+    <div class="prompt-card" id="card-handoff">
+      <div class="prompt-name">Implementation Email</div>
+      <div class="prompt-desc">A readable narrative handoff for the next coach — the key points of the conversation, not a form. Copy/paste editable. Coach reference only.</div>
+      <span class="prompt-badge badge-html">COPY</span>
+      <div class="prompt-status status-idle" id="status-handoff">Ready</div>
+    </div>
+  </div>
+
+  <div class="handoff-block" id="handoffBlock" style="display:none;margin-top:18px;">
+    <div class="section-title" style="font-size:15px;display:flex;align-items:center;gap:12px;">
+      Implementation Coach Email
+      <button class="download-link" id="copyHandoff" onclick="copyHandoff()">Copy</button>
+      <button class="download-link" id="dlHandoff" onclick="downloadHandoff()">↓ Download (HTML)</button>
+    </div>
+    <textarea id="handoffText" spellcheck="false" style="width:100%;min-height:240px;margin-top:10px;font-family:'Roboto Mono',monospace;font-size:13px;line-height:1.55;color:#2c3035;border:1px solid var(--border);border-radius:4px;padding:14px;resize:vertical;"></textarea>
   </div>
 
   <div class="error-msg" id="errorMsg"></div>
@@ -214,6 +235,7 @@
 {% block scripts %}
 <script>
 const fileContents = { transcript: '', resume: '', intake: '' };
+let pkgClientName = '';
 
 function dragOver(e, id) { e.preventDefault(); document.getElementById(id).classList.add('drag'); }
 function dragLeave(id)   { document.getElementById(id).classList.remove('drag'); }
@@ -274,7 +296,9 @@ async function runAll() {
   if (!clientName) { showError("Please enter the client's name."); return; }
 
   document.getElementById('runBtn').disabled = true;
-  ['summary','roleplay','branding','training'].forEach(id => setStatus(id, 'running', 'Generating...'));
+  pkgClientName = clientName;
+  document.getElementById('handoffBlock').style.display = 'none';
+  ['summary','roleplay','branding','linkedin','training','handoff'].forEach(id => setStatus(id, 'running', 'Generating...'));
   // roleplay note
   setStatus('roleplay', 'running', 'Generating Part 1 of 2...');
 
@@ -320,7 +344,7 @@ async function runAll() {
     }
   } catch (err) {
     showError(err.message || 'Something went wrong.');
-    ['summary','roleplay','branding','training'].forEach(id => {
+    ['summary','roleplay','branding','linkedin','training','handoff'].forEach(id => {
       if (!results[id]) setStatus(id, 'error', 'Failed');
     });
   } finally {
@@ -341,6 +365,14 @@ function wireDownload(id, content, clientName) {
   } else if (id === 'branding') {
     setDone('branding', 'Branding Profile (PDF)',
       () => downloadFile('/api/builder2/branding.pdf', { content, client_name: clientName }, 'branding', 'pdf'));
+  } else if (id === 'linkedin') {
+    setDone('linkedin', 'LinkedIn Strategy (PDF)',
+      () => downloadFile('/api/builder2/linkedin.pdf', { content, client_name: clientName }, 'linkedin', 'pdf'));
+  } else if (id === 'handoff') {
+    document.getElementById('card-handoff').className = 'prompt-card done';
+    document.getElementById('status-handoff').innerHTML = 'Ready below ↓';
+    document.getElementById('handoffText').value = content;
+    document.getElementById('handoffBlock').style.display = 'block';
   } else if (id === 'training') {
     document.getElementById('card-training').className = 'prompt-card done';
     const s = document.getElementById('status-training');
@@ -398,6 +430,19 @@ async function downloadFile(endpoint, body, cardId, ext) {
   } finally {
     if (btn) { btn.disabled = false; btn.textContent = orig; }
   }
+}
+
+function downloadHandoff() {
+  const txt = document.getElementById('handoffText').value;
+  if (!txt) return;
+  downloadFile('/api/builder2/handoff.html', { content: txt, client_name: pkgClientName }, 'handoff', 'html');
+}
+function copyHandoff() {
+  const ta = document.getElementById('handoffText');
+  navigator.clipboard.writeText(ta.value).then(() => {
+    const b = document.getElementById('copyHandoff'); const o = b.textContent;
+    b.textContent = 'Copied'; setTimeout(() => { b.textContent = o; }, 1500);
+  });
 }
 
 function showError(msg) { const el=document.getElementById('errorMsg'); el.textContent=msg; el.className='error-msg visible'; }

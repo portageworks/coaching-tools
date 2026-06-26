@@ -24,6 +24,7 @@ PIECE_LABELS = {
     "stories":     "Success Stories",
     "roleplay":    "Roleplay Analysis",
     "positioning": "Where to Look",
+    "linkedin":    "LinkedIn Strategy",
 }
 JSON_KEYS = {"positioning"}
 

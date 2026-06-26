@@ -954,6 +954,7 @@ PACKAGE_ORDER = [
     ("stories",     "Success Stories"),
     ("roleplay",    "Roleplay Analysis"),
     ("positioning", "Where to Look"),
+    ("linkedin",    "LinkedIn Strategy"),
 ]
 
 
@@ -1139,7 +1140,7 @@ def build_strategy_package_html(client_name, pieces, target_title="", date=None)
         if action_md:
             bodies["actionplan"] = _md_to_html(action_md, strip_emoji=False)
 
-    for key in ("branding", "ip", "stories", "roleplay"):
+    for key in ("branding", "ip", "stories", "roleplay", "linkedin"):
         md = pieces.get(key)
         if md:
             bodies[key] = _md_to_html(_strip_leading_h1(md), strip_emoji=False)

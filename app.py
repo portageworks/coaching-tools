@@ -19,6 +19,7 @@ from prompts.resume_tool import DIAGNOSTIC_SYSTEM, REWRITE_SYSTEM
 from prompts.session_builder_part2 import (
     summary_prompt, roleplay_a_prompt, roleplay_b_prompt,
     branding_prompt, training_prompt,
+    linkedin_strategy_prompt, coach_handoff_prompt,
 )
 from docx_builder import markdown_to_docx
 from resume_docx_builder import resume_to_docx
@@ -666,7 +667,9 @@ def builder2_generate():
     JOBS = [
         ("summary",  summary_prompt(client_name),                          12000),
         ("branding", branding_prompt(client_name, bool(resume), bool(intake)), 12000),
+        ("linkedin", linkedin_strategy_prompt(client_name, bool(resume), bool(intake)), 8000),
         ("training", training_prompt(client_name),                          8000),
+        ("handoff",  coach_handoff_prompt(client_name),                     3000),
     ]
 
     def generate():
@@ -744,6 +747,17 @@ def builder2_branding_pdf():
     pdf_bytes   = render_pdf(build_client_html(content, client_name, "Branding Profile"))
     return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
                      as_attachment=True, download_name=f"{slug}_branding_profile.pdf")
+
+
+@app.route("/api/builder2/linkedin.pdf", methods=["POST"])
+def builder2_linkedin_pdf():
+    data        = request.get_json()
+    content     = data.get("content", "")
+    client_name = (data.get("client_name") or "client").strip()
+    slug        = re.sub(r"[^a-z0-9_]", "", client_name.lower().replace(" ", "_"))
+    pdf_bytes   = render_pdf(build_client_html(content, client_name, "LinkedIn Strategy"))
+    return send_file(io.BytesIO(pdf_bytes), mimetype="application/pdf",
+                     as_attachment=True, download_name=f"{slug}_linkedin_strategy.pdf")
 
 
 @app.route("/api/builder2/resume.docx", methods=["POST"])
@@ -827,6 +841,52 @@ body{{font-family:'Roboto',sans-serif;font-size:15px;line-height:1.7;color:#2c30
     )
 
 
+@app.route("/api/builder2/handoff.html", methods=["POST"])
+def builder2_handoff_html():
+    import markdown as md_lib
+    from datetime import date
+    data        = request.get_json()
+    content     = data.get("content", "")
+    client_name = (data.get("client_name") or "client").strip()
+    slug        = re.sub(r"[^a-z0-9_]", "", client_name.lower().replace(" ", "_"))
+    today       = date.today().strftime("%B %d, %Y")
+    rendered    = md_lib.markdown(content, extensions=["extra", "nl2br"])
+    html_out = f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Implementation Handoff — {client_name}</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;700&family=Roboto:wght@300;400;600&family=Roboto+Mono&display=swap" rel="stylesheet">
+<style>
+*{{box-sizing:border-box;margin:0;padding:0;}}
+body{{font-family:'Roboto',sans-serif;font-size:15px;line-height:1.7;color:#2c3035;background:#f5f3f0;padding:40px 20px;}}
+.doc{{max-width:720px;margin:0 auto;background:#fff;border:1px solid #ddd;border-radius:4px;overflow:hidden;}}
+.doc-header{{background:#1e2022;padding:28px 40px 22px;}}
+.doc-header-label{{font-family:'Roboto Mono',monospace;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#5579a0;margin-bottom:6px;}}
+.doc-header-name{{font-family:'Roboto Slab',serif;font-size:24px;font-weight:700;color:#fff;line-height:1.1;}}
+.doc-header-sub{{font-size:12px;font-weight:300;color:#9ba0a6;margin-top:4px;}}
+.doc-body{{padding:34px 40px 46px;}}
+.doc-body p{{margin-bottom:13px;}}
+.doc-body strong{{font-weight:600;color:#1e2022;}}
+.doc-footer{{padding:14px 40px;border-top:1px solid #e0dbd4;font-family:'Roboto Mono',monospace;font-size:10px;color:#9ba0a6;letter-spacing:.08em;display:flex;justify-content:space-between;}}
+</style></head><body>
+<div class="doc">
+  <div class="doc-header">
+    <div class="doc-header-label">Coach Reference Only</div>
+    <div class="doc-header-name">{client_name}</div>
+    <div class="doc-header-sub">Implementation Coach Handoff</div>
+  </div>
+  <div class="doc-body">{rendered}</div>
+  <div class="doc-footer"><span>{client_name} — Implementation Handoff</span><span>{today}</span></div>
+</div>
+</body></html>"""
+    return send_file(
+        io.BytesIO(html_out.encode("utf-8")),
+        mimetype="text/html",
+        as_attachment=True,
+        download_name=f"{slug}_implementation_handoff.html",
+    )
+
+
 # ── All-in-one (full day: both runs + package build) ────────────────────────────
 
 @app.route("/full-session")
@@ -868,7 +928,9 @@ def full_generate():
         ("summary",     summary_prompt(client_name),                                 12000, MODEL_SMART),
         ("branding",    branding_prompt(client_name, bool(resume), bool(intake)),    12000, MODEL_SMART),
         ("positioning", positioning_prompt(client_name, bool(resume), bool(intake)), 16000, MODEL_SMART),
+        ("linkedin",    linkedin_strategy_prompt(client_name, bool(resume), bool(intake)), 8000, MODEL_SMART),
         ("training",    training_prompt(client_name),                                 8000, MODEL_FAST),
+        ("handoff",     coach_handoff_prompt(client_name),                            3000, MODEL_SMART),
     ]
 
     def run_job(job_id, system_prompt, max_tokens, model):

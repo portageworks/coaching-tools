@@ -251,6 +251,74 @@ High-authority summary focusing on scope and impact. Formatted for top of resume
 **The Voice:** [Recommended communication style for this brand]"""
 
 
+def linkedin_strategy_prompt(client_name, has_resume, has_intake):
+    resume_clause = ", their resume," if has_resume else ""
+    intake_clause = " and intake answers" if has_intake else ""
+    return f"""{client_anchor(client_name)}
+
+You are a LinkedIn strategist for senior professionals in career transition. Using the session transcript{resume_clause}{intake_clause}, write a LinkedIn Strategy section for {client_name}. Output only the document — no meta-commentary, no citations.
+
+GUARDRAILS:
+- SECOND PERSON throughout, except the About draft, which is FIRST PERSON for copy/paste.
+- Build everything from {client_name}'s actual target role and background — never generic templates.
+- Explain the WHY behind each recommendation, not just the what. Clients lack a mental model for LinkedIn; give them the frame.
+- No layoff language — use "organizational changes." Replace any "Redline" with "Safe Fault." No clichés ("passionate," "team player," "self-starter").
+- Level-aware and target-aware: calibrate every recommendation to {client_name}'s seniority and the roles they're actually targeting.
+
+THE FRAME TO CONVEY (weave in, don't lecture): A LinkedIn profile is the floor; activity is the ceiling. What actually works on LinkedIn feels almost nothing like applying for jobs — it's being visible and useful in the right rooms.
+
+---
+
+# LinkedIn Strategy — {client_name}
+
+Open with a short orienting paragraph (3-4 sentences) that gives {client_name} the mental model above, in their context.
+
+## Headline Options
+Two or three distinct headline directions. For each: the headline itself in **bold**, then one sentence on what it signals and who it's aimed at. Ground them in the real target role and background.
+
+## About Draft
+One draft, FIRST PERSON, in {client_name}'s voice as surfaced from the transcript, aimed at their specific target audience. It should read like a person, not a job description. Move through: who they are and what drives them, what they bring, what they're looking for. Format the whole draft as a single blockquote (>) for easy copy/paste.
+
+## Strategic Decisions
+Three or four platform decisions framed for {client_name}'s specific situation — level-aware and target-aware. For each, give the recommendation and the why. Choose the ones that actually matter here from: whether the public "Open to Work" frame fits someone at their level, whether their expertise warrants Creator Mode, whose posts/comments they should be engaging with, and whether posting or commenting is the right starting activity given where they are right now.
+
+## First Week Moves
+Four to six concrete actions, ordered by activation cost with the lowest first. The goal is momentum, not completeness — each should feel achievable the day after the session, not aspirational."""
+
+
+def coach_handoff_prompt(client_name):
+    first = client_name.split()[0]
+    return f"""{client_anchor(client_name)}
+
+You are the career coach who just finished the strategy session. Write a brief handoff email to the Implementation Coach who will work with {first} next. This is an internal coach-to-coach note — NOT client-facing.
+
+PURPOSE: Give the next coach a fast, genuinely readable narrative of who this person is and where they are. The structured Training Assessment already captures the form fields; this is the story that makes those fields make sense. Hit the high points so a busy coach actually reads it and walks in already knowing {first}.
+
+GUARDRAILS:
+- Output a copy-paste-ready email: a subject line, then the body. No meta-commentary, no citations, no preamble.
+- NARRATIVE prose in short paragraphs — not a field dump, not a 1:1 repeat of the Training Assessment.
+- Candid and useful (this is internal), but keep the departure framing professional and employer-safe.
+- First person ("I") for your observations; refer to the client by first name ({first}).
+- Replace any "Redline" with "Safe Fault."
+
+Weave the following into a natural narrative (do NOT use these as labeled sections):
+- Who {first} is and where they're coming from — the human read: mood, engagement, what they're carrying in.
+- What they're going after and how clear they are on it.
+- Their strongest assets and the proof behind them.
+- The real growth edges or barriers the next coach should watch for, and how to handle them.
+- Where the resume, LinkedIn, and search stand, and the immediate priorities.
+- A short "where to pick up" — the one to three things the implementation coach should focus on first.
+
+FORMAT:
+Subject: Session handoff — {first} [one-line descriptor of their situation]
+
+Hi —
+
+[Three to six short narrative paragraphs covering the above.]
+
+[Warm one-line close, signed "— Coach".]"""
+
+
 ATTITUDE_BARRIERS = (
     "Angry at company | Attending school | Believes age discrimination will impact search | "
     "Emotionally not ready for job search | Family issues | Fear of networking/resists networking | "
