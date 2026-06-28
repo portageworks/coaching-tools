@@ -174,8 +174,49 @@
 {% block scripts %}
 <script>
 const SLIDES = [
+  // ═══ Open & Orient (live opener — Session Setup, moved to front) ════════════
+  { type: "intro", section: "Open & Orient", kicker: "Section 1 of 7",
+    title: "Open & Orient",
+    blocks: [
+      { type: "p", text: "Before we dig in, let’s get oriented — what you want out of today, and where you’re starting from." },
+      { type: "p", text: "There are no wrong answers here. This just helps me steer our time well." }
+    ]},
+
+  { section: "Open & Orient",
+    q: "What would make today feel worthwhile?",
+    sub: "Pick at least one, no more than three.",
+    type: "checkbox",
+    choices: [
+      "Walk out with a resume I can actually use",
+      "Have clear, practiced answers for the hard interview questions",
+      "Know what kind of role I’m actually targeting",
+      "Have a short list of companies or leads to pursue",
+      "Get better at talking about myself without feeling like I’m bragging",
+      "Have a better handle on my LinkedIn presence",
+      "Understand how to use AI tools in my job search",
+      "Have a clear action plan for this week",
+      "Feel less alone in this process"
+    ]},
+
+  { section: "Open & Orient",
+    q: "How prepared do you feel for your job search right now?",
+    type: "scale", low: "Starting from zero", high: "Ready to go"},
+
+  { section: "Open & Orient",
+    q: "How clear are you on what you want next?",
+    type: "scale", low: "Completely uncertain", high: "Crystal clear"},
+
+  { section: "Open & Orient",
+    q: "How confident do you feel talking about your professional value?",
+    type: "scale", low: "Struggle with this", high: "Fully confident"},
+
+  { section: "Open & Orient",
+    q: "What do you want me to know before we start?",
+    sub: "Concerns, constraints, context about your situation — anything that would help our time together be as useful as possible.",
+    type: "open"},
+
   // ═══ Your Next Opportunity ═════════════════════════════════════════════════
-  { type: "intro", section: "Your Next Opportunity", kicker: "Section 1 of 7",
+  { type: "intro", section: "Your Next Opportunity", kicker: "Section 2 of 7",
     title: "Your Next Opportunity",
     blocks: [
       { type: "p", text: "Part of what we’ll be doing together is helping you define your ideal role, and answer the interview question, “What are you looking for in your next opportunity?”" },
@@ -192,7 +233,7 @@ const SLIDES = [
     ]},
 
   // ═══ The Non-Negotiables ═══════════════════════════════════════════════════
-  { type: "intro", section: "The Non-Negotiables", kicker: "Section 2 of 7",
+  { type: "intro", section: "The Non-Negotiables", kicker: "Section 3 of 7",
     title: "The Non-Negotiables",
     blocks: [
       { type: "p", text: "In the perfect job, we’d get everything we wanted — but since that’s not realistic, we need to be clear about not what we’d be happy with, but what we’re willing to live with." },
@@ -225,7 +266,7 @@ const SLIDES = [
     choices: ["Base salary", "Total comp", "Benefits", "Title", "Work-life balance"]},
 
   // ═══ Generative AI Adoption ════════════════════════════════════════════════
-  { type: "intro", section: "Generative AI Adoption", kicker: "Section 3 of 7",
+  { type: "intro", section: "Generative AI Adoption", kicker: "Section 4 of 7",
     title: "Generative AI Adoption",
     blocks: [
       { type: "p", text: "Familiarity with Generative AI is now a baseline for most roles. These questions help me get a sense of where you are in that process — because part of what we’ll do is explore how AI can augment your career transition." }
@@ -241,7 +282,7 @@ const SLIDES = [
     choices: ["Copilot", "ChatGPT", "Claude", "Gemini", "None yet", "Other"]},
 
   // ═══ Who You Are ═══════════════════════════════════════════════════════════
-  { type: "intro", section: "Who You Are", kicker: "Section 4 of 7",
+  { type: "intro", section: "Who You Are", kicker: "Section 5 of 7",
     title: "Who You Are",
     blocks: [
       { type: "p", text: "One of the toughest interview questions to answer is: “Tell me about yourself.”" },
@@ -338,7 +379,7 @@ const SLIDES = [
     type: "open"},
 
   // ═══ Your Stories ══════════════════════════════════════════════════════════
-  { type: "intro", section: "Your Stories", kicker: "Section 5 of 7",
+  { type: "intro", section: "Your Stories", kicker: "Section 6 of 7",
     title: "Your Stories",
     blocks: [
       { type: "p", text: "This is the most important section. Your career stories become the raw material for answers to all those “Tell me about a time when…” questions. You’ll be asked for three. Don’t polish — just be specific and honest. We’ll shape them together in the session." },
@@ -430,7 +471,7 @@ const SLIDES = [
     type: "open", optional: true},
 
   // ═══ Your Safe Fault ═══════════════════════════════════════════════════════
-  { type: "intro", section: "Your Safe Fault", kicker: "Section 6 of 7",
+  { type: "intro", section: "Your Safe Fault", kicker: "Section 7 of 7",
     title: "Your Safe Fault",
     blocks: [
       { type: "p", text: "Every genuine weakness is a strength in overdrive." },
@@ -446,46 +487,6 @@ const SLIDES = [
   { section: "Your Safe Fault",
     q: "What have you learned to do about it?",
     sub: "Concrete strategies only — not “I try to be more aware.” What do you actually do when you notice this pattern showing up?",
-    type: "open"},
-
-  // ═══ Session Setup ═════════════════════════════════════════════════════════
-  { type: "intro", section: "Session Setup", kicker: "Section 7 of 7",
-    title: "Session Setup",
-    blocks: [
-      { type: "p", text: "A final set of questions to help guide our time together, and to give me a clear sense of where you are on your career transition journey." }
-    ]},
-
-  { section: "Session Setup",
-    q: "What would make today feel worthwhile?",
-    sub: "Pick at least one, no more than three.",
-    type: "checkbox",
-    choices: [
-      "Walk out with a resume I can actually use",
-      "Have clear, practiced answers for the hard interview questions",
-      "Know what kind of role I’m actually targeting",
-      "Have a short list of companies or leads to pursue",
-      "Get better at talking about myself without feeling like I’m bragging",
-      "Have a better handle on my LinkedIn presence",
-      "Understand how to use AI tools in my job search",
-      "Have a clear action plan for this week",
-      "Feel less alone in this process"
-    ]},
-
-  { section: "Session Setup",
-    q: "How prepared do you feel for your job search right now?",
-    type: "scale", low: "Starting from zero", high: "Ready to go"},
-
-  { section: "Session Setup",
-    q: "How clear are you on what you want next?",
-    type: "scale", low: "Completely uncertain", high: "Crystal clear"},
-
-  { section: "Session Setup",
-    q: "How confident do you feel talking about your professional value?",
-    type: "scale", low: "Struggle with this", high: "Fully confident"},
-
-  { section: "Session Setup",
-    q: "What do you want me to know before we start?",
-    sub: "Concerns, constraints, context about your situation — anything that would help our time together be as useful as possible.",
     type: "open"}
 ];
 
