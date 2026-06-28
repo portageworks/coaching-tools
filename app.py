@@ -410,6 +410,10 @@ def session_guide_docx():
 def session_timer():
     return render_template("session_timer.html")
 
+@app.route("/intake-prompter")
+def intake_prompter():
+    return render_template("intake_prompter.html")
+
 
 # ── Session Builder ───────────────────────────────────────────────────────────
 
