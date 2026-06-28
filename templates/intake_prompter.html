@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+{% block title %}Intake Prompter — CGC{% endblock %}
+
+{% block head %}
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  nav { display: none; }
+  main { max-width: none; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f3f0; --surface: #fff; --border: #e0dbd4; --border-mid: #ccc8c0;
+    --charcoal: #1e2022; --charcoal-mid: #3d4145;
+    --text: #2c3035; --text-dim: #7a8088;
+    --slate: #3a5a7c; --slate-mid: #5579a0; --slate-light: #dce8f5; --slate-pale: #eef4fb;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    height: 100dvh; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: 'Roboto', sans-serif; font-size: 14px; line-height: 1.6;
+    -webkit-tap-highlight-color: transparent; user-select: none;
+  }
+
+  /* ── Header ── */
+  #p-header {
+    position: fixed; top: 0; left: 0; right: 0; height: 56px;
+    background: var(--charcoal); display: flex; align-items: center;
+    gap: 16px; padding: 0 20px; z-index: 100;
+  }
+  #p-section {
+    font-family: 'Roboto Mono', monospace; font-size: 10px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--slate-mid); flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  #p-progress {
+    font-family: 'Roboto Mono', monospace; font-size: 12px; color: #9ba0a6; flex-shrink: 0;
+  }
+  #p-reset {
+    font-family: 'Roboto', sans-serif; font-size: 11px; font-weight: 500;
+    background: transparent; border: 1px solid var(--charcoal-mid); color: #9ba0a6;
+    border-radius: 2px; padding: 5px 12px; cursor: pointer; flex-shrink: 0;
+    transition: border-color .15s, color .15s;
+  }
+  #p-reset:hover { border-color: var(--slate-mid); color: var(--slate-mid); }
+
+  /* ── Progress bar ── */
+  #p-bar-wrap {
+    position: fixed; top: 56px; left: 0; right: 0; height: 3px;
+    background: var(--charcoal-mid); z-index: 100;
+  }
+  #p-bar { height: 100%; background: var(--slate-mid); transition: width .2s; }
+
+  /* ── Slide ── */
+  #p-slide {
+    position: fixed; top: 59px; bottom: 68px; left: 0; right: 0;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 28px 52px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+
+  .p-q-num {
+    font-family: 'Roboto Mono', monospace; font-size: 10px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--text-dim); margin-bottom: 14px;
+  }
+  .p-q-text {
+    font-family: 'Roboto Slab', serif;
+    font-size: clamp(18px, 2.6vw, 30px);
+    font-weight: 600; color: var(--charcoal); line-height: 1.3;
+    margin-bottom: 10px; max-width: 780px;
+  }
+  .p-q-sub {
+    font-size: 14px; font-weight: 300; font-style: italic;
+    color: var(--text-dim); line-height: 1.55; margin-bottom: 24px; max-width: 680px;
+  }
+  .p-discuss {
+    margin-top: 4px; display: flex; align-items: center; gap: 10px;
+    font-family: 'Roboto Mono', monospace; font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--border-mid);
+  }
+  .p-discuss::before { content: ''; display: block; width: 32px; height: 1px; background: var(--border); }
+
+  /* ── Choices ── */
+  .p-choices { display: flex; flex-direction: column; gap: 7px; max-width: 720px; }
+  .p-choice {
+    display: flex; align-items: flex-start; gap: 14px;
+    padding: 13px 18px; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: 3px;
+    cursor: pointer; transition: border-color .1s, background .1s;
+    font-size: 15px; line-height: 1.4; color: var(--text);
+  }
+  .p-choice:hover { border-color: var(--slate-light); background: var(--slate-pale); }
+  .p-choice.selected { border-color: var(--slate); background: var(--slate); color: #fff; }
+  .p-mark {
+    width: 18px; height: 18px; flex-shrink: 0; margin-top: 2px;
+    border: 2px solid var(--border-mid); border-radius: 50%; background: transparent;
+  }
+  .p-choice.selected .p-mark { border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.25); }
+  .p-choices.checkbox .p-mark { border-radius: 2px; }
+
+  /* ── Scale ── */
+  .p-scale { max-width: 660px; }
+  .p-scale-labels { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .p-scale-label { font-size: 12px; font-weight: 300; font-style: italic; color: var(--text-dim); }
+  .p-scale-btns { display: flex; gap: 5px; }
+  .p-scale-btn {
+    flex: 1; padding: 16px 4px; background: var(--surface);
+    border: 1.5px solid var(--border); border-radius: 3px; cursor: pointer;
+    font-family: 'Roboto Mono', monospace; font-size: 15px; font-weight: 500;
+    color: var(--text-dim); transition: border-color .1s, background .1s, color .1s;
+    text-align: center;
+  }
+  .p-scale-btn:hover { border-color: var(--slate-light); background: var(--slate-pale); color: var(--slate); }
+  .p-scale-btn.selected { border-color: var(--slate); background: var(--slate); color: #fff; }
+
+  /* ── Footer ── */
+  #p-footer {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 68px;
+    background: var(--surface); border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; z-index: 100;
+  }
+  .p-nav-btn {
+    font-family: 'Roboto', sans-serif; font-size: 14px; font-weight: 600;
+    letter-spacing: .04em; background: var(--charcoal); color: #fff;
+    border: none; border-radius: 2px; padding: 14px 36px; cursor: pointer;
+    transition: background .15s; min-width: 110px;
+  }
+  .p-nav-btn:hover:not(:disabled) { background: var(--charcoal-mid); }
+  .p-nav-btn:disabled { background: var(--border); color: var(--text-dim); cursor: not-allowed; }
+  #p-footer-mid {
+    font-family: 'Roboto Mono', monospace; font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--border-mid);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="p-header">
+  <div id="p-section"></div>
+  <div id="p-progress"></div>
+  <button id="p-reset" onclick="resetAll()">Reset</button>
+</div>
+<div id="p-bar-wrap"><div id="p-bar"></div></div>
+
+<div id="p-slide"></div>
+
+<div id="p-footer">
+  <button class="p-nav-btn" id="p-prev" onclick="go(-1)">&#8592; Back</button>
+  <div id="p-footer-mid"></div>
+  <button class="p-nav-btn" id="p-next" onclick="go(1)">Next &#8594;</button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const SLIDES = [
+  // ── Your Next Opportunity ─────────────────────────────────────────────────
+  { section: "Your Next Opportunity",
+    q: "Which best describes your search right now?",
+    type: "radio",
+    choices: [
+      "Same role, same industry — I know what I want, I need to find it",
+      "Same role, new industry — I want to apply my skills somewhere different",
+      "New role, new industry — I’m open to reinvention"
+    ]},
+
+  // ── The Non-Negotiables ───────────────────────────────────────────────────
+  { section: "The Non-Negotiables",
+    q: "When it comes to work structure, what’s the non-negotiable?",
+    type: "radio",
+    choices: ["Autonomy", "Clear direction", "Flexibility", "Remote / Hybrid", "Defined scope"]},
+
+  { section: "The Non-Negotiables",
+    q: "As you think about growth, what’s the one thing you need to have in your next role?",
+    type: "radio",
+    choices: ["Mentorship", "Advancement path", "Skill development", "Stretch assignments", "Visibility"]},
+
+  { section: "The Non-Negotiables",
+    q: "What’s the most important aspect of a work environment for you?",
+    type: "radio",
+    choices: ["Team culture", "Mission alignment", "Stability", "Innovation", "Pace"]},
+
+  { section: "The Non-Negotiables",
+    q: "What kind of impact is essential for you in your next role?",
+    type: "radio",
+    choices: ["Customer proximity", "Strategic influence", "Ownership", "Measurable outcomes", "Cross-functional scope"]},
+
+  { section: "The Non-Negotiables",
+    q: "If you had to pick one thing to define ideal compensation and conditions in the workplace, what would it be?",
+    type: "radio",
+    choices: ["Base salary", "Total comp", "Benefits", "Title", "Work-life balance"]},
+
+  // ── Generative AI Adoption ────────────────────────────────────────────────
+  { section: "Generative AI Adoption",
+    q: "How comfortable are you with AI tools right now?",
+    type: "scale", low: "Never used them", high: "Use them daily"},
+
+  { section: "Generative AI Adoption",
+    q: "Which AI tools have you used, if any?",
+    type: "checkbox",
+    choices: ["Copilot", "ChatGPT", "Claude", "Gemini", "None yet"]},
+
+  // ── Who You Are ───────────────────────────────────────────────────────────
+  { section: "Who You Are",
+    q: "Outside of work, what fills your tank?",
+    sub: "Could be hobbies, people, environments, activities — anything that genuinely recharges you.",
+    type: "open"},
+
+  { section: "Who You Are",
+    q: "What are three things you genuinely like about yourself?",
+    sub: "Not what sounds impressive — three things you’d defend if someone criticized you for them.",
+    type: "open"},
+
+  { section: "Who You Are",
+    q: "What’s one thing you’d like to see more of from yourself?",
+    sub: "Not fixing a flaw — more like “if I had more bandwidth, I’d lean into this more.”",
+    type: "open"},
+
+  { section: "Who You Are",
+    q: "What’s your career archetype?",
+    sub: "If you had to pick a main character for your career, who would you be?",
+    type: "radio",
+    choices: [
+      "The Crisis Leader — You thrive under pressure; you stabilize teams and make clear decisions when the stakes are high.",
+      "The Systems Expert — You build the processes and frameworks that make organizations run and scale.",
+      "The Culture Builder — You create environments where people want to work and teams actually perform.",
+      "The Strategist — You’re most valuable when the organization needs to figure out where it’s going and why.",
+      "The Visionary — You see what’s possible before others do; you’re drawn to new ideas and uncharted problems.",
+      "The Specialist — Your deep expertise in a specific domain makes you the person others seek out for that subject."
+    ]},
+
+  { section: "Who You Are",
+    q: "When you’re facing a problem, which feels more naturally like you?",
+    type: "radio",
+    choices: [
+      "Research & Plan — I gather information and think it through before acting",
+      "Test & Adjust — I try something, see what happens, and course-correct"
+    ]},
+
+  { section: "Who You Are",
+    q: "In your work, which role do you more naturally play?",
+    type: "radio",
+    choices: [
+      "Designer — I build the strategy and the plan",
+      "Executor — I make things happen and get it done"
+    ]},
+
+  { section: "Who You Are",
+    q: "When working with a team, which feels more like you?",
+    type: "radio",
+    choices: [
+      "Direction & Decision — I tend to set direction and make the call",
+      "Collaborative & Facilitative — I help the team arrive at decisions together"
+    ]},
+
+  { section: "Who You Are",
+    q: "When communicating something difficult or complex, which is more natural?",
+    type: "radio",
+    choices: [
+      "Direct / Point-first — I lead with the bottom line",
+      "Relational / Easing in — I build context before getting to the point"
+    ]},
+
+  { section: "Who You Are",
+    q: "Where does your attention naturally go when you’re working?",
+    type: "radio",
+    choices: [
+      "Details & Precision — I focus on getting it exactly right",
+      "Big Picture & Systems — I step back to see how everything connects"
+    ]},
+
+  { section: "Who You Are",
+    q: "What kind of problems do you like to solve?",
+    type: "radio",
+    choices: ["People problems", "Technical problems", "Strategy problems", "Operational problems"]},
+
+  { section: "Who You Are",
+    q: "What does a signature win look like?",
+    sub: "When you’ve solved a problem, what are you typically doing?",
+    type: "radio",
+    choices: ["Building something new", "Fixing something that’s broken", "Scaling something that’s working"]},
+
+  { section: "Who You Are",
+    q: "How do you know you’re winning at work?",
+    sub: "What makes work feel worth it? What metrics, feedback, or outcomes tell you “this is working”?",
+    type: "open"},
+
+  { section: "Who You Are",
+    q: "What are you done with?",
+    sub: "What are you moving away from? What do you NOT want in your next role? This helps define your boundaries.",
+    type: "open"},
+
+  // ── Your Stories: The Zone ────────────────────────────────────────────────
+  { section: "Your Stories — The Zone",
+    q: "The Zone — What was the situation?",
+    sub: "A time you were operating at your absolute best. Work felt effortless, you were fully in it, results were coming. Brief context: what was happening and what were the stakes?",
+    type: "open"},
+
+  { section: "Your Stories — The Zone",
+    q: "The Zone — What did YOU specifically do?",
+    sub: "Not just “we” — what was your move? Your decision? Your specific contribution?",
+    type: "open"},
+
+  { section: "Your Stories — The Zone",
+    q: "The Zone — What changed because of what you did?",
+    sub: "What was the outcome? Numbers, reactions, results — whatever you’ve got.",
+    type: "open"},
+
+  { section: "Your Stories — The Zone",
+    q: "The Zone — What did you learn from this experience?",
+    sub: "What did this situation teach you — about leading, problem-solving, or what actually works?",
+    type: "open", optional: true},
+
+  // ── Your Stories: The Save ────────────────────────────────────────────────
+  { section: "Your Stories — The Save",
+    q: "The Save — What was the situation?",
+    sub: "A time something was going downhill and your specific approach made the difference. What was going wrong, and what were the stakes if nothing changed?",
+    type: "open"},
+
+  { section: "Your Stories — The Save",
+    q: "The Save — What did YOU specifically do?",
+    sub: "What was your specific move? What did you do that someone else might not have?",
+    type: "open"},
+
+  { section: "Your Stories — The Save",
+    q: "The Save — What changed because of your actions?",
+    sub: "What was the outcome? What did your actions produce?",
+    type: "open"},
+
+  { section: "Your Stories — The Save",
+    q: "The Save — What did you learn from this experience?",
+    sub: "What did this situation teach you — about leading, problem-solving, or what actually works?",
+    type: "open", optional: true},
+
+  // ── Your Stories: The Swerve ──────────────────────────────────────────────
+  { section: "Your Stories — The Swerve",
+    q: "The Swerve — What was the situation?",
+    sub: "A time things didn’t go as planned — not a disaster story, a story about your response. What happened and what made it go off track?",
+    type: "open"},
+
+  { section: "Your Stories — The Swerve",
+    q: "The Swerve — What did YOU specifically do?",
+    sub: "How did you respond? What was your move?",
+    type: "open"},
+
+  { section: "Your Stories — The Swerve",
+    q: "The Swerve — What changed because of it?",
+    sub: "What came out the other side?",
+    type: "open"},
+
+  { section: "Your Stories — The Swerve",
+    q: "The Swerve — What did you learn from this experience?",
+    sub: "What did this situation teach you — about leading, problem-solving, or what actually works?",
+    type: "open", optional: true},
+
+  // ── Your Safe Fault ───────────────────────────────────────────────────────
+  { section: "Your Safe Fault",
+    q: "What strength sometimes works against you?",
+    sub: "Name the strength first. Then describe what it looks like when it goes too far. Something like: “I’m really good at [strength] but when I lean into that too hard, it can get in my way because [this happens].”",
+    type: "open"},
+
+  { section: "Your Safe Fault",
+    q: "What have you learned to do about it?",
+    sub: "Concrete strategies only — not “I try to be more aware.” What do you actually do when you notice this pattern showing up?",
+    type: "open"},
+
+  // ── Session Setup ─────────────────────────────────────────────────────────
+  { section: "Session Setup",
+    q: "What would make today feel worthwhile?",
+    sub: "Pick at least one, no more than three.",
+    type: "checkbox",
+    choices: [
+      "Walk out with a resume I can actually use",
+      "Have clear, practiced answers for the hard interview questions",
+      "Know what kind of role I’m actually targeting",
+      "Have a short list of companies or leads to pursue",
+      "Get better at talking about myself without feeling like I’m bragging",
+      "Have a better handle on my LinkedIn presence",
+      "Understand how to use AI tools in my job search",
+      "Have a clear action plan for this week",
+      "Feel less alone in this process"
+    ]},
+
+  { section: "Session Setup",
+    q: "How prepared do you feel for your job search right now?",
+    type: "scale", low: "Starting from zero", high: "Ready to go"},
+
+  { section: "Session Setup",
+    q: "How clear are you on what you want next?",
+    type: "scale", low: "Completely uncertain", high: "Crystal clear"},
+
+  { section: "Session Setup",
+    q: "How confident do you feel talking about your professional value?",
+    type: "scale", low: "Struggle with this", high: "Fully confident"},
+
+  { section: "Session Setup",
+    q: "What do you want me to know before we start?",
+    sub: "Concerns, constraints, context about your situation — anything that would help our time together be as useful as possible.",
+    type: "open"}
+];
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let cur = 0;
+const state = {};
+
+function go(dir) {
+  const next = cur + dir;
+  if (next < 0 || next >= SLIDES.length) return;
+  cur = next;
+  render();
+  document.getElementById('p-slide').scrollTop = 0;
+}
+
+function resetAll() {
+  if (!confirm('Clear all selections and return to slide 1?')) return;
+  Object.keys(state).forEach(k => delete state[k]);
+  cur = 0;
+  render();
+}
+
+function selectRadio(i) {
+  state[cur] = (state[cur] === i) ? undefined : i;
+  render();
+}
+
+function selectCheck(i) {
+  if (!state[cur]) state[cur] = new Set();
+  state[cur].has(i) ? state[cur].delete(i) : state[cur].add(i);
+  render();
+}
+
+function selectScale(i) {
+  state[cur] = (state[cur] === i) ? undefined : i;
+  render();
+}
+
+// ── Render ────────────────────────────────────────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function render() {
+  const s = SLIDES[cur];
+  const total = SLIDES.length;
+
+  document.getElementById('p-section').textContent = s.section;
+  document.getElementById('p-progress').textContent = (cur + 1) + ' / ' + total;
+  document.getElementById('p-bar').style.width = (((cur + 1) / total) * 100) + '%';
+  document.getElementById('p-prev').disabled = cur === 0;
+  document.getElementById('p-next').disabled = cur === total - 1;
+  document.getElementById('p-footer-mid').textContent = s.optional ? 'optional' : '';
+
+  let html = '<div class="p-q-num">Question ' + (cur + 1) + ' of ' + total + '</div>';
+  html += '<div class="p-q-text">' + esc(s.q) + '</div>';
+  if (s.sub) html += '<div class="p-q-sub">' + esc(s.sub) + '</div>';
+
+  if (s.type === 'open') {
+    html += '<div class="p-discuss">discuss live</div>';
+
+  } else if (s.type === 'radio') {
+    const sel = state[cur];
+    html += '<div class="p-choices">';
+    s.choices.forEach(function(c, i) {
+      html += '<div class="p-choice' + (sel === i ? ' selected' : '') + '" onclick="selectRadio(' + i + ')">'
+            + '<div class="p-mark"></div><span>' + esc(c) + '</span></div>';
+    });
+    html += '</div>';
+
+  } else if (s.type === 'checkbox') {
+    const sel = state[cur] || new Set();
+    html += '<div class="p-choices checkbox">';
+    s.choices.forEach(function(c, i) {
+      html += '<div class="p-choice' + (sel.has(i) ? ' selected' : '') + '" onclick="selectCheck(' + i + ')">'
+            + '<div class="p-mark"></div><span>' + esc(c) + '</span></div>';
+    });
+    html += '</div>';
+
+  } else if (s.type === 'scale') {
+    const sel = state[cur];
+    html += '<div class="p-scale">'
+          + '<div class="p-scale-labels">'
+          + '<span class="p-scale-label">' + esc(s.low) + '</span>'
+          + '<span class="p-scale-label">' + esc(s.high) + '</span>'
+          + '</div><div class="p-scale-btns">';
+    for (var i = 1; i <= 10; i++) {
+      html += '<div class="p-scale-btn' + (sel === i ? ' selected' : '') + '" onclick="selectScale(' + i + ')">' + i + '</div>';
+    }
+    html += '</div></div>';
+  }
+
+  document.getElementById('p-slide').innerHTML = html;
+}
+
+// ── Navigation: keyboard + swipe ──────────────────────────────────────────────
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+});
+
+var _tx = 0;
+document.addEventListener('touchstart', function(e) { _tx = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', function(e) {
+  var dx = e.changedTouches[0].clientX - _tx;
+  if (Math.abs(dx) > 60) go(dx < 0 ? 1 : -1);
+}, { passive: true });
+
+render();
+</script>
+{% endblock %}
