@@ -385,7 +385,7 @@ body{{font-family:'Roboto','DejaVu Sans',sans-serif;background:var(--bg);color:v
 .cue-stage{{flex:1;display:flex;align-items:flex-start;justify-content:center;padding:34px 22px 120px;}}
 .card{{display:none;background:var(--surface);border:1px solid var(--border);border-radius:6px;
   width:100%;max-width:760px;padding:36px 40px;box-shadow:0 1px 3px rgba(0,0,0,.05);}}
-.card.active{{display:block;}}
+.card.active{{display:block;transform:translateZ(0);}}
 .card h1{{display:none;}}
 .card-block-label{{font-family:'Roboto Slab',serif;font-size:17px;font-weight:700;
   letter-spacing:.01em;color:var(--slate);margin-bottom:18px;padding-bottom:11px;
@@ -761,6 +761,11 @@ function render() {{
   document.getElementById('prev').disabled = (idx===0);
   document.getElementById('next').disabled = (idx===cards.length-1);
   window.scrollTo(0,0);
+  // iOS/iPadOS Safari sometimes updates the DOM but defers painting the show/hide
+  // swap until a zoom or scroll forces a reflow. Force a synchronous layout flush
+  // on the new card so it paints right away.
+  var active = cards[idx];
+  if (active) {{ active.style.display = 'none'; void active.offsetHeight; active.style.display = ''; }}
 }}
 function step(d) {{
   var n = idx + d;
