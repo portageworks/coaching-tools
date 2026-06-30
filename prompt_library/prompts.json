@@ -1012,5 +1012,42 @@
     "needs_resume": false,
     "needs_paste": false,
     "model": "fast"
+  },
+  {
+    "id": "P37",
+    "category": "interview",
+    "category_title": "Interview Preparation",
+    "purpose": "Personalized prep for a specific interview",
+    "title": "Prepare for an interview using my materials",
+    "search": "interview prep preparation questions practice mock hiring manager session document interviewer personalized answers stories tailored",
+    "fields": [
+      {
+        "label": "Role you're interviewing for",
+        "placeholder": "e.g. Director of Operations",
+        "key": "ROLE TITLE"
+      },
+      {
+        "label": "Company",
+        "placeholder": "e.g. Acme Corp",
+        "key": "COMPANY NAME"
+      }
+    ],
+    "template": "You are an expert interview coach and former hiring manager who prepares candidates for high-stakes interviews. I have an interview for a [ROLE TITLE] position at [COMPANY NAME]. Using my materials — my resume, the job description, and (if provided) my coaching session document, which captures my positioning, strengths, and key stories — prepare me for this specific interview.\n\nProduce:\n(1) The 6–8 questions I'm most likely to be asked for this role and level, drawn from the job description's priorities.\n(2) For each question, a brief strategic angle and the specific achievement or story from my materials I should use to answer it.\n(3) The 2–3 questions I'm most likely to handle poorly — a gap, a career transition, or something the role demands that my background doesn't obviously show — and exactly how to address each with confidence and honesty.\n(4) A short list of sharp, specific questions for me to ask the interviewer that signal real insight into the role and the company.\n(5) The core narrative I should anchor everything to — who I am, the value I bring, and where I'm headed.\n\nIf I've provided a session document, ground my positioning and stories in it; if not, work from my resume and the job description. If I've provided information about my interviewer, tailor your guidance to what's likely to resonate with them; if I haven't, don't speculate about who they are. Base everything strictly on my materials — do not invent experience, achievements, or facts I haven't provided. Be direct and practical, like a coach prepping me the day before.\n\nJob Description:\n[PASTE THE JOB DESCRIPTION HERE]\n\nMy Coaching Session Document:\n[PASTE YOUR SESSION DOCUMENT HERE]\n\nInterviewer:\n[PASTE INTERVIEWER INFO HERE]\n\n📎 Attach your resume before sending.",
+    "hint": "Works best with your resume attached and the job description, plus your session document if you have one.",
+    "model": "smart",
+    "extra_inputs": [
+      {
+        "key": "session_document",
+        "token": "[PASTE YOUR SESSION DOCUMENT HERE]",
+        "label": "Your coaching session document (optional)",
+        "placeholder": "Paste your session document — optional, but it makes the prep far more personalized"
+      },
+      {
+        "key": "interviewer",
+        "token": "[PASTE INTERVIEWER INFO HERE]",
+        "label": "Who you'll be interviewing with (optional)",
+        "placeholder": "Paste their name, title, or LinkedIn — leave blank if you don't know"
+      }
+    ]
   }
 ]

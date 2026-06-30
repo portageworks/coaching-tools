@@ -180,12 +180,18 @@ async function generate(btn) {
 
   const jdEl = card.querySelector('.gen-jd');
   const clEl = card.querySelector('.gen-cl');
+  const extras = {};
+  card.querySelectorAll('.gen-extra').forEach(el => {
+    const v = el.value.trim();
+    if (v) extras[el.dataset.key] = v;
+  });
   const payload = {
     id: card.dataset.id,
     fields,
     resume,
     job_description: jdEl ? jdEl.value.trim() : '',
     cover_letter: clEl ? clEl.value.trim() : '',
+    extras,
   };
 
   btn.disabled = true;

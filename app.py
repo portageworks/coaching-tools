@@ -372,9 +372,16 @@ def _load_prompt_library():
     cats, order = {}, []
     for p in prompts:
         t = p["template"]
-        # Derived input flags drive which generation controls the page shows.
+        tl = t.lower()
+        # Input flags are derived from the template, so an authored prompt only
+        # needs its text — no by-hand bookkeeping to keep in sync.
+        p["needs_resume"] = "attach your resume" in tl or "paste your resume" in tl
+        p["needs_paste"] = "[paste" in tl
         p["needs_job_description"] = "[PASTE THE JOB DESCRIPTION HERE]" in t
         p["needs_cover_letter"] = "[PASTE YOUR COVER LETTER HERE]" in t
+        # extra_inputs: optional per-prompt list of extra free-text documents
+        # (e.g. a session document) — each {key, token, label, placeholder}.
+        p.setdefault("extra_inputs", [])
         k = p["category"]
         if k not in cats:
             cats[k] = {"key": k, "title": p["category_title"],
@@ -406,7 +413,7 @@ def _docx_to_text(raw):
     return "\n".join(parts).strip()
 
 
-def _build_library_messages(prompt, fields, resume, job_description, cover_letter):
+def _build_library_messages(prompt, fields, resume, job_description, cover_letter, extras=None):
     """Fill the prompt template with the client's inputs and return an Anthropic
     messages list. Short [FIELD] placeholders and the large [PASTE …] blocks are
     substituted inline; a PDF resume rides along as a native document block."""
@@ -418,6 +425,11 @@ def _build_library_messages(prompt, fields, resume, job_description, cover_lette
         template = template.replace("[PASTE THE JOB DESCRIPTION HERE]", job_description)
     if cover_letter:
         template = template.replace("[PASTE YOUR COVER LETTER HERE]", cover_letter)
+    # Per-prompt extra free-text inputs (session document, interviewer, …).
+    # Empty optional ones become "(not provided)" so no raw token reaches Claude.
+    for ex in prompt.get("extra_inputs", []):
+        val = ((extras or {}).get(ex["key"]) or "").strip()
+        template = template.replace(ex["token"], val if val else "(not provided)")
 
     attachments, resume_text = [], ""
     if resume:
@@ -547,6 +559,7 @@ def prompt_library_generate():
             prompt, data.get("fields"), resume,
             (data.get("job_description") or "").strip(),
             (data.get("cover_letter") or "").strip(),
+            data.get("extras"),
         )
     except Exception as e:
         return jsonify({"error": f"Could not read your upload: {e}"}), 400

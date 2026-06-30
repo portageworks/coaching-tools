@@ -102,7 +102,7 @@
         </div>
 
         <div class="gen-section">
-          {% if p.needs_resume or p.needs_job_description or p.needs_cover_letter %}
+          {% if p.needs_resume or p.needs_job_description or p.needs_cover_letter or p.extra_inputs %}
           <div class="gen-inputs">
             {% if p.needs_resume %}
             <div class="gen-input">
@@ -126,6 +126,12 @@
               <textarea class="gen-cl" rows="3" placeholder="Paste your cover letter draft here"></textarea>
             </div>
             {% endif %}
+            {% for ex in p.extra_inputs %}
+            <div class="gen-input">
+              <label class="gen-input-label">{{ ex.label }}</label>
+              <textarea class="gen-extra" data-key="{{ ex.key }}" rows="3" placeholder="{{ ex.placeholder }}"></textarea>
+            </div>
+            {% endfor %}
           </div>
           {% endif %}
           <div class="gen-row">
