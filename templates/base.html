@@ -9,8 +9,9 @@
   {% block head %}{% endblock %}
 </head>
 <body>
-  <nav>
+  <nav style="display:flex;align-items:center;gap:1.25rem;">
     <a href="/">Home</a>
+    {% if auth_enabled %}<a href="/logout" style="margin-left:auto;font-weight:500;opacity:.85;">Sign out</a>{% endif %}
   </nav>
   <main>
     {% block content %}{% endblock %}

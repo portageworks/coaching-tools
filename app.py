@@ -114,6 +114,12 @@ def logout():
     session.clear()
     return redirect(url_for("login"))
 
+
+@app.context_processor
+def _inject_auth():
+    # Lets templates show a "Sign out" link only when the password gate is active.
+    return {"auth_enabled": bool(APP_PASSWORD)}
+
 # max_retries handles transient API failures (overloaded, rate limits, timeouts,
 # 5xx) with exponential backoff so a run succeeds the first time instead of
 # erroring out and forcing a full re-run. Default is 2; raised for reliability.
