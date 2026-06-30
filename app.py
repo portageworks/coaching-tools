@@ -115,8 +115,9 @@ _TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteveri
 def _gate():
     host = request.host.split(":")[0].lower()
     if host == PUBLIC_HOST:
-        # Client domain: expose only the library; everything else is invisible.
-        if request.path.startswith(_PUBLIC_PREFIXES):
+        # Client domain: expose only the library (the bare root serves it too);
+        # everything else is invisible.
+        if request.path == "/" or request.path.startswith(_PUBLIC_PREFIXES):
             return
         abort(404)
 
@@ -236,6 +237,10 @@ MODEL_FAST  = "claude-sonnet-4-6"
 
 @app.route("/")
 def index():
+    # On the client domain the bare root IS the prompt library; the private host
+    # keeps the coaching hub.
+    if request.host.split(":")[0].lower() == PUBLIC_HOST:
+        return _render_prompt_library()
     return render_template("index.html")
 
 
@@ -446,12 +451,16 @@ def _build_library_messages(prompt, fields, resume, job_description, cover_lette
     return [{"role": "user", "content": content}]
 
 
-@app.route("/prompt-library")
-def prompt_library():
+def _render_prompt_library():
     return render_template("prompt_library.html",
                            categories=PROMPT_CATEGORIES,
                            total=len(PROMPT_LIBRARY),
                            turnstile_site_key=TURNSTILE_SITE_KEY)
+
+
+@app.route("/prompt-library")
+def prompt_library():
+    return _render_prompt_library()
 
 
 # ── Generation rate limiting ───────────────────────────────────────────────
