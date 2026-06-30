@@ -5,10 +5,15 @@ import os
 import re
 import json
 import io
+import time
+import base64
 import queue
 import threading
 import hmac
 import secrets as _secrets
+import urllib.request
+import urllib.parse
+from collections import deque, defaultdict
 from datetime import timedelta
 from flask import (Flask, render_template, render_template_string, request, jsonify,
                    Response, stream_with_context, send_file, session, redirect,
@@ -36,6 +41,18 @@ from pdf_builder import (
 import cue_store
 import segno
 import strategy_store
+
+# Load .env for local dev so ANTHROPIC_API_KEY (etc.) is available when running
+# `python app.py` directly. setdefault means real environment variables — as set
+# in production (Railway) — always win, so this is a no-op there. Kept dependency-
+# free so it works even where python-dotenv isn't installed.
+_envfile = os.path.join(os.path.dirname(__file__), ".env")
+if os.path.exists(_envfile):
+    for _line in open(_envfile, encoding="utf-8"):
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _k, _v = _line.split("=", 1)
+            os.environ.setdefault(_k.strip(), _v.strip().strip('"').strip("'"))
 
 app = Flask(__name__)
 
@@ -78,8 +95,32 @@ button{width:100%;font-size:15px;font-weight:600;padding:12px;border:none;border
 </form></div></body></html>"""
 
 
+# The client-facing prompt library is served on its own public host
+# (promptrunway.work). On THAT host only the library is reachable — the coaching
+# tools 404 — and the library is open, with no coach login. Every other host is
+# the private side, behind the shared-password gate below. Set PUBLIC_HOST in the
+# environment if the client domain ever changes.
+PUBLIC_HOST = os.environ.get("PUBLIC_HOST", "promptrunway.work").lower()
+_PUBLIC_PREFIXES = ("/prompt-library", "/api/prompt-library", "/static/")
+
+# Cloudflare Turnstile (bot protection on the generate endpoint). Set both env
+# vars to require a token on every generation; leave them unset and verification
+# is skipped, so the tool works unchanged until you configure Cloudflare.
+TURNSTILE_SITE_KEY = os.environ.get("TURNSTILE_SITE_KEY", "")
+TURNSTILE_SECRET = os.environ.get("TURNSTILE_SECRET", "")
+_TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+
 @app.before_request
-def _require_login():
+def _gate():
+    host = request.host.split(":")[0].lower()
+    if host == PUBLIC_HOST:
+        # Client domain: expose only the library; everything else is invisible.
+        if request.path.startswith(_PUBLIC_PREFIXES):
+            return
+        abort(404)
+
+    # Private host: single shared password gate.
     if not APP_PASSWORD:
         return  # gate disabled until a password is configured
     p = request.path
@@ -304,6 +345,217 @@ def resume_download_docx():
         as_attachment=True,
         download_name=filename,
     )
+
+
+# ── Prompt Library (client-facing) ────────────────────────────────────────────
+# Prompts live as data in prompt_library/prompts.json (extracted from the
+# original static promptrunway.work page). The page renders from this list, so
+# adding or editing a prompt is a data change, not markup surgery. Each prompt's
+# "model" ("fast"=Sonnet / "smart"=Opus) drives routing when inline generation
+# lands in Phase 3.
+_PROMPT_LIB_LABELS = {
+    "resume": "Resume", "cover": "Cover Letters", "search": "Job Search",
+    "network": "Networking", "interview": "Interview", "salary": "Salary",
+    "pivot": "Career Pivots", "mindset": "Mindset",
+}
+
+
+def _load_prompt_library():
+    path = os.path.join(os.path.dirname(__file__), "prompt_library", "prompts.json")
+    with open(path, encoding="utf-8") as f:
+        prompts = json.load(f)
+    cats, order = {}, []
+    for p in prompts:
+        t = p["template"]
+        # Derived input flags drive which generation controls the page shows.
+        p["needs_job_description"] = "[PASTE THE JOB DESCRIPTION HERE]" in t
+        p["needs_cover_letter"] = "[PASTE YOUR COVER LETTER HERE]" in t
+        k = p["category"]
+        if k not in cats:
+            cats[k] = {"key": k, "title": p["category_title"],
+                       "filter_label": _PROMPT_LIB_LABELS.get(k, p["category_title"]),
+                       "prompts": []}
+            order.append(k)
+        cats[k]["prompts"].append(p)
+    return prompts, [cats[k] for k in order]
+
+
+PROMPT_LIBRARY, PROMPT_CATEGORIES = _load_prompt_library()
+PROMPTS_BY_ID = {p["id"]: p for p in PROMPT_LIBRARY}
+
+_DOCX_MIME = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+
+
+def _docx_to_text(raw):
+    """Pull readable text out of an uploaded .docx (paragraphs + table cells).
+    The Claude API reads PDFs natively but not .docx, so Word resumes are
+    flattened to text here before they go to the model."""
+    from docx import Document
+    doc = Document(io.BytesIO(raw))
+    parts = [p.text for p in doc.paragraphs if p.text.strip()]
+    for tbl in doc.tables:
+        for row in tbl.rows:
+            cells = [c.text.strip() for c in row.cells if c.text.strip()]
+            if cells:
+                parts.append(" | ".join(cells))
+    return "\n".join(parts).strip()
+
+
+def _build_library_messages(prompt, fields, resume, job_description, cover_letter):
+    """Fill the prompt template with the client's inputs and return an Anthropic
+    messages list. Short [FIELD] placeholders and the large [PASTE …] blocks are
+    substituted inline; a PDF resume rides along as a native document block."""
+    template = prompt["template"]
+    for key, val in (fields or {}).items():
+        if val:
+            template = template.replace(f"[{key}]", val)
+    if job_description:
+        template = template.replace("[PASTE THE JOB DESCRIPTION HERE]", job_description)
+    if cover_letter:
+        template = template.replace("[PASTE YOUR COVER LETTER HERE]", cover_letter)
+
+    attachments, resume_text = [], ""
+    if resume:
+        if resume.get("kind") == "text":
+            resume_text = (resume.get("text") or "").strip()
+        elif resume.get("kind") == "file":
+            data = resume.get("data") or ""
+            if data.startswith("data:") and "," in data:
+                data = data.split(",", 1)[1]  # strip data-URL prefix
+            mime = resume.get("mime", "")
+            name = (resume.get("name") or "").lower()
+            if mime == "application/pdf" or name.endswith(".pdf"):
+                attachments.append({"type": "document", "source": {
+                    "type": "base64", "media_type": "application/pdf", "data": data}})
+            else:
+                raw = base64.b64decode(data)
+                if mime == _DOCX_MIME or name.endswith(".docx"):
+                    resume_text = _docx_to_text(raw)
+                else:
+                    resume_text = raw.decode("utf-8", "ignore").strip()
+
+    if resume_text:
+        if "[PASTE YOUR RESUME HERE]" in template:
+            template = template.replace("[PASTE YOUR RESUME HERE]", resume_text)
+        else:
+            template += f"\n\nRESUME:\n\n{resume_text}"
+    elif attachments and "[PASTE YOUR RESUME HERE]" in template:
+        template = template.replace("[PASTE YOUR RESUME HERE]", "(resume attached as a PDF)")
+
+    content = (attachments + [{"type": "text", "text": template}]) if attachments else template
+    return [{"role": "user", "content": content}]
+
+
+@app.route("/prompt-library")
+def prompt_library():
+    return render_template("prompt_library.html",
+                           categories=PROMPT_CATEGORIES,
+                           total=len(PROMPT_LIBRARY),
+                           turnstile_site_key=TURNSTILE_SITE_KEY)
+
+
+# ── Generation rate limiting ───────────────────────────────────────────────
+# The generate endpoint spends real money per call and is public, so cap usage
+# per visitor and overall. State is in-memory and per-worker (gunicorn runs 2),
+# so the effective global ceiling is ~2x PL_RATE_GLOBAL_DAY — fine as a first
+# guardrail; move to a Redis-backed limiter if you need an exact shared ceiling.
+# Bot protection (e.g. Cloudflare Turnstile) is the next layer and needs your
+# Cloudflare keys to wire up. Tune all limits via env vars.
+PL_RATE_PER_MIN = int(os.environ.get("PL_RATE_PER_MIN", "8"))
+PL_RATE_PER_DAY = int(os.environ.get("PL_RATE_PER_DAY", "40"))
+PL_RATE_GLOBAL_DAY = int(os.environ.get("PL_RATE_GLOBAL_DAY", "600"))
+_pl_ip_hits = defaultdict(deque)
+_pl_global = deque()
+_pl_lock = threading.Lock()
+
+
+def _client_ip():
+    fwd = request.headers.get("X-Forwarded-For", "")
+    return (fwd.split(",")[0].strip() if fwd else request.remote_addr) or "unknown"
+
+
+def _rate_limit_message():
+    """Record this request and return a user-facing message if the visitor (or
+    the service overall) is over a limit, else None."""
+    now = time.time()
+    ip = _client_ip()
+    with _pl_lock:
+        dq = _pl_ip_hits[ip]
+        while dq and now - dq[0] > 86400:
+            dq.popleft()
+        while _pl_global and now - _pl_global[0] > 86400:
+            _pl_global.popleft()
+        if sum(1 for t in dq if now - t <= 60) >= PL_RATE_PER_MIN:
+            return "You're going a little fast — please wait a minute and try again."
+        if len(dq) >= PL_RATE_PER_DAY:
+            return "You've reached today's limit for AI generations. Please try again tomorrow."
+        if len(_pl_global) >= PL_RATE_GLOBAL_DAY:
+            return "This tool is at capacity right now — please try again in a little while."
+        dq.append(now)
+        _pl_global.append(now)
+    return None
+
+
+def _verify_turnstile(token):
+    """True if the request may proceed. No secret configured -> always True.
+    Secret set but token missing/invalid -> False. Network/verification errors
+    fail OPEN (allow) — the per-IP rate limiter remains the cost backstop, so a
+    brief Cloudflare outage won't block real clients."""
+    if not TURNSTILE_SECRET:
+        return True
+    if not token:
+        return False
+    payload = urllib.parse.urlencode({
+        "secret": TURNSTILE_SECRET, "response": token, "remoteip": _client_ip(),
+    }).encode()
+    try:
+        with urllib.request.urlopen(_TURNSTILE_VERIFY_URL, data=payload, timeout=10) as resp:
+            return bool(json.loads(resp.read().decode()).get("success"))
+    except Exception:
+        return True  # fail open on infra errors; rate limiter still applies
+
+
+@app.route("/api/prompt-library/generate", methods=["POST"])
+def prompt_library_generate():
+    data = request.get_json(silent=True) or {}
+    prompt = PROMPTS_BY_ID.get(data.get("id"))
+    if not prompt:
+        return jsonify({"error": "Unknown prompt."}), 404
+
+    if not _verify_turnstile(data.get("turnstile_token")):
+        return jsonify({"error": "Verification failed — please refresh the page and try again."}), 403
+
+    limited = _rate_limit_message()
+    if limited:
+        return jsonify({"error": limited}), 429
+
+    resume = data.get("resume") or {}
+    if resume.get("kind") == "file" and len(resume.get("data") or "") > 14_000_000:
+        return jsonify({"error": "That file is too large — please use one under 10 MB."}), 400
+
+    try:
+        messages = _build_library_messages(
+            prompt, data.get("fields"), resume,
+            (data.get("job_description") or "").strip(),
+            (data.get("cover_letter") or "").strip(),
+        )
+    except Exception as e:
+        return jsonify({"error": f"Could not read your upload: {e}"}), 400
+
+    model = MODEL_SMART if prompt.get("model") == "smart" else MODEL_FAST
+    max_tokens = 8000 if prompt.get("model") == "smart" else 4000
+
+    def gen():
+        try:
+            with client.messages.stream(model=model, max_tokens=max_tokens, messages=messages) as stream:
+                for text in stream.text_stream:
+                    yield f"data: {json.dumps(text)}\n\n"
+            yield "data: [DONE]\n\n"
+        except Exception as e:
+            yield f"event: error\ndata: {json.dumps(str(e))}\n\n"
+
+    return Response(stream_with_context(gen()), mimetype="text/event-stream",
+                    headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
 # ── Session Generator ─────────────────────────────────────────────────────────

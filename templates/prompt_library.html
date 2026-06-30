@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNiIgZmlsbD0iIzNhNWE3YyIvPjxwb2x5bGluZSBwb2ludHM9IjIsMTYgMTEsMTYgMTMsOCAxNiwyNCAxOSwxNiAzMCwxNiIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjZmZmZmZmIiBzdHJva2Utd2lkdGg9IjIuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIi8+PC9zdmc+">
+<title>AI Job Search Prompt Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@400;600;700&family=Roboto:wght@300;400;500;600&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/prompt_library.css') }}">
+{% if turnstile_site_key %}
+<script>window.TURNSTILE_SITE_KEY = "{{ turnstile_site_key }}";</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+{% endif %}
+</head>
+<body>
+
+<div class="header">
+  <div class="header-eyebrow">AI-Powered Job Search</div>
+  <h1>Prompt Library</h1>
+  <div class="header-sub">{{ total }} expert-crafted prompts for every stage of your job search. Fill in your details, then generate a result instantly — or copy the prompt to use anywhere.</div>
+  <div class="header-pills">
+    <span class="header-pill">Works with Claude</span>
+    <span class="header-pill">Works with ChatGPT</span>
+    <span class="header-pill">Works with any AI</span>
+  </div>
+</div>
+
+<div style="max-width:860px;margin:0 auto;padding:0 24px;">
+  <div class="how-to">
+    <h3>How to use this library</h3>
+    <ol>
+      <li><strong>Find a prompt</strong> — use the search bar or category filters to find the prompt you need.</li>
+      <li><strong>Open the prompt</strong> — click "Fill in &amp; generate" to expand it.</li>
+      <li><strong>Fill in your details</strong> — type in the fields, and add your résumé or a job description if the prompt asks for it (upload a PDF or Word file, or paste the text).</li>
+      <li><strong>Generate</strong> — hit <strong>Generate with AI</strong> and your result appears right here.</li>
+      <li><strong>Or copy it</strong> — prefer your own AI assistant? Hit Copy to grab the completed prompt and paste it into Claude, ChatGPT, or anywhere else.</li>
+    </ol>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" class="search-input" id="searchInput" placeholder="Search prompts..." oninput="filterPrompts()">
+    </div>
+    <div class="filter-btns">
+      <button class="filter-btn active" data-cat="all" onclick="setFilter('all',this)">All</button>
+      {% for c in categories %}
+      <button class="filter-btn" data-cat="{{ c.key }}" onclick="setFilter('{{ c.key }}',this)">{{ c.filter_label }}</button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="results-count" id="resultsCount">Expert-crafted prompts for every stage of your job search</div>
+  <div id="noResults" class="no-results" style="display:none;">
+    <div class="no-results-icon">🔍</div>
+    <div class="no-results-text">No prompts match your search. Try different keywords.</div>
+  </div>
+
+  {% for c in categories %}
+  <div class="category-section" data-cat="{{ c.key }}">
+    <div class="category-header">
+      <div class="category-title">{{ c.title }}</div>
+      <span class="category-count">{{ c.prompts|length }} prompt{{ '' if c.prompts|length == 1 else 's' }}</span>
+    </div>
+
+    {% for p in c.prompts %}
+    <div class="prompt-card" data-cat="{{ p.category }}" data-id="{{ p.id }}" data-search="{{ p.search }}">
+      <div class="card-top">
+        <div class="card-purpose">{{ p.purpose }}</div>
+        <div class="card-title">{{ p.title }}</div>
+      </div>
+      <div class="card-toggle" onclick="toggleCard(this)">
+        <span>Fill in &amp; generate</span><span class="toggle-arrow">▶</span>
+      </div>
+      <div class="card-body">
+        {% if p.fields %}
+        <div class="fields-section">
+          <div class="fields-label">Fill in your details</div>
+          <div class="fields-grid">
+            {% for f in p.fields %}
+            <div class="field-item">
+              <span class="field-name">{{ f.label }}</span>
+              <input type="text" class="field-input" placeholder="{{ f.placeholder }}" oninput="updatePrompt(this)" data-field="{{ f.key }}">
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+        <div class="prompt-section">
+          <div class="prompt-box" data-template="{{ p.template }}"></div>
+        </div>
+        <div class="copy-row">
+          <span class="copy-hint-text">{{ p.hint }}</span>
+          <button class="copy-btn" onclick="copyPrompt(this)">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none"><rect x="5" y="5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.5"/><path d="M3 11H2.5A1.5 1.5 0 0 1 1 9.5v-7A1.5 1.5 0 0 1 2.5 1h7A1.5 1.5 0 0 1 11 2.5V3" stroke="currentColor" stroke-width="1.5"/></svg>
+            Copy prompt
+          </button>
+        </div>
+
+        <div class="gen-section">
+          {% if p.needs_resume or p.needs_job_description or p.needs_cover_letter %}
+          <div class="gen-inputs">
+            {% if p.needs_resume %}
+            <div class="gen-input">
+              <label class="gen-input-label">Your résumé</label>
+              <label class="gen-file-pick">
+                <input type="file" class="gen-file" accept=".pdf,.docx,.txt" onchange="onResumeFile(this)">
+                <span class="gen-file-name">Choose a PDF, Word, or text file</span>
+              </label>
+              <textarea class="gen-resume-text" rows="3" placeholder="…or paste your résumé text here"></textarea>
+            </div>
+            {% endif %}
+            {% if p.needs_job_description %}
+            <div class="gen-input">
+              <label class="gen-input-label">Job description</label>
+              <textarea class="gen-jd" rows="3" placeholder="Paste the job description here"></textarea>
+            </div>
+            {% endif %}
+            {% if p.needs_cover_letter %}
+            <div class="gen-input">
+              <label class="gen-input-label">Your cover letter draft</label>
+              <textarea class="gen-cl" rows="3" placeholder="Paste your cover letter draft here"></textarea>
+            </div>
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="gen-row">
+            <button class="gen-btn" onclick="generate(this)">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1l1.6 4.2L14 6.8l-3.6 2.3L11.2 14 8 11.3 4.8 14l.8-4.9L2 6.8l4.4-1.6L8 1z"/></svg>
+              Generate with AI
+            </button>
+            <span class="gen-status"></span>
+          </div>
+          <div class="gen-result" style="display:none;">
+            <div class="gen-output"></div>
+            <div class="gen-result-actions">
+              <button class="gen-copy-btn" onclick="copyResult(this)">Copy result</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+
+</div>
+
+{% if turnstile_site_key %}
+<div id="turnstile-widget" class="turnstile-holder"></div>
+{% endif %}
+
+<div class="footer">
+  <p>AI Job Search Prompt Library · Expert-crafted prompts · Works with Claude, ChatGPT, or any AI assistant</p>
+</div>
+
+<script src="{{ url_for('static', filename='js/prompt_library.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,1016 @@
+[
+  {
+    "id": "P1",
+    "category": "resume",
+    "category_title": "Resume Optimization & Writing",
+    "purpose": "Customize for a target role",
+    "title": "Adapt my resume for a new direction",
+    "search": "resume customize industry role tailor adapt",
+    "fields": [
+      {
+        "label": "Industry or role",
+        "placeholder": "e.g. Supply Chain Director",
+        "key": "SPECIFIC INDUSTRY OR ROLE"
+      }
+    ],
+    "template": "You are an expert resume strategist specializing in career positioning and targeted job applications. Review the attached resume and provide specific, actionable suggestions to customize it for a [SPECIFIC INDUSTRY OR ROLE] position. Focus on: (1) language and terminology adjustments that align with this industry or role, (2) achievements or experiences to emphasize or reframe, (3) sections that need strengthening or could be condensed. Do not rewrite the resume — provide prioritized recommendations only. Base all suggestions strictly on the experience present in the attached document.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P2",
+    "category": "resume",
+    "category_title": "Resume Optimization & Writing",
+    "purpose": "Evaluate resume against a job description",
+    "title": "Tailor my resume to a specific role",
+    "search": "resume job description tailor evaluate ATS keywords gaps",
+    "fields": [
+      {
+        "label": "Role title",
+        "placeholder": "e.g. VP of Operations",
+        "key": "ROLE TITLE"
+      },
+      {
+        "label": "Company name",
+        "placeholder": "e.g. Acme Corp",
+        "key": "COMPANY NAME"
+      }
+    ],
+    "template": "You are an expert resume strategist and ATS optimization specialist. I am applying for a [ROLE TITLE] position at [COMPANY NAME]. Below is the job description, followed by my resume. Analyze both documents and provide: (1) a gap analysis identifying requirements in the job description not reflected in my resume, (2) specific language from the job description I should incorporate, and (3) achievements or experiences I should elevate for this application. Do not rewrite the resume. Do not add experience I do not have. Prioritize your suggestions by impact.\n\nJob Description:\n[PASTE THE JOB DESCRIPTION HERE]\n\nResume:\n[PASTE YOUR RESUME HERE]",
+    "hint": "Paste job description and resume into the prompt after copying",
+    "needs_resume": true,
+    "needs_paste": true,
+    "model": "fast"
+  },
+  {
+    "id": "P3",
+    "category": "resume",
+    "category_title": "Resume Optimization & Writing",
+    "purpose": "Identify ATS keywords",
+    "title": "Find the right keywords for my industry",
+    "search": "resume keywords ATS bypass recruiter terminology industry",
+    "fields": [
+      {
+        "label": "Job title or industry",
+        "placeholder": "e.g. Healthcare Operations Manager",
+        "key": "JOB TITLE OR INDUSTRY"
+      }
+    ],
+    "template": "You are an ATS optimization expert and recruiter with deep knowledge of [JOB TITLE OR INDUSTRY] hiring practices. Identify the most impactful keywords and phrases I should incorporate into my resume for a [JOB TITLE OR INDUSTRY] role. Organize your response into three groups: (1) hard skills and technical terms, (2) soft skills and leadership language, and (3) industry-specific certifications, methodologies, or tools. For each keyword, provide one sentence explaining why it matters to recruiters or ATS systems in this field.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P4",
+    "category": "resume",
+    "category_title": "Resume Optimization & Writing",
+    "purpose": "Condense a lengthy resume",
+    "title": "Make my resume shorter and more impactful",
+    "search": "resume shorten condense concise word count impact bullets",
+    "fields": [
+      {
+        "label": "Target role / level",
+        "placeholder": "e.g. Senior Director, Manufacturing",
+        "key": "TARGET ROLE, INDUSTRY, OR LEVEL"
+      }
+    ],
+    "template": "You are an executive resume editor specializing in concise, high-impact career documents. Review the attached resume line by line. My career goal is [TARGET ROLE, INDUSTRY, OR LEVEL]. For each section and bullet point, provide: (1) a recommended revision that reduces word count while preserving or strengthening impact, (2) any bullets that can be removed without loss of positioning value, and (3) any achievement statements that are missing quantification and would benefit from it. Do not add experience I have not provided. Flag any inferred improvements with a note.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "smart"
+  },
+  {
+    "id": "P5",
+    "category": "resume",
+    "category_title": "Resume Optimization & Writing",
+    "purpose": "Gap analysis against a job description",
+    "title": "See exactly where my resume falls short",
+    "search": "resume gap analysis job description strengths gaps language alignment",
+    "fields": [],
+    "template": "You are an expert career strategist conducting an objective gap analysis. Compare the attached resume to the attached job description. Provide a structured analysis with three sections: (1) Strengths — where the resume clearly meets or exceeds the role's requirements, with specific evidence; (2) Gaps — requirements or qualifications in the job description that are absent or underrepresented in the resume; (3) Language Alignment — specific phrases or terminology from the job description that should be incorporated. Do not rewrite the resume. Do not infer or add experience not present in the resume. Summarize findings only.\n\nJob Description:\n[PASTE THE JOB DESCRIPTION HERE]\n\nResume:\n[PASTE YOUR RESUME HERE]",
+    "hint": "No fields to fill in — paste your documents after copying",
+    "needs_resume": true,
+    "needs_paste": true,
+    "model": "smart"
+  },
+  {
+    "id": "P5b",
+    "category": "resume",
+    "category_title": "Resume Optimization & Writing",
+    "purpose": "Perception audit from a target reader",
+    "title": "See the story my resume is telling",
+    "search": "resume story perception narrative recruiter hiring manager signal impression audit positioning what story telling",
+    "fields": [
+      {
+        "label": "Target role",
+        "placeholder": "e.g. Director of Operations",
+        "key": "TARGET ROLE"
+      },
+      {
+        "label": "Target industry",
+        "placeholder": "e.g. Healthcare",
+        "key": "TARGET INDUSTRY"
+      }
+    ],
+    "template": "You are an experienced hiring manager and recruiter who screens candidates for [TARGET ROLE] roles in [TARGET INDUSTRY]. Read the attached resume the way you actually would: a 30-second first skim, then a closer read. Tell me: (1) the story this resume tells about who I am and where I'm headed, in your words; (2) the three things that stand out most, good or bad; (3) where the narrative is muddy, inconsistent, or sends a signal I may not intend (overqualified, scattered, dated, job-hopper); (4) what a reader like you would assume about me that isn't written down; and (5) the single change that would most sharpen the story for these roles. Be candid — tell me what you actually perceive, not what's polite. Base everything on what's on the page.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "smart"
+  },
+  {
+    "id": "P6",
+    "category": "cover",
+    "category_title": "Cover Letters",
+    "purpose": "Write a cover letter from scratch",
+    "title": "Generate a targeted cover letter draft",
+    "search": "cover letter write draft personalized application job company",
+    "fields": [
+      {
+        "label": "Job title",
+        "placeholder": "e.g. Director of Operations",
+        "key": "JOB TITLE"
+      },
+      {
+        "label": "Company name",
+        "placeholder": "e.g. Acme Corp",
+        "key": "COMPANY NAME"
+      }
+    ],
+    "template": "You are an expert career writer specializing in executive and professional cover letters. Write a personalized, targeted cover letter for a [JOB TITLE] position at [COMPANY NAME]. The letter should: open with a compelling hook that is not a restatement of the job title, highlight 2–3 specific achievements from the attached resume that directly address the role's likely priorities, and close with a confident, action-oriented paragraph. Tone: professional, direct, and human — not generic or overly formal. Length: 3–4 paragraphs. Do not fabricate achievements or experience not present in the attached resume.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "smart"
+  },
+  {
+    "id": "P7",
+    "category": "cover",
+    "category_title": "Cover Letters",
+    "purpose": "Improve an existing cover letter",
+    "title": "Make my achievements stand out in my cover letter",
+    "search": "cover letter tailor skills achievements integrate edit improve",
+    "fields": [
+      {
+        "label": "Skills or achievements to highlight",
+        "placeholder": "e.g. my turnaround experience and cost savings results",
+        "key": "SPECIFIC SKILLS OR ACHIEVEMENTS"
+      },
+      {
+        "label": "Tone preference",
+        "placeholder": "Professional / Conversational",
+        "key": "PROFESSIONAL / CONVERSATIONAL — choose one"
+      }
+    ],
+    "template": "You are an expert cover letter editor. I have a cover letter draft and I want to more effectively highlight [SPECIFIC SKILLS OR ACHIEVEMENTS]. Review the draft below and provide: (1) specific edits that integrate these strengths more naturally and compellingly, (2) any existing language that undercuts or buries the achievements I want to feature, and (3) a revised version of any paragraph you recommend changing. Preserve the existing structure unless a structural change clearly strengthens the letter. Tone should remain [PROFESSIONAL / CONVERSATIONAL — choose one].\n\nCover Letter Draft:\n[PASTE YOUR COVER LETTER HERE]",
+    "hint": "Paste your cover letter draft after copying",
+    "needs_resume": false,
+    "needs_paste": true,
+    "model": "smart"
+  },
+  {
+    "id": "P8",
+    "category": "search",
+    "category_title": "Job Search Strategies & Planning",
+    "purpose": "Find industry-specific job search strategies",
+    "title": "Build a targeted search strategy for my industry",
+    "search": "job search strategies industry niche find job hunting avenues",
+    "fields": [
+      {
+        "label": "Job title or level",
+        "placeholder": "e.g. VP of Finance",
+        "key": "JOB TITLE OR LEVEL"
+      },
+      {
+        "label": "Industry",
+        "placeholder": "e.g. Healthcare Technology",
+        "key": "SPECIFIC INDUSTRY"
+      },
+      {
+        "label": "Location or remote",
+        "placeholder": "e.g. Dallas, TX or Remote",
+        "key": "LOCATION OR REMOTE"
+      }
+    ],
+    "template": "You are an expert career strategist with deep knowledge of job search methods across industries. I am searching for a [JOB TITLE OR LEVEL] role in the [SPECIFIC INDUSTRY] industry, based in [LOCATION OR REMOTE]. Provide a prioritized list of job search strategies tailored specifically to this industry — including niche job boards, professional associations, events, and networking approaches that are most effective here. For each strategy, provide one sentence on why it works particularly well in this field. Distinguish between strategies I can execute immediately and those that require 30+ days to show results.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P9",
+    "category": "search",
+    "category_title": "Job Search Strategies & Planning",
+    "purpose": "Create a structured daily job search plan",
+    "title": "Build a month-long job search calendar",
+    "search": "job search calendar daily routine schedule plan month 8 hours",
+    "fields": [
+      {
+        "label": "Target role or industry",
+        "placeholder": "e.g. Operations Director in Manufacturing",
+        "key": "TARGET ROLE OR INDUSTRY"
+      }
+    ],
+    "template": "You are an expert career coach and productivity strategist. Create a detailed, realistic month-long job search calendar for someone devoting 8 hours per day to their search. My target role is [TARGET ROLE OR INDUSTRY]. Structure each week around a clear weekly theme (e.g., Week 1: Foundation & Setup; Week 2: Outreach; Week 3: Applications & Follow-Up; Week 4: Interviews & Refinement). Within each week, provide a day-by-day breakdown of specific activities with approximate time allocations. Include a mix of: direct applications, networking outreach, skill development, LinkedIn optimization, and recovery/reflection time. Be specific — name the platforms, tools, and activity types. Do not pad with generic advice.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "smart"
+  },
+  {
+    "id": "P10",
+    "category": "search",
+    "category_title": "Job Search Strategies & Planning",
+    "purpose": "Build a LinkedIn job search strategy",
+    "title": "Use LinkedIn more strategically than just applying",
+    "search": "linkedin network job search apply optimize profile strategy",
+    "fields": [
+      {
+        "label": "Your current title or level",
+        "placeholder": "e.g. Senior Manager",
+        "key": "JOB TITLE OR LEVEL"
+      },
+      {
+        "label": "Target industry or function",
+        "placeholder": "e.g. Supply Chain, Fortune 500",
+        "key": "TARGET INDUSTRY OR FUNCTION"
+      }
+    ],
+    "template": "You are a LinkedIn strategy expert specializing in professional networking and job search optimization. I am a [JOB TITLE OR LEVEL] professional searching for roles in [TARGET INDUSTRY OR FUNCTION]. Provide a specific, step-by-step LinkedIn action plan that goes beyond passive scrolling and basic applications. Cover: (1) profile optimization priorities for my target role, (2) a content and engagement strategy to increase visibility with the right people, (3) a direct outreach framework for connecting with hiring managers and industry contacts, and (4) how to use LinkedIn's job search tools effectively for my target. Be tactical — provide specific language, frequency, and sequencing guidance.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P11",
+    "category": "network",
+    "category_title": "Networking & Outreach",
+    "purpose": "Cold LinkedIn connection request",
+    "title": "Write a LinkedIn message to connect with someone new",
+    "search": "linkedin message connect cold outreach networking contact industry",
+    "fields": [
+      {
+        "label": "Their name or title",
+        "placeholder": "e.g. Sarah Chen, VP of Logistics",
+        "key": "INDUSTRY PROFESSIONAL'S NAME OR TITLE"
+      },
+      {
+        "label": "Their company or industry",
+        "placeholder": "e.g. Amazon Logistics",
+        "key": "THEIR COMPANY OR INDUSTRY"
+      },
+      {
+        "label": "Your background (brief)",
+        "placeholder": "e.g. Operations Director with 15 years in manufacturing",
+        "key": "YOUR ROLE OR BRIEF CONTEXT"
+      }
+    ],
+    "template": "You are an expert in professional networking and concise business communication. Write a LinkedIn connection request message to [INDUSTRY PROFESSIONAL'S NAME OR TITLE] who works in [THEIR COMPANY OR INDUSTRY]. My background is [YOUR ROLE OR BRIEF CONTEXT]. The message should: be under 300 characters (LinkedIn's connection note limit), lead with a genuine, specific reason for connecting rather than a generic request, and avoid asking for anything in the first message. Tone: warm, peer-level, and non-transactional.",
+    "hint": "Note: LinkedIn connection notes have a 300 character limit",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P12",
+    "category": "network",
+    "category_title": "Networking & Outreach",
+    "purpose": "Ask for a job referral",
+    "title": "Request a referral without being awkward about it",
+    "search": "referral ask professional job recommendation contact request",
+    "fields": [
+      {
+        "label": "Contact name & relationship",
+        "placeholder": "e.g. James, former manager at Dell",
+        "key": "CONTACT'S NAME AND YOUR RELATIONSHIP TO THEM"
+      },
+      {
+        "label": "Role you're applying for",
+        "placeholder": "e.g. Director of Supply Chain",
+        "key": "JOB TITLE"
+      },
+      {
+        "label": "Company",
+        "placeholder": "e.g. Amazon",
+        "key": "COMPANY NAME"
+      },
+      {
+        "label": "Message channel",
+        "placeholder": "Email / LinkedIn / Text",
+        "key": "EMAIL / LINKEDIN / TEXT — choose one"
+      }
+    ],
+    "template": "You are an expert career coach specializing in professional communication and relationship management. I need to ask [CONTACT'S NAME AND YOUR RELATIONSHIP TO THEM] for a referral for a [JOB TITLE] role at [COMPANY NAME]. Draft a message I can send via [EMAIL / LINKEDIN / TEXT — choose one] that: makes it easy for them to say yes or no without pressure, provides everything they need to advocate for me without requiring them to do research, and maintains the relationship regardless of the outcome. Include a brief context line I can customize, a one-sentence summary of why I'm a strong fit, and a clear, low-pressure ask. Length: 150–200 words.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P13",
+    "category": "network",
+    "category_title": "Networking & Outreach",
+    "purpose": "Re-engage a dormant connection",
+    "title": "Reach out to someone I haven't talked to in a while",
+    "search": "reconnect former colleague networking dormant relationship catch up message",
+    "fields": [
+      {
+        "label": "Their name",
+        "placeholder": "e.g. Maria",
+        "key": "THEIR NAME"
+      },
+      {
+        "label": "How long it's been",
+        "placeholder": "e.g. about 2 years",
+        "key": "APPROXIMATE TIME"
+      },
+      {
+        "label": "Where you worked together",
+        "placeholder": "e.g. Honeywell, 2019–2021",
+        "key": "COMPANY OR CONTEXT"
+      },
+      {
+        "label": "What you'd like",
+        "placeholder": "15-minute catch-up / introduction / advice",
+        "key": "15-minute catch-up / introduction / advice — choose one"
+      }
+    ],
+    "template": "You are an expert in professional relationship management and business communication. Draft a brief, warm message to a former colleague, [THEIR NAME], whom I haven't spoken to in [APPROXIMATE TIME]. We worked together at [COMPANY OR CONTEXT]. I'd like to reconnect and eventually ask for a [15-minute catch-up / introduction / advice — choose one], but this first message should feel genuinely reconnective rather than transactional — no ask yet. Reference something specific and authentic about our time working together if I provide it. Tone: warm, peer-level, and human. Length: 3–5 sentences.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P14",
+    "category": "network",
+    "category_title": "Networking & Outreach",
+    "purpose": "Build a local networking strategy",
+    "title": "Find the right people to connect with in my area",
+    "search": "executive local networking strategy location industry connections career coach",
+    "fields": [
+      {
+        "label": "Your current or recent title",
+        "placeholder": "e.g. VP of Operations",
+        "key": "CURRENT OR MOST RECENT ROLE TITLE"
+      },
+      {
+        "label": "City, State",
+        "placeholder": "e.g. Atlanta, GA",
+        "key": "CITY, STATE"
+      },
+      {
+        "label": "Industry 1",
+        "placeholder": "e.g. Aerospace",
+        "key": "INDUSTRY 1"
+      },
+      {
+        "label": "Industry 2",
+        "placeholder": "e.g. Defense",
+        "key": "INDUSTRY 2"
+      },
+      {
+        "label": "Industry 3",
+        "placeholder": "e.g. Advanced Manufacturing",
+        "key": "INDUSTRY 3"
+      },
+      {
+        "label": "Target level",
+        "placeholder": "e.g. VP / Director",
+        "key": "TARGET ROLE LEVEL"
+      }
+    ],
+    "template": "You are an expert career coach specializing in executive-level networking strategy. I am a [CURRENT OR MOST RECENT ROLE TITLE] based in [CITY, STATE]. My target industries are [INDUSTRY 1], [INDUSTRY 2], and [INDUSTRY 3]. I am actively searching for [TARGET ROLE LEVEL] opportunities. Using the attached resume as context, develop a specific local networking strategy that includes: (1) industry associations, conferences, or events in my area worth joining or attending, (2) types of people I should prioritize connecting with and how to find them locally, (3) a suggested outreach sequence for the first 30 days, and (4) any geographic or industry-specific considerations that affect how I should position myself in this market. Be specific to my background — do not provide generic networking advice.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P15",
+    "category": "interview",
+    "category_title": "Interview Preparation",
+    "purpose": "Anticipate common interview questions",
+    "title": "Get the most likely questions for my target role",
+    "search": "interview questions common behavioral role preparation anticipate",
+    "fields": [
+      {
+        "label": "Role title",
+        "placeholder": "e.g. Director of Engineering",
+        "key": "ROLE TITLE"
+      },
+      {
+        "label": "Level",
+        "placeholder": "Entry / Mid / Senior / Executive",
+        "key": "ENTRY / MID / SENIOR / EXECUTIVE — choose one"
+      }
+    ],
+    "template": "You are an expert interview coach with deep knowledge of hiring practices across industries. List the 15 most commonly asked interview questions for a [ROLE TITLE] position at the [ENTRY / MID / SENIOR / EXECUTIVE — choose one] level. For each question, provide: (1) the underlying competency or concern the interviewer is evaluating, and (2) one sentence on what a strong answer must include to land well. Organize questions into three groups: behavioral, situational, and role-specific technical.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P16",
+    "category": "interview",
+    "category_title": "Interview Preparation",
+    "purpose": "Answer a difficult \"what went wrong\" question",
+    "title": "Turn a hard experience into a strong answer",
+    "search": "interview difficult question negative experience reframe learning narrative regret",
+    "fields": [
+      {
+        "label": "Brief description of the situation",
+        "placeholder": "e.g. A product launch that missed deadline due to scope creep",
+        "key": "BRIEFLY DESCRIBE THE SITUATION"
+      }
+    ],
+    "template": "You are an expert interview coach specializing in narrative reframing and difficult interview questions. Help me craft a strong, authentic answer to the interview question: 'What work situation do you wish had never happened, and what are you doing to make sure it doesn't happen again?' The situation I have in mind is: [BRIEFLY DESCRIBE THE SITUATION]. My answer should: acknowledge the difficulty honestly without being self-flagellating, focus primarily on what I learned and what I changed as a result, and end on a forward-looking note that demonstrates professional growth. Draft a 90–120 second spoken response in first person. Tone: grounded, self-aware, and confident.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P17",
+    "category": "interview",
+    "category_title": "Interview Preparation",
+    "purpose": "Craft a \"Tell me about yourself\" response",
+    "title": "Build a compelling personal introduction for interviews",
+    "search": "tell me about yourself TMAY elevator pitch introduction resume interview",
+    "fields": [
+      {
+        "label": "Target role or industry",
+        "placeholder": "e.g. Operations VP in Defense Manufacturing",
+        "key": "TARGET ROLE OR INDUSTRY"
+      }
+    ],
+    "template": "You are an expert interview coach specializing in executive positioning and personal narrative. Using the attached resume, help me craft a compelling, natural-sounding response to 'Tell me about yourself' for a [TARGET ROLE OR INDUSTRY] interview. The response should follow a three-part structure: (1) a strong identity statement that captures who I am professionally — not a recitation of my job history, (2) 2–3 sentences of evidence highlighting my most relevant pattern of impact, and (3) a forward-looking close that connects my background to why I'm interested in this opportunity. Length: 90–120 seconds spoken (approximately 225–300 words). First person. No corporate jargon.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P18",
+    "category": "interview",
+    "category_title": "Interview Preparation",
+    "purpose": "Simulate a live interview with feedback",
+    "title": "Practice interview questions with instant coaching",
+    "search": "mock interview practice simulate live feedback behavioral questions roleplay",
+    "fields": [
+      {
+        "label": "Target role",
+        "placeholder": "e.g. VP of Supply Chain",
+        "key": "TARGET ROLE TITLE"
+      },
+      {
+        "label": "Start with questions about",
+        "placeholder": "Leadership / Problem-Solving / Conflict / Results",
+        "key": "LEADERSHIP / PROBLEM-SOLVING / CONFLICT / RESULTS — choose one"
+      }
+    ],
+    "template": "You are a senior hiring manager conducting a behavioral interview for a [TARGET ROLE TITLE] position. Ask me one behavioral interview question at a time. After I respond, provide structured feedback covering: (1) what worked in my answer — specific language or content that was effective, (2) what to strengthen — one or two specific improvements, and (3) a revised version of my opening sentence if it could be stronger. Then ask the next question. Continue until I tell you to stop. Start with a question that probes [LEADERSHIP / PROBLEM-SOLVING / CONFLICT / RESULTS — choose one]. Do not ask more than one question at a time.",
+    "hint": "This is interactive — paste into AI and start answering questions",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P19",
+    "category": "interview",
+    "category_title": "Interview Preparation",
+    "purpose": "Build a high-impact STAR story with an AI coach",
+    "title": "Success Story Architect",
+    "search": "STAR success story behavioral interview executive coach dimension leadership career transition",
+    "fields": [],
+    "template": "# ROLE\n\nYou are the \"Success Story Architect.\" Your goal is to help me build high-impact, STAR-method success stories for job interviews. You are an expert executive coach: warm, direct, and focused on uncovering the \"hidden\" value in my experience.\n\n# CONTEXT\n\nI am in a high-stakes career transition. I need stories that sound authentic and powerful, not like corporate jargon. We are using the STAR framework (Situation, Task, Action, Result).\n\n# OPERATING PROTOCOL\n\nYou will guide me through a 6-step interactive process. Do NOT skip ahead. Wait for my response after every step.\n\n### STEP 1: CONTEXT MAPPING\n\nAsk me for:\n\n1. My target job title/level.\n2. Whether I am a \"Strategic Leader\" or a \"Technical/Operational Expert.\"\n\n### STEP 2: THE DIMENSION MENU\n\nPresent this menu and ask me to choose ONE dimension for this story:\n\n1. Leading through Change & Uncertainty\n2. Crisis Response & Problem Solving\n3. Operational Efficiency & Scaling\n4. Cross-Functional Leadership & Stakeholder Influence\n5. People Development & Culture\n6. Strategic Vision & Alignment\n7. Specialized Technical/Project Delivery\n\n### STEP 3: THE INTERVIEW\n\nPropose 3 specific behavioral interview questions based on my choice. Ask me to pick ONE or provide a story I already have in mind.\n\n### STEP 4: THE PROBE\n\nAnalyze my story for STAR components.\n\n* The \"I\" Factor: If the story uses \"we,\" ask me to clarify exactly what I did, what I decided, and how I led.\n* The Meat: Ask 1-2 probing questions to uncover specific metrics (savings, revenue, time) or the \"logic\" behind a key decision.\n\n### STEP 5: THE FINAL ARCHITECTURE\n\nOutput the final story using this exact format:\n\n[Story Title]\nPrimary Question: [The interview question this was built for]\nLeadership Dimension: [The dimension chosen]\n\nThe Hook: A 1-sentence 'Contrast Hook' bridging the initial problem with the ultimate result.\n\nThe Strategy (2nd Person): 3-4 sentences explaining the 'competency' this story proves. Focus on why this success is a repeatable ROI for a future employer.\n\nThe Script (1st Person): A polished, conversational STAR script (approx. 250-300 words). Use the Hook as the opening line. Ensure the 'Action' section is the longest part, detailing the specific steps YOU took.\n\nThe Pivot Guide: Provide 3 alternate interview questions this same story could answer (e.g., 'If asked about [Conflict/Failure/Innovation], you can pivot this story by emphasizing [Specific Aspect].')\n\n### STEP 6: THE LOOP & REFINEMENT\n\nAfter providing the Final Architecture, ask me: \"Would you like to refine this story further, or should we go back to the Dimension Menu to build a new one?\"\n\nRefinement Logic: If I choose to refine, you will exit the structured 6-step process and act as an open-ended editor. You will take my feedback (e.g., \"make it punchier,\" \"add more detail to the Result,\" \"adjust the tone\") and provide an updated Final Architecture until I am satisfied.\n\nReady? Let's begin. Start with STEP 1.",
+    "hint": "This is a multi-step interactive session — the AI will guide you",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P19b",
+    "category": "interview",
+    "category_title": "Interview Preparation",
+    "purpose": "Explain a sudden departure without losing the room",
+    "title": "Talk about why I left, honestly",
+    "search": "layoff laid off let go restructuring reason for leaving why left position eliminated explain interview departure",
+    "fields": [
+      {
+        "label": "Your role",
+        "placeholder": "e.g. Director of Operations",
+        "key": "ROLE"
+      },
+      {
+        "label": "What happened to your role",
+        "placeholder": "e.g. my position was eliminated in a restructuring",
+        "key": "WHAT HAPPENED"
+      }
+    ],
+    "template": "You are an expert interview coach who frames career transitions in positive, professional language. My most recent role was [ROLE], and here is what happened to it: [WHAT HAPPENED]. Help me explain my departure in a way that is honest, brief, and forward-looking. Important: do not use the words 'laid off,' 'let go,' 'fired,' 'terminated,' or 'downsized' anywhere in your answer — use neutral, professional framing such as 'my role was eliminated,' 'the organization restructured,' or 'the team was reorganized.' Give me: (1) a primary spoken answer of about 15–20 seconds that states the reason in neutral, non-defensive language — no blame, no bitterness, no over-explaining — and pivots to what I'm looking for next; (2) an even shorter one-line version; and (3) two follow-up questions an interviewer is likely to ask after my answer, with how to handle each. Keep it natural and matter-of-fact, the way a steady person would say it out loud. Do not make me sound rehearsed or spun.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P20",
+    "category": "salary",
+    "category_title": "Salary & Negotiation Strategy",
+    "purpose": "Build a salary negotiation strategy",
+    "title": "Learn how to negotiate a higher salary",
+    "search": "salary negotiate higher compensation strategy script offer",
+    "fields": [
+      {
+        "label": "Job title",
+        "placeholder": "e.g. Director of Finance",
+        "key": "JOB TITLE"
+      },
+      {
+        "label": "Level",
+        "placeholder": "Entry / Mid / Senior / Executive",
+        "key": "ENTRY / MID / SENIOR / EXECUTIVE — choose one"
+      },
+      {
+        "label": "Industry",
+        "placeholder": "e.g. Financial Services",
+        "key": "INDUSTRY"
+      },
+      {
+        "label": "Location",
+        "placeholder": "e.g. Chicago, IL",
+        "key": "LOCATION"
+      }
+    ],
+    "template": "You are an expert compensation strategist and negotiation coach. I am preparing to negotiate salary for a [JOB TITLE] role at the [ENTRY / MID / SENIOR / EXECUTIVE — choose one] level in [INDUSTRY] in [LOCATION]. Provide a practical negotiation strategy that covers: (1) how and when to bring up compensation in the interview process, (2) how to anchor the conversation to market data without naming a number first, (3) specific language I can use when asked for my salary expectations, and (4) how to negotiate once an offer is extended, including how to respond to pushback. Provide example scripts for each step.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P21",
+    "category": "salary",
+    "category_title": "Salary & Negotiation Strategy",
+    "purpose": "Research market salary for a role",
+    "title": "Find out what I should be earning",
+    "search": "salary range average market rate role location benchmark compensation",
+    "fields": [
+      {
+        "label": "Role title",
+        "placeholder": "e.g. VP of Operations",
+        "key": "ROLE TITLE"
+      },
+      {
+        "label": "City, State or Region",
+        "placeholder": "e.g. Houston, TX",
+        "key": "CITY, STATE OR REGION"
+      },
+      {
+        "label": "Level",
+        "placeholder": "Entry / Mid / Senior / Executive",
+        "key": "ENTRY / MID / SENIOR / EXECUTIVE — choose one"
+      },
+      {
+        "label": "Industry",
+        "placeholder": "e.g. Aerospace & Defense",
+        "key": "INDUSTRY"
+      }
+    ],
+    "template": "You are an expert compensation analyst with knowledge of current labor market data. Provide the current salary range for a [ROLE TITLE] position in [CITY, STATE OR REGION] at the [ENTRY / MID / SENIOR / EXECUTIVE — choose one] level in the [INDUSTRY] sector. Include: (1) base salary range (low, median, high), (2) total compensation range if equity or bonus is standard for this role, (3) the primary data sources informing this estimate (e.g., BLS, Glassdoor, Levels.fyi), and (4) any factors that would push compensation toward the higher end of the range (company size, specific skills, certifications). Note the date of your most recent data for this role.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P22",
+    "category": "salary",
+    "category_title": "Salary & Negotiation Strategy",
+    "purpose": "Full executive offer negotiation playbook",
+    "title": "Build a complete strategy to negotiate my offer",
+    "search": "offer negotiation playbook executive compensation equity benefits benchmark scripts",
+    "fields": [],
+    "template": "You are a senior career strategist, compensation analyst, and expert negotiator operating on win-win negotiation principles. Using the attached documents — my resume, the offer letter, and my completed job and benefits-fit matrix — produce a comprehensive negotiation playbook structured as follows:\n\n1. Market Benchmark: Salary, equity, and benefits benchmark for this role, level, and geography based on current market data. Identify where the offer stands relative to market (below, at, or above).\n2. Negotiation Strategy: Specific strategies for negotiating each component of the offer — base, bonus, equity, benefits, and any non-monetary terms. Prioritize by impact.\n3. Scripts: Word-for-word language I can use at each stage: (a) expressing enthusiasm while opening negotiation, (b) making the ask with market anchoring, (c) responding to pushback, and (d) closing gracefully regardless of outcome.\n4. Career Trajectory: Assessment of how this role and compensation package positions me for the next 3–5 years.\n5. Risks & Gaps: Anything in the offer or role that warrants caution — vague language, missing protections, below-market components I may be overlooking.\n6. Action Plan: Step-by-step sequence with fallback positions for each negotiating point.\n\n📎 Attach: Resume, Offer Letter, and Job & Benefits-Fit Matrix before sending.",
+    "hint": "📎 Attach resume, offer letter, and benefits matrix before sending",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P23",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Find adjacent roles I'm qualified for",
+    "title": "Discover what other roles I could target right now",
+    "search": "adjacent roles transferable skills career pivot expand job search options",
+    "fields": [],
+    "template": "You are an expert career strategist specializing in skills-based career development and lateral transitions. Based on the attached resume, identify 5–7 adjacent roles where my skills, experience, and career capital would transfer strongly. For each role, provide: (1) the specific skills from my background that map directly to it, (2) any gaps I would need to address and how significant they are, and (3) a one-sentence assessment of how competitive I would be as a candidate today without additional preparation. Rank suggestions from strongest to weakest transferability. Do not suggest roles that require entirely new credentials or more than 12 months of upskilling.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P24",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Build a learning plan for a career pivot",
+    "title": "Find the right online courses to bridge my skill gaps",
+    "search": "learning plan upskill skill gaps online courses target role career pivot budget",
+    "fields": [
+      {
+        "label": "Target role",
+        "placeholder": "e.g. Product Manager",
+        "key": "TARGET ROLE TITLE"
+      },
+      {
+        "label": "Target industry",
+        "placeholder": "e.g. SaaS / Tech",
+        "key": "TARGET INDUSTRY"
+      }
+    ],
+    "template": "You are an expert career development coach and learning strategist. Based on the attached resume and my target role of [TARGET ROLE TITLE] in [TARGET INDUSTRY], identify the skill gaps I need to address to be competitive. Then recommend a prioritized learning plan using online resources only. Organize recommendations in a table with columns: Skill Gap, Recommended Resource, Provider/Website, Cost (Free / Paid), and Estimated Time to Complete. Rank by priority (address first = highest leverage for job search). Do not recommend resources you cannot verify exist.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P25",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Map your skills to a specific career target",
+    "title": "See exactly how competitive I am for my target role",
+    "search": "skills assessment career pivot hard soft transferable gap analysis target role level salary location",
+    "fields": [
+      {
+        "label": "Target career pivot",
+        "placeholder": "e.g. From Operations to Consulting",
+        "key": "TARGET CAREER PIVOT"
+      },
+      {
+        "label": "Target career level",
+        "placeholder": "e.g. Senior Director",
+        "key": "TARGET CAREER LEVEL"
+      },
+      {
+        "label": "Desired salary range",
+        "placeholder": "e.g. $180k–$220k",
+        "key": "SALARY RANGE"
+      },
+      {
+        "label": "Target location",
+        "placeholder": "e.g. Austin, TX",
+        "key": "TARGET LOCATION"
+      },
+      {
+        "label": "Target industry",
+        "placeholder": "e.g. Clean Energy",
+        "key": "TARGET INDUSTRY"
+      }
+    ],
+    "template": "You are an expert career coach specializing in skills-based career transitions and market positioning. Review the attached resume and complete the following analysis:\n\nStep 1 — Skills Extraction: Identify and categorize all hard skills, soft skills, and transferable skills present in my background.\n\nStep 2 — Contextual Analysis: Evaluate those skills against my specific target:\n- Target pivot: [TARGET CAREER PIVOT]\n- Target level: [TARGET CAREER LEVEL]\n- Desired salary range: [SALARY RANGE]\n- Target market/location: [TARGET LOCATION]\n- Target industry: [TARGET INDUSTRY]\n\nStep 3 — Assessment: Identify (a) the skills that transfer most directly and create immediate competitive advantage, (b) the skills that transfer partially and need reframing, and (c) the gaps that represent the most significant barriers to making this pivot at the target level and compensation.\n\nBe specific and direct. Do not provide generic career pivot advice.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P26",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Create a budget-conscious upskilling roadmap",
+    "title": "Build a prioritized plan to develop the skills I need",
+    "search": "upskilling roadmap skill development plan free paid online programs current role target role",
+    "fields": [
+      {
+        "label": "Current role",
+        "placeholder": "e.g. Operations Manager",
+        "key": "CURRENT ROLE"
+      },
+      {
+        "label": "Target role",
+        "placeholder": "e.g. Head of Strategy",
+        "key": "TARGET ROLE"
+      }
+    ],
+    "template": "You are an expert learning and development strategist. Create a prioritized online skill development plan to support my transition from [CURRENT ROLE] to [TARGET ROLE]. Organize the plan in a table ranked first by cost (free before paid) and then by program length (shortest first). For each item include: Skill addressed, Program name, Provider, URL, Cost, and Estimated duration. Include only programs that currently exist and are accessible online. After the table, provide a recommended sequencing narrative: which skills to tackle first and why, based on what will most quickly make me competitive for the target role.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P27",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Plan the finances of a career pivot",
+    "title": "Build a 12-month budget plan for my career transition",
+    "search": "career pivot budget financial plan 12 month savings upskill expenses bridge job transition",
+    "fields": [
+      {
+        "label": "Current career",
+        "placeholder": "e.g. Corporate Attorney",
+        "key": "CURRENT CAREER"
+      },
+      {
+        "label": "Target career",
+        "placeholder": "e.g. UX Designer",
+        "key": "TARGET CAREER"
+      },
+      {
+        "label": "Current savings",
+        "placeholder": "e.g. $45,000",
+        "key": "AMOUNT"
+      },
+      {
+        "label": "Monthly fixed expenses",
+        "placeholder": "e.g. $3,200/month (rent, car, insurance)",
+        "key": "LIST OR AMOUNT"
+      },
+      {
+        "label": "Monthly variable spending",
+        "placeholder": "e.g. $800/month",
+        "key": "AMOUNT"
+      },
+      {
+        "label": "Other financial obligations",
+        "placeholder": "e.g. student loans $400/month",
+        "key": "DETAILS"
+      },
+      {
+        "label": "Upskilling costs identified",
+        "placeholder": "e.g. UX bootcamp $8,000, software $200/yr",
+        "key": "LIST"
+      }
+    ],
+    "template": "You are an expert career transition strategist and personal finance advisor. I am transitioning from [CURRENT CAREER] to [TARGET CAREER] and need a realistic 12-month financial plan to support this pivot including upskilling costs. Using the information I provide below, create: (1) a month-by-month budget showing income, fixed expenses, variable spending, upskilling costs, and net monthly position, (2) a risk buffer recommendation based on my runway, (3) specific suggestions for expense reduction, and (4) bridge job options that leverage my existing skills and could provide income during the transition without derailing the pivot. Flag any months where my financial position becomes precarious and recommend action triggers.\n\nMy financial information:\n- Current savings: [AMOUNT]\n- Monthly fixed expenses: [LIST OR AMOUNT]\n- Monthly variable spending: [AMOUNT]\n- Other financial obligations: [DETAILS]\n- Upskilling costs identified: [LIST]\n\n📎 Optionally attach your resume for bridge job suggestions tailored to your background.",
+    "hint": "Fill in the fields above — they'll appear in the prompt automatically",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P28",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Create a cross-industry value statement",
+    "title": "Distill what makes me valuable across any industry",
+    "search": "transferable strengths cross industry value statement summary professional brand",
+    "fields": [
+      {
+        "label": "Target role or industry (optional)",
+        "placeholder": "Leave blank to keep it general",
+        "key": "TARGET ROLE OR INDUSTRY — optional"
+      },
+      {
+        "label": "Perspective",
+        "placeholder": "First person (interview) / Third person (bio)",
+        "key": "THIRD PERSON / FIRST PERSON"
+      }
+    ],
+    "template": "You are an expert career branding strategist. Based on the attached resume, identify the 3–5 transferable strengths that apply most powerfully across industries — look for patterns of impact, not just job titles or functions. Then write a 2–3 sentence professional value statement that: leads with the candidate's most distinctive capability, references specific scale or impact where possible, and positions them for [TARGET ROLE OR INDUSTRY — optional]. The statement should be written in [THIRD PERSON / FIRST PERSON].\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P29",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Rapid resume-to-JD diagnostic",
+    "title": "See my skills vs. what the job actually requires",
+    "search": "skills inventory gap analysis resume job description diagnostic rapid hard soft transferable",
+    "fields": [],
+    "template": "You are an expert career strategist. Complete a two-part rapid diagnostic:\n\nPart 1 — Skills Inventory: Based on the attached resume, identify and categorize all hard skills, soft skills, and transferable skills. Be comprehensive.\n\nPart 2 — Gap Analysis: Compare those skills against the attached job description. Identify: (a) skills the job requires that are well-represented in my background, (b) skills the job requires that are partially present or need strengthening, and (c) skills the job requires that are absent from my background entirely.\n\nPresent Part 2 as a three-column table: Requirement | Status (Strong / Partial / Gap) | Notes.\n\nResume: [PASTE YOUR RESUME HERE]\nJob Description: [PASTE THE JOB DESCRIPTION HERE]",
+    "hint": "Paste resume and job description into the prompt after copying",
+    "needs_resume": true,
+    "needs_paste": true,
+    "model": "fast"
+  },
+  {
+    "id": "P30",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Identify exactly what skills I need to learn",
+    "title": "Find out what's standing between me and my target role",
+    "search": "skills learn acquire target role career leap gap new career development",
+    "fields": [
+      {
+        "label": "Target role",
+        "placeholder": "e.g. Chief Operating Officer",
+        "key": "TARGET ROLE"
+      }
+    ],
+    "template": "You are an expert career development strategist with deep knowledge of the [TARGET ROLE] function and its requirements. I want to become a [TARGET ROLE]. Based on my attached resume, identify only the skills I need to learn or significantly upskill — do not list skills I already have. For each skill gap, assess: (1) how critical it is for success in the target role (Essential / Important / Nice-to-Have), (2) a realistic estimate of how long it would take me to develop it given my existing background, and (3) the best learning pathway (on-the-job, online course, certification, mentorship, etc.). Sort by priority: Essential gaps first.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P31",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Build a long-term reskilling plan that accounts for AI",
+    "title": "Future-proof my career with a comprehensive development plan",
+    "search": "reskilling upskilling AI future proof long term plan transferable gaps credible institutions",
+    "fields": [],
+    "template": "You are an expert career development strategist and future-of-work analyst. Review the attached resume and develop a comprehensive, personalized reskilling and upskilling plan. The plan must: (1) identify transferable skills from my background that are genuinely competitive and worth building on, (2) identify specific skill gaps that will limit my competitiveness in the next 3–5 years, (3) recommend credible, verifiable learning resources with links for each gap, (4) explicitly address how AI is likely to affect my current function and the roles I am targeting — which skills will become more valuable, which will become less relevant, and what I should prioritize learning in the next 6–12 months to stay ahead of that curve. Be direct and specific. Do not provide generic future-of-work commentary.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "smart"
+  },
+  {
+    "id": "P32",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Analyze a major career transition",
+    "title": "Get a full picture of what my career change actually involves",
+    "search": "career transition analysis current area target area skills market growth adjacent emerging roles",
+    "fields": [
+      {
+        "label": "Current area / function",
+        "placeholder": "e.g. Corporate Finance",
+        "key": "CURRENT AREA / FUNCTION"
+      },
+      {
+        "label": "Target area / function",
+        "placeholder": "e.g. Venture Capital",
+        "key": "TARGET AREA / FUNCTION"
+      },
+      {
+        "label": "Location or remote preference",
+        "placeholder": "e.g. New York, NY or Remote",
+        "key": "MY TARGET LOCATION OR REMOTE"
+      }
+    ],
+    "template": "You are an expert career transition strategist and labor market analyst. Analyze my career transition from [CURRENT AREA / FUNCTION] to [TARGET AREA / FUNCTION]. Provide: (1) a skills comparison — how my current capabilities map to typical [TARGET AREA / FUNCTION] roles, with transferable strengths and specific gaps identified, (2) market growth assessment — the current growth trajectory and outlook for [TARGET AREA / FUNCTION] roles in [MY TARGET LOCATION OR REMOTE], (3) adjacent and emerging roles — specific job titles adjacent to [TARGET AREA / FUNCTION] that I may be competitive for now or with minimal preparation, including any emerging titles driven by technology or market changes, and (4) a recommended entry strategy — the most realistic path into [TARGET AREA / FUNCTION] given my specific background, not a generic pivot framework.\n\n📎 Attach your resume before sending.",
+    "hint": "📎 Attach your resume before sending",
+    "needs_resume": true,
+    "needs_paste": false,
+    "model": "smart"
+  },
+  {
+    "id": "P33",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Research where an industry is heading",
+    "title": "Find the fastest-growing roles in my target industry",
+    "search": "industry job growth outlook 5 10 years future roles fastest growing BLS labor market",
+    "fields": [
+      {
+        "label": "Industry name",
+        "placeholder": "e.g. Renewable Energy",
+        "key": "INDUSTRY NAME"
+      }
+    ],
+    "template": "You are an expert labor market analyst and career strategist. Summarize the job growth outlook for the [INDUSTRY NAME] industry over the next 5–10 years. Specifically: (1) identify the roles projected to grow fastest and why, citing available data sources (BLS, McKinsey, WEF, or similar), (2) identify roles within the industry that are at risk of contraction or automation, and (3) highlight emerging roles or functions within the industry that may not yet be widely recognized but represent significant opportunity. Where data is limited or projections are speculative, say so clearly.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P34",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Compare two potential career paths",
+    "title": "Make a data-driven decision between two career directions",
+    "search": "compare two career paths salary growth BLS data role X vs Y decision",
+    "fields": [
+      {
+        "label": "Role Option A",
+        "placeholder": "e.g. Data Scientist",
+        "key": "ROLE X"
+      },
+      {
+        "label": "Role Option B",
+        "placeholder": "e.g. Machine Learning Engineer",
+        "key": "ROLE Y"
+      },
+      {
+        "label": "Career level",
+        "placeholder": "Entry / Mid / Senior",
+        "key": "ENTRY / MID / SENIOR — choose one"
+      },
+      {
+        "label": "Location or national",
+        "placeholder": "e.g. San Francisco, CA or National",
+        "key": "LOCATION OR NATIONAL"
+      },
+      {
+        "label": "Your background (brief)",
+        "placeholder": "e.g. 8 years in analytics, Python skills",
+        "key": "BRIEF DESCRIPTION OF YOUR BACKGROUND"
+      }
+    ],
+    "template": "You are an expert labor market analyst. Using Bureau of Labor Statistics data and other credible compensation sources, compare [ROLE X] and [ROLE Y] across the following dimensions: (1) current median salary and total compensation range at the [ENTRY / MID / SENIOR — choose one] level in [LOCATION OR NATIONAL], (2) projected 10-year job growth rate, (3) current demand and hiring volume, (4) typical career trajectory and ceiling for each path, and (5) key factors that would make one path significantly more advantageous than the other for someone with [BRIEF DESCRIPTION OF YOUR BACKGROUND]. Cite your data sources and note the publication date for salary and growth figures.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P35",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Future-proof your current role against AI",
+    "title": "Understand how AI is changing my role and what to do about it",
+    "search": "AI disruption future proof current role skills valuable decline automation 3 5 years competitive",
+    "fields": [
+      {
+        "label": "Your job title",
+        "placeholder": "e.g. Financial Analyst",
+        "key": "JOB TITLE"
+      },
+      {
+        "label": "Brief skill summary",
+        "placeholder": "e.g. financial modeling, forecasting, Excel, SQL",
+        "key": "BRIEF SKILL SUMMARY"
+      }
+    ],
+    "template": "You are an expert future-of-work analyst and career strategist specializing in AI's impact on professional roles. I am a [JOB TITLE] with experience in [BRIEF SKILL SUMMARY]. Analyze how AI is changing this role over the next 3–5 years and provide: (1) specific tasks or responsibilities in this role that AI is most likely to automate or significantly disrupt, (2) skills and capabilities that will become more valuable as AI handles routine work — be specific, not generic, (3) skills that are likely to decline in market value, (4) a concrete 6-month learning plan with specific resources to strengthen my position, and (5) an honest assessment of the long-term viability of this role and what adjacent moves would provide the most career security. Base your analysis on current AI capabilities and near-term development trajectory, not speculation.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "P36",
+    "category": "pivot",
+    "category_title": "Career Pivots, Skills & Upskilling",
+    "purpose": "Turn AI fluency into a hiring advantage",
+    "title": "Make my AI skills a selling point",
+    "search": "AI artificial intelligence advantage leverage skills fluency differentiator chatgpt claude hiring competitive selling point",
+    "fields": [
+      {
+        "label": "Target role or industry",
+        "placeholder": "e.g. Operations leadership in healthcare",
+        "key": "TARGET ROLE OR INDUSTRY"
+      },
+      {
+        "label": "How you use AI today",
+        "placeholder": "e.g. drafting emails in ChatGPT — or 'just getting started'",
+        "key": "HOW YOU USE AI"
+      }
+    ],
+    "template": "You are a career strategist who helps professionals position themselves in an AI-shifting market. I am targeting [TARGET ROLE OR INDUSTRY] roles. Here is how I currently use AI tools: [HOW YOU USE AI]. Help me turn AI fluency into a hiring advantage: (1) the highest-value ways someone in my target role can use AI that employers actively want right now, (2) how to show that credibly on my resume and LinkedIn using specific language, not buzzwords, (3) how to speak to it in an interview with one concrete example I could build from my background, and (4) the two or three AI skills most worth building in the next 60 days for my target. Be specific to my role. Do not pad with generic future-of-work commentary.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "M1",
+    "category": "mindset",
+    "category_title": "Mindset & Momentum",
+    "purpose": "Reframe a sudden transition and re-anchor on what's still true",
+    "title": "Get my head straight after a sudden transition",
+    "search": "layoff mindset confidence reframe grounding setback identity self-worth perspective momentum process head straight",
+    "fields": [
+      {
+        "label": "How you're feeling right now",
+        "placeholder": "e.g. angry, shaken, unsure about the market",
+        "key": "HOW I'M FEELING RIGHT NOW"
+      }
+    ],
+    "template": "You are a sharp, supportive career coach who has walked a lot of people through job loss. My most recent role recently came to an end through [a restructuring / a reorganization / a role elimination — choose one], and right now I'm feeling [HOW I'M FEELING RIGHT NOW]. I don't want empty cheerleading — I want a clear head. Before you answer, ask me up to three questions to understand my situation. Then help me: (1) separate what was actually in my control from what wasn't; (2) name the strengths and the track record that are still true about me regardless of how this ended; (3) reframe this moment in a way that's honest, not sugarcoated; and (4) give me one specific thing I can do today to get moving again. Talk to me like a person, not a worksheet.",
+    "hint": "The AI will ask you a few questions first",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  },
+  {
+    "id": "M2",
+    "category": "mindset",
+    "category_title": "Mindset & Momentum",
+    "purpose": "Stay steady through rejection and silence",
+    "title": "Keep going when the search gets quiet",
+    "search": "rejection no response ghosted silence anxiety resilience momentum burnout discouraged keep going stay motivated quiet",
+    "fields": [
+      {
+        "label": "Where you are right now",
+        "placeholder": "e.g. lots of applications, few replies, a recent rejection",
+        "key": "WHERE I AM RIGHT NOW"
+      }
+    ],
+    "template": "You are a grounded career coach helping me keep momentum during a long job search. Here's where I am: [WHERE I AM RIGHT NOW]. Help me stay steady and effective. Give me: (1) a quick gut-check on whether my discouragement is pointing at something I should actually change in my approach, or whether it's just the normal grind talking; (2) a realistic way to think about rejection and silence so they stop draining me; (3) one or two adjustments that would put more of my energy where it actually moves the needle; and (4) a small, doable plan for the next three days that rebuilds momentum without burning me out. Be honest and practical, not motivational-poster.",
+    "hint": "No file attachment needed for this one",
+    "needs_resume": false,
+    "needs_paste": false,
+    "model": "fast"
+  }
+]
