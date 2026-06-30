@@ -7,7 +7,12 @@ import json
 import io
 import queue
 import threading
-from flask import Flask, render_template, request, jsonify, Response, stream_with_context, send_file
+import hmac
+import secrets as _secrets
+from datetime import timedelta
+from flask import (Flask, render_template, render_template_string, request, jsonify,
+                   Response, stream_with_context, send_file, session, redirect,
+                   url_for, abort)
 import anthropic
 
 from prompts.session_generator import SYNTHESIS_SYSTEM, COACH_GUIDE_SYSTEM, WORKSHEET_SYSTEM
@@ -33,6 +38,81 @@ import segno
 import strategy_store
 
 app = Flask(__name__)
+
+# ── Access control ──────────────────────────────────────────────────────────────
+# A single shared password gates the whole site (it holds client PII). On success
+# we set a signed, 30-day cookie so the coach logs in once per device. Set
+# APP_PASSWORD in the environment to enable; if it's unset (e.g. local dev), the
+# gate is off. SECRET_KEY signs the cookie — set it in Railway so the login
+# survives redeploys (otherwise a fresh random key logs everyone out each deploy).
+APP_PASSWORD = os.environ.get("APP_PASSWORD", "")
+app.secret_key = os.environ.get("SECRET_KEY") or _secrets.token_hex(32)
+app.permanent_session_lifetime = timedelta(days=30)
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(APP_PASSWORD),  # cookie only over HTTPS in prod
+)
+
+LOGIN_HTML = """<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in</title><style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;background:#f5f3f0;color:#2c3035;
+  display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;}
+.box{background:#fff;border:1px solid #e0dbd4;border-radius:8px;padding:36px 38px;width:100%;max-width:360px;}
+h1{font-family:'Roboto Slab',serif;font-size:20px;color:#1e2022;margin-bottom:6px;}
+p{font-size:13px;color:#7a8088;margin-bottom:20px;}
+input{width:100%;font-size:15px;padding:12px 14px;border:1px solid #d8d3cc;border-radius:6px;margin-bottom:14px;}
+input:focus{outline:none;border-color:#3a5a7c;}
+button{width:100%;font-size:15px;font-weight:600;padding:12px;border:none;border-radius:6px;
+  background:#1e2022;color:#fff;cursor:pointer;}
+.err{font-size:13px;color:#8b4040;margin-bottom:12px;}
+</style></head><body><div class="box">
+<h1>Coaching Tools</h1><p>Enter the password to continue.</p>
+{% if error %}<div class="err">{{ error }}</div>{% endif %}
+<form method="POST" action="{{ url_for('login') }}">
+  <input type="hidden" name="next" value="{{ next }}">
+  <input type="password" name="password" placeholder="Password" autofocus autocomplete="current-password">
+  <button type="submit">Sign in</button>
+</form></div></body></html>"""
+
+
+@app.before_request
+def _require_login():
+    if not APP_PASSWORD:
+        return  # gate disabled until a password is configured
+    p = request.path
+    if p == "/login" or p.startswith("/static/"):
+        return
+    if session.get("authed"):
+        return
+    if p.startswith("/api/"):
+        abort(401)  # JSON callers get a clean 401, not an HTML redirect
+    return redirect(url_for("login", next=p))
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if not APP_PASSWORD:
+        return redirect("/")
+    error = ""
+    nxt = request.values.get("next", "/")
+    if not nxt.startswith("/"):
+        nxt = "/"  # guard against open-redirect
+    if request.method == "POST":
+        if hmac.compare_digest(request.form.get("password", ""), APP_PASSWORD):
+            session.permanent = True
+            session["authed"] = True
+            return redirect(nxt)
+        error = "Incorrect password."
+    return render_template_string(LOGIN_HTML, error=error, next=nxt)
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
 
 # max_retries handles transient API failures (overloaded, rate limits, timeouts,
 # 5xx) with exponential backoff so a run succeeds the first time instead of
