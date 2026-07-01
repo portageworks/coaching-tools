@@ -374,7 +374,8 @@ def _cue_css(client_name):
 }}
 html,body{{height:100%;}}
 body{{font-family:'Roboto','DejaVu Sans',sans-serif;background:var(--bg);color:var(--text);
-  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100vh;}}
+  -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100vh;
+  touch-action:manipulation;}}
 .cue-top{{background:var(--charcoal);color:#fff;padding:14px 22px;display:flex;
   align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;}}
 .cue-top .eyebrow{{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--slate-mid);}}
@@ -460,7 +461,7 @@ li.chk.done{{color:var(--text-dim);}}
   align-items:center;justify-content:space-between;gap:14px;z-index:5;}}
 .cue-btn{{font-family:'Roboto',sans-serif;font-size:16px;font-weight:600;border-radius:4px;
   padding:14px 30px;cursor:pointer;border:1px solid var(--charcoal);background:var(--charcoal);
-  color:#fff;min-width:120px;}}
+  color:#fff;min-width:120px;touch-action:manipulation;}}
 .cue-btn.secondary{{background:var(--surface);color:var(--charcoal);}}
 .cue-btn:disabled{{opacity:.35;cursor:not-allowed;}}
 .cue-dots{{font-family:'Roboto Mono',monospace;font-size:13px;color:var(--text-dim);}}
@@ -731,7 +732,7 @@ def build_worksheet_cue_html(worksheet_md, client_name):
     )
     total = len(all_cards)
     return f"""<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>{esc(client_name)} — Session Cue</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
