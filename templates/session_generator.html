@@ -201,7 +201,7 @@
   background:#f5f3f0;border:1px solid #e0dbd4;border-radius:8px;padding:16px 18px;}
 .cue-qr{flex:none;width:180px;height:180px;background:#fff;border:1px solid #e0dbd4;
   border-radius:6px;padding:10px;}
-.cue-qr svg{width:100%;height:100%;display:block;image-rendering:pixelated;}
+.cue-qr img{width:100%;height:100%;display:block;}
 .cue-link-body{flex:1;min-width:0;}
 .cue-link-label{font-size:12px;color:#6a7078;margin-bottom:6px;}
 .cue-link-row{display:flex;align-items:center;gap:8px;}
@@ -380,7 +380,7 @@ async function createCueLink() {
     const exp = new Date(data.expires * 1000).toLocaleDateString(undefined,
       { month: 'short', day: 'numeric', year: 'numeric' });
     panel.innerHTML =
-      '<div class="cue-qr">' + data.qr_svg + '</div>' +
+      '<div class="cue-qr"><img alt="QR code for cue link" src="' + data.qr_data + '"></div>' +
       '<div class="cue-link-body">' +
         '<div class="cue-link-label">Scan with your tablet camera, or open this link:</div>' +
         '<div class="cue-link-row">' +

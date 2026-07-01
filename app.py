@@ -9,6 +9,7 @@ import time
 import base64
 import queue
 import threading
+import base64
 import hmac
 import secrets as _secrets
 import urllib.request
@@ -719,12 +720,14 @@ def session_cue_create():
     # so the QR encodes https (phone cameras are finicky about http links).
     scheme = request.headers.get("X-Forwarded-Proto", request.scheme)
     url = f"{scheme}://{request.host}/cue/{token}"
+    # Render a high-res PNG (crisp black/white squares, no SVG scaling quirks) and
+    # hand it back as a data URI. error="l" keeps the module count low; border=4
+    # is the required quiet zone.
     buf = io.BytesIO()
-    # error="l" keeps the module count low so the code stays easy to scan at a
-    # small on-screen size; border=4 gives the required quiet zone.
-    segno.make(url, error="l").save(buf, kind="svg", scale=6, border=4, dark="#1e2022")
-    qr_svg = re.sub(r"^<\?xml[^>]*\?>\s*", "", buf.getvalue().decode("utf-8"))
-    return jsonify({"url": url, "expires": expires, "qr_svg": qr_svg})
+    segno.make(url, error="l").save(buf, kind="png", scale=10, border=4,
+                                    dark="#1e2022", light="#ffffff")
+    qr_data = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    return jsonify({"url": url, "expires": expires, "qr_data": qr_data})
 
 
 def _cue_message_page(title, message):
