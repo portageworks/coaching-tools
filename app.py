@@ -715,9 +715,14 @@ def session_cue_create():
         return jsonify({"error": "No worksheet to build a cue screen from."}), 400
     html = build_worksheet_cue_html(worksheet_md, name)
     token, expires = cue_store.save_cue(html, client_name=name)
-    url = request.host_url.rstrip("/") + "/cue/" + token
+    # Behind Railway's proxy request.scheme can be http; trust the forwarded proto
+    # so the QR encodes https (phone cameras are finicky about http links).
+    scheme = request.headers.get("X-Forwarded-Proto", request.scheme)
+    url = f"{scheme}://{request.host}/cue/{token}"
     buf = io.BytesIO()
-    segno.make(url, error="m").save(buf, kind="svg", scale=4, border=2, dark="#1e2022")
+    # error="l" keeps the module count low so the code stays easy to scan at a
+    # small on-screen size; border=4 gives the required quiet zone.
+    segno.make(url, error="l").save(buf, kind="svg", scale=6, border=4, dark="#1e2022")
     qr_svg = re.sub(r"^<\?xml[^>]*\?>\s*", "", buf.getvalue().decode("utf-8"))
     return jsonify({"url": url, "expires": expires, "qr_svg": qr_svg})
 
